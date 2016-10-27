@@ -72,8 +72,12 @@ function Rack.clear()
 end
 
 function Rack.load(path)
-	local r = loadrack(path)
-	r.path = filepath.dir(path)
+	local r = nil
+	local reload = function()
+		r = loadrack(path)
+		r.path = filepath.dir(path)
+	end
+	reload()
 	local built = r:build()
 
 	assert(built.modules, 'modules should be exposed in the build action')
@@ -85,19 +89,18 @@ function Rack.load(path)
 		mount = function(self)
 			Rack.mount(self)
 		end,
-		output = built.output,
+		output = function()
+			return built.output()
+		end,
 		rebuild = function(self)
-			r = loadrack(path)
-			r.path = filepath.dir(path)
+			reload()
 			Rack.clear()
-			reset(built.modules)
-			close(built.modules)
 			built = r:build()
 			r:patch(built.modules)
 			self:mount()
 		end,
 		repatch = function()
-			r = loadrack(path)
+			reload()
 			reset(built.modules)
 			r:patch(built.modules)
 		end
