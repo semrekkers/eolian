@@ -1,4 +1,5 @@
 PROJECT := github.com/brettbuddin/eolian
+BINPATH := bin/
 
 default: build
 
@@ -8,7 +9,8 @@ govendor: $(GOPATH)/bin/govendor
 	$(GOPATH)/bin/govendor sync
 
 build: govendor
-	go build -v $(PROJECT)/...
+	@mkdir -p $(BINPATH)
+	go build -o $(BINPATH)/eolian -v $(PROJECT)/cmd/eolian
 
 test: govendor
 	go test -test.timeout=1000s $(PROJECT)/...
