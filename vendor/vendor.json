@@ -1,0 +1,67 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "HGHazB2e0roKDxGxFUGgrwTO68I=",
+			"path": "github.com/brettbuddin/musictheory",
+			"revision": "58523bf935cf1962ec149ac62573197dc19431de",
+			"revisionTime": "2016-09-07T13:35:37Z"
+		},
+		{
+			"checksumSHA1": "JZzGZSKv+oXaWoAHavL0lzumB+c=",
+			"path": "github.com/chzyer/readline",
+			"revision": "25c2772d5fd908077927228597b084a1f1a0e66d",
+			"revisionTime": "2016-10-06T04:35:07Z"
+		},
+		{
+			"checksumSHA1": "OFB3spI9K2CJz9cyDzi/5Fgkom0=",
+			"path": "github.com/gordonklaus/portaudio",
+			"revision": "ee87a127ce8f364049c62b5ae0bef46cc87dae3d",
+			"revisionTime": "2016-03-26T21:52:59Z"
+		},
+		{
+			"checksumSHA1": "UuXgD2dDojfS8AViUEe15gLIWZE=",
+			"path": "github.com/mitchellh/mapstructure",
+			"revision": "f3009df150dadf309fdee4a54ed65c124afad715",
+			"revisionTime": "2016-10-20T16:18:36Z"
+		},
+		{
+			"checksumSHA1": "/1EMdwlI46e/gejR1EKVbyaNZQM=",
+			"path": "github.com/rakyll/portmidi",
+			"revision": "b18948bbf1f7047ebaebcbd9ca47bdcccff70646",
+			"revisionTime": "2016-10-24T21:20:02Z"
+		},
+		{
+			"checksumSHA1": "XV+uHP/kNfpi+a0Ja/GldHlJJsc=",
+			"path": "github.com/yuin/gluamapper",
+			"revision": "d836955830e75240d46ce9f0e6d148d94f2e1d3a",
+			"revisionTime": "2015-03-23T12:09:27Z"
+		},
+		{
+			"checksumSHA1": "YaR0YDaJbk6cYUyfUd8tHDC8+uk=",
+			"path": "github.com/yuin/gopher-lua",
+			"revision": "d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e",
+			"revisionTime": "2016-10-13T02:33:00Z"
+		},
+		{
+			"checksumSHA1": "yNGEI9BMDbGwabUnaHvV9ZZm/a0=",
+			"path": "github.com/yuin/gopher-lua/ast",
+			"revision": "d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e",
+			"revisionTime": "2016-10-13T02:33:00Z"
+		},
+		{
+			"checksumSHA1": "RzAFlqrwEE/ybIrUhDQeIE8+7pM=",
+			"path": "github.com/yuin/gopher-lua/parse",
+			"revision": "d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e",
+			"revisionTime": "2016-10-13T02:33:00Z"
+		},
+		{
+			"checksumSHA1": "lsdmE0I6R+1KjYPLM+Y9crLDyHw=",
+			"path": "github.com/yuin/gopher-lua/pm",
+			"revision": "d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e",
+			"revisionTime": "2016-10-13T02:33:00Z"
+		}
+	],
+	"rootPath": "github.com/brettbuddin/eolian"
+}

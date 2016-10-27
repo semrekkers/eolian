@@ -1,0 +1,4 @@
+pkg/*
+vendor/pkg/*
+bin/*
+coverage.out
