@@ -4,14 +4,18 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type IO struct {
+	sync.Mutex
 	ins  map[string]*In
 	outs map[string]*Out
 }
 
 func (io *IO) Expose(ins []*In, outs []*Out) error {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	for _, in := range ins {
 		if _, ok := io.ins[in.Name]; ok {
@@ -39,11 +43,15 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 }
 
 func (io *IO) Unpatch(name string) error {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	return io.Patch(name, zero)
 }
 
 func (inout *IO) Patch(name string, t interface{}) error {
+	inout.Lock()
+	defer inout.Unlock()
 	inout.lazyInit()
 	input, ok := inout.ins[name]
 	if !ok {
@@ -100,16 +108,22 @@ func (inout *IO) Patch(name string, t interface{}) error {
 }
 
 func (io *IO) Inputs() map[string]*In {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	return io.ins
 }
 
 func (io *IO) Outputs() map[string]*Out {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	return io.outs
 }
 
 func (io *IO) Output(name string) (Reader, error) {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	if o, ok := io.outs[name]; ok {
 		if o.IsActive() {
@@ -124,6 +138,8 @@ func (io *IO) Output(name string) (Reader, error) {
 }
 
 func (io *IO) OutputsActive() int {
+	io.Lock()
+	defer io.Unlock()
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
@@ -135,6 +151,8 @@ func (io *IO) OutputsActive() int {
 }
 
 func (io *IO) String() string {
+	io.Lock()
+	defer io.Unlock()
 	out := "inputs:\n"
 	for name, in := range io.ins {
 		if v, ok := in.Source.(fmt.Stringer); ok {
@@ -155,6 +173,8 @@ func (io *IO) String() string {
 }
 
 func (inout *IO) closeOutput(name string) error {
+	inout.Lock()
+	defer inout.Unlock()
 	inout.lazyInit()
 	if o, ok := inout.outs[name]; ok {
 		o.reader = nil
@@ -173,6 +193,8 @@ func (io *IO) lazyInit() {
 }
 
 func (io *IO) Reset() error {
+	io.Lock()
+	defer io.Unlock()
 	for _, in := range io.ins {
 		if nested, ok := in.Source.(*In); ok {
 			if err := nested.Close(); err != nil {
@@ -200,6 +222,8 @@ type Lister interface {
 }
 
 type In struct {
+	sync.Mutex
+
 	Source Reader
 	Name   string
 
@@ -208,10 +232,15 @@ type In struct {
 }
 
 func (reader *In) Read(f Frame) {
+	reader.Lock()
 	reader.Source.Read(f)
+	reader.Unlock()
 }
 
 func (setter *In) SetSource(r Reader) {
+	setter.Lock()
+	defer setter.Unlock()
+
 	switch v := setter.Source.(type) {
 	case SourceSetter:
 		v.SetSource(r)
@@ -221,14 +250,20 @@ func (setter *In) SetSource(r Reader) {
 }
 
 func (i *In) ReadFrame() Frame {
+	i.Lock()
+	defer i.Unlock()
 	return i.Source.(*Buffer).ReadFrame()
 }
 
 func (i *In) LastFrame() Frame {
+	i.Lock()
+	defer i.Unlock()
 	return i.Source.(*Buffer).Frame
 }
 
 func (i *In) Close() error {
+	i.Lock()
+	defer i.Unlock()
 	if closer, ok := i.Source.(Closer); ok {
 		return closer.Close()
 	}
