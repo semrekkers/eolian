@@ -150,7 +150,7 @@ func (io *IO) OutputsActive() int {
 	return i
 }
 
-func (io *IO) String() string {
+func (io *IO) Inspect() string {
 	io.Lock()
 	defer io.Unlock()
 	out := "inputs:\n"
