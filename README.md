@@ -76,6 +76,7 @@ people who know more about DSP than I do. Wanna help out? Awesome! Mosey on over
 ## TODO
 
 - Documentation!
+- Live-remapping of MIDI controller inputs to controls in a patch (what does the Lua interface look like?)
 - Improved filters (Butterworth or Chebyshev)
 - Different classifications of inputs (when they get updated)
 - Band-pass filter
