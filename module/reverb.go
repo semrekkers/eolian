@@ -6,8 +6,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-const inFeedback = "feedback"
-
 func init() {
 	Register("Reverb", func(c Config) (Patcher, error) {
 		var config ReverbConfig
