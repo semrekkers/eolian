@@ -76,6 +76,7 @@ This project is very much in its infancy and there is still lots of work to be d
 
 - Documentation!
 - Live-remapping of MIDI controller inputs to controls in a patch (what does the Lua interface look like?)
+- REST API to manipulate the patch graph
 - Improved filters (Butterworth or Chebyshev)
 - Different classifications of inputs (when they get updated)
 - Band-pass filter
