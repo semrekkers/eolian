@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/module"
 	"github.com/chzyer/readline"
 	"github.com/yuin/gluamapper"
@@ -30,13 +29,13 @@ type VM struct {
 	*lua.LState
 }
 
-func NewVM(e *engine.Engine) (*VM, error) {
+func NewVM(p module.Patcher) (*VM, error) {
 	state := lua.NewState()
 	lua.OpenBase(state)
 	lua.OpenDebug(state)
 	lua.OpenString(state)
 	OpenFilePath(state)
-	OpenSynth(state, e)
+	OpenSynth(state, p)
 	OpenTheory(state)
 
 	// Add go functions

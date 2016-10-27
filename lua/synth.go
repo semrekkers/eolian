@@ -3,19 +3,18 @@ package lua
 import (
 	"strings"
 
-	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/module"
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 )
 
-func OpenSynth(state *lua.LState, e *engine.Engine) int {
+func OpenSynth(state *lua.LState, p module.Patcher) int {
 	fns := map[string]lua.LGFunction{}
 	for name, t := range module.Registry {
 		fns[name] = buildConstructor(t)
 	}
 	module := state.RegisterModule("synth", fns)
-	state.SetField(module, "Engine", decoratePatcher(state, e))
+	state.SetField(module, "Engine", decoratePatcher(state, p))
 	state.Push(module)
 	return 1
 }
