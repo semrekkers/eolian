@@ -43,6 +43,12 @@ $ eolian
 > 
 > -- Set inputs or repatch modules
 > Rack.inspect(rack.modules.low.lpf)
+inputs:
+- input: &{0xc420282510 output 0xc420282510}
+- cutoff: 3000.00Hz
+- resonance: 0
+outputs:
+- output (active)
 > rack.modules.low.lpf:set { cutoff = hz(2000) }
 ...
 ```

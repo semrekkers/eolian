@@ -155,11 +155,7 @@ func (io *IO) Inspect() string {
 	defer io.Unlock()
 	out := "inputs:\n"
 	for name, in := range io.ins {
-		if v, ok := in.Source.(fmt.Stringer); ok {
-			out += fmt.Sprintf("- %s: %s\n", name, v.String())
-		} else {
-			out += fmt.Sprintf("- %s\n", name)
-		}
+		out += fmt.Sprintf("- %s: %v\n", name, in)
 	}
 	out += "outputs:\n"
 	for name, e := range io.outs {
@@ -247,6 +243,10 @@ func (setter *In) SetSource(r Reader) {
 	case Reader:
 		setter.Source = r
 	}
+}
+
+func (i *In) String() string {
+	return fmt.Sprintf("%v", i.Source)
 }
 
 func (i *In) ReadFrame() Frame {
