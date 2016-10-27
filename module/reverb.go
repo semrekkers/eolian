@@ -93,14 +93,14 @@ func NewReverb(c ReverbConfig) (*Reverb, error) {
 		if err := m.allpasses[i].Patch("duration", Value(1)); err != nil {
 			return m, err
 		}
+		var port Port
 		if i == 0 {
-			if err := m.allpasses[i].Patch("input", Port{mixer, "output"}); err != nil {
-				return m, err
-			}
+			port = Port{mixer, "output"}
 		} else {
-			if err := m.allpasses[i].Patch("input", Port{m.allpasses[i-1], "output"}); err != nil {
-				return m, err
-			}
+			port = Port{m.allpasses[i-1], "output"}
+		}
+		if err := m.allpasses[i].Patch("input", port); err != nil {
+			return m, err
 		}
 		if err := m.allpasses[i].Patch("gain", Port{allpassGainMultiple, fmt.Sprintf("%d", i)}); err != nil {
 			return m, err
