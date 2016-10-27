@@ -31,9 +31,10 @@ $ make
 $ make install
 $ eolian
 > rack = Rack.load('racks/circles.lua')
-> Rack.inspect(rack.modules)
-> rack:rebuild()
-> rack:repatch()
+> rack:rebuild() -- Rebuild the Rack entirely
+> rack:repatch() -- Repatch existing Rack
+> Rack.inspect(rack.modules.low.lpf)
+> rack.modules.low.lpf:set { cutoff = hz(2000) }
 ...
 ```
 
