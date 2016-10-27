@@ -41,6 +41,7 @@ You can find some example rack setups in the [racks](https://github.com/brettbud
 
 ## TODO
 
+- Add some locks to prevent race-conditions
 - Improved filters (Butterworth or Chebyshev)
 - Different classifications of inputs (when they get updated)
 - Band-pass filter
