@@ -30,10 +30,10 @@ $ make
 ```
 $ make install
 $ eolian
->> rack = Rack.load('racks/circles.lua')
->> Rack.inspect(rack.modules)
->> rack:rebuild()
->> rack:repatch()
+> rack = Rack.load('racks/circles.lua')
+> Rack.inspect(rack.modules)
+> rack:rebuild()
+> rack:repatch()
 ...
 ```
 
