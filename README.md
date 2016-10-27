@@ -55,9 +55,21 @@ outputs:
 
 You can find some example rack setups in the [racks](https://github.com/brettbuddin/eolian/tree/master/racks) directory.
 
+### Example Sounds
+
+Here's some example videos of things I've been able to get it to do at various stages during development:
+
+- https://www.instagram.com/p/BLxTrABjGhG/ (Tinkering with FilteredReverb)
+- https://www.instagram.com/p/BKzAeRQjZ7N/ (Karplus-Strong #2)
+- https://www.instagram.com/p/BKx7jIpjL4O/ (Karplus-Strong #1)
+- https://www.instagram.com/p/BKhJ42FDnSY/ (MIDI controller)
+- https://www.instagram.com/p/BKZQbtfj0OM/ (Static clicks #2)
+- https://www.instagram.com/p/BKCLIGYjU_F/ (4-Pole filter)
+- https://www.instagram.com/p/BKCJ98Dj2RS/ (Reverb exploration)
+
 ## TODO
 
-- Add some locks to prevent race-conditions
+- Documentation!
 - Improved filters (Butterworth or Chebyshev)
 - Different classifications of inputs (when they get updated)
 - Band-pass filter
