@@ -67,6 +67,12 @@ Here's some example videos of things I've been able to get it to do at various s
 - https://www.instagram.com/p/BKCLIGYjU_F/ (4-Pole filter)
 - https://www.instagram.com/p/BKCJ98Dj2RS/ (Reverb exploration)
 
+## Contributing
+
+This project is very much in its infancy and there is still lots of work to be done. I could use some more help from
+people who know more about DSP than I do. Wanna help out? Awesome! Mosey on over to
+[CONTRIBUTING.md](https://github.com/brettbuddin/eolian/tree/master/CONTRIBUTING.md) and submit your first Pull Request.
+
 ## TODO
 
 - Documentation!
