@@ -59,13 +59,13 @@ You can find some example rack setups in the [racks](https://github.com/brettbud
 
 Here's some example videos of things I've been able to get it to do at various stages during development:
 
-- https://www.instagram.com/p/BLxTrABjGhG/ (Tinkering with FilteredReverb)
-- https://www.instagram.com/p/BKzAeRQjZ7N/ (Karplus-Strong #2)
-- https://www.instagram.com/p/BKx7jIpjL4O/ (Karplus-Strong #1)
-- https://www.instagram.com/p/BKhJ42FDnSY/ (MIDI controller)
-- https://www.instagram.com/p/BKZQbtfj0OM/ (Static clicks #2)
-- https://www.instagram.com/p/BKCLIGYjU_F/ (4-Pole filter)
-- https://www.instagram.com/p/BKCJ98Dj2RS/ (Reverb exploration)
+- [Tinkering with FilteredReverb](https://www.instagram.com/p/BLxTrABjGhG/)
+- [4-Pole filter](https://www.instagram.com/p/BKCLIGYjU_F/)
+- [Karplus-Strong #1](https://www.instagram.com/p/BKx7jIpjL4O/)
+- [Karplus-Strong #2](https://www.instagram.com/p/BKzAeRQjZ7N/)
+- [MIDI controller](https://www.instagram.com/p/BKhJ42FDnSY/)
+- [Static clicks #2](https://www.instagram.com/p/BKZQbtfj0OM/)
+- [Reverb exploration](https://www.instagram.com/p/BKCJ98Dj2RS/)
 
 ## Contributing
 
