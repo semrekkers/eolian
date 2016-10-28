@@ -52,7 +52,7 @@ outputs:
 > rack.modules.low.lpf:set { cutoff = hz(2000) }
 ...
 ```
-Be sure to check out the [Wiki](./wiki) for more features and tutorials. You can also find some example Rack setups in the [racks directory](./tree/master/racks).
+Be sure to check out the [Wiki](./wiki) for more features and tutorials. You can also find some example Rack setups in the [racks directory](./blob/master/racks).
 
 ### Example Sounds
 
@@ -69,7 +69,7 @@ Here's some example videos of things I've been able to get it to do at various s
 ## Contributing
 
 This project is very much in its infancy and there is still lots of work to be done. Wanna help out? Awesome! Mosey on over to
-[CONTRIBUTING.md](./tree/master/CONTRIBUTING.md) and submit your first Pull Request.
+[CONTRIBUTING.md](./blob/master/CONTRIBUTING.md) and submit your first Pull Request.
 
 ## TODO
 
