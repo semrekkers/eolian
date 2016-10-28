@@ -74,6 +74,7 @@ This project is very much in its infancy and there is still lots of work to be d
 ## TODO
 
 - Documentation!
+- Swap out the minimal REPL with something more sophisticated
 - Live-remapping of MIDI controller inputs to controls in a patch (what does the Lua interface look like?)
 - OSC integration
 - REST API to view and manipulate the patch graph. D3 module graphs?
