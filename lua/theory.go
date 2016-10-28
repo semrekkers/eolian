@@ -1,6 +1,7 @@
 package lua
 
 import (
+	"github.com/brettbuddin/eolian/module"
 	"github.com/brettbuddin/musictheory"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -78,11 +79,12 @@ func newOctaveInterval(state *lua.LState) int {
 	return 1
 }
 
-func addPitchMethods(state *lua.LState, table *lua.LTable, p *musictheory.Pitch) {
-	funcs := func(p *musictheory.Pitch) map[string]lua.LGFunction {
+func addPitchMethods(state *lua.LState, table *lua.LTable, p musictheory.Pitch) {
+	funcs := func(p musictheory.Pitch) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
 			"value": func(state *lua.LState) int {
-				state.Push(&lua.LUserData{Value: p})
+				v := module.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: module.Frequency(p.Freq())}
+				state.Push(&lua.LUserData{Value: v})
 				return 1
 			},
 			"name": func(state *lua.LState) int {
@@ -94,7 +96,7 @@ func addPitchMethods(state *lua.LState, table *lua.LTable, p *musictheory.Pitch)
 				if interval, ok := userdata.Value.(musictheory.Interval); ok {
 					table := state.NewTable()
 					p := p.Transpose(interval).(musictheory.Pitch)
-					addPitchMethods(state, table, &p)
+					addPitchMethods(state, table, p)
 					state.Push(table)
 					return 1
 				} else {
@@ -115,7 +117,7 @@ func newPitch(state *lua.LState) int {
 	}
 
 	table := state.NewTable()
-	addPitchMethods(state, table, p)
+	addPitchMethods(state, table, *p)
 	state.Push(table)
 	return 1
 }

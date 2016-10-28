@@ -83,8 +83,8 @@ function pkg.patch(self, modules)
         t.adsr:set {
             gate    = t.sequence:output('gate'),
             attack  = ms(10),
-            decay   = ms(100),
-            sustain = 0.1,
+            decay   = ms(70),
+            sustain = 0.2,
             release = ms(50)
         }
 
@@ -200,8 +200,8 @@ function pkg.patch(self, modules)
     with(modules.effects, function(t)
         t.reverb:set { 
             input    = modules.mix:output(),
-            cutoff   = hz(100),
-            gain     = 0.1,
+            cutoff   = hz(500),
+            gain     = 0.7,
             feedback = 0.86
         }
 

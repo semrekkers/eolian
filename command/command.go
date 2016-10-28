@@ -9,6 +9,7 @@ import (
 	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/lua"
 	_ "github.com/brettbuddin/eolian/midi"
+	_ "github.com/brettbuddin/eolian/osc"
 )
 
 func Run(args []string) error {

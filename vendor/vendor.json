@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "HGHazB2e0roKDxGxFUGgrwTO68I=",
+			"checksumSHA1": "ioPiXUg7wwctBuSYgnrA2SmeHdM=",
 			"path": "github.com/brettbuddin/musictheory",
-			"revision": "58523bf935cf1962ec149ac62573197dc19431de",
-			"revisionTime": "2016-09-07T13:35:37Z"
+			"revision": "a2f901cd9c71baaa6f9408981526ede5527df5c2",
+			"revisionTime": "2016-10-29T15:17:22Z"
 		},
 		{
 			"checksumSHA1": "JZzGZSKv+oXaWoAHavL0lzumB+c=",
@@ -19,6 +19,12 @@
 			"path": "github.com/gordonklaus/portaudio",
 			"revision": "ee87a127ce8f364049c62b5ae0bef46cc87dae3d",
 			"revisionTime": "2016-03-26T21:52:59Z"
+		},
+		{
+			"checksumSHA1": "rVuALDEwZJtlzkx5PFo96jlaeAk=",
+			"path": "github.com/hypebeast/go-osc/osc",
+			"revision": "14110159f516cd8d55bdd8b322644d36c3d24345",
+			"revisionTime": "2016-10-06T20:55:19Z"
 		},
 		{
 			"checksumSHA1": "UuXgD2dDojfS8AViUEe15gLIWZE=",
