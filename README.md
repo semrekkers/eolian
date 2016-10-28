@@ -63,7 +63,7 @@ Here's some example videos of things I've been able to get it to do at various s
 - [Karplus-Strong #1](https://www.instagram.com/p/BKx7jIpjL4O/)
 - [Karplus-Strong #2](https://www.instagram.com/p/BKzAeRQjZ7N/)
 - [MIDI controller](https://www.instagram.com/p/BKhJ42FDnSY/)
-- [Static clicks #2](https://www.instagram.com/p/BKZQbtfj0OM/)
+- [Static clicks](https://www.instagram.com/p/BKZQbtfj0OM/)
 - [Reverb exploration](https://www.instagram.com/p/BKCJ98Dj2RS/)
 
 ## Contributing
