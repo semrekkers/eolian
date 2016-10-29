@@ -15,7 +15,7 @@ func init() {
 	p := musictheory.NewPitch(musictheory.C, musictheory.Natural, 0)
 	for i := 12; i < 127; i++ {
 		pitches[i] = module.Frequency(p.Freq()).Value()
-		p.Chromatic++
+		p = p.Transpose(musictheory.Minor(2)).(musictheory.Pitch)
 	}
 
 	module.Register("MIDIController", func(c module.Config) (module.Patcher, error) {
