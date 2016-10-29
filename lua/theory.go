@@ -92,7 +92,7 @@ func addPitchMethods(state *lua.LState, table *lua.LTable, p musictheory.Pitch) 
 				return 1
 			},
 			"transpose": func(state *lua.LState) int {
-				userdata := state.CheckUserData(1)
+				userdata := state.CheckUserData(2)
 				if interval, ok := userdata.Value.(musictheory.Interval); ok {
 					table := state.NewTable()
 					p := p.Transpose(interval).(musictheory.Pitch)
