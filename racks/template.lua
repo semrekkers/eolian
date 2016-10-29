@@ -1,5 +1,7 @@
 local pkg = {}
 
+-- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
+
 function pkg.build(self)
     local modules = {
         -- Rack composition
