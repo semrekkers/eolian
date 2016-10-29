@@ -84,7 +84,7 @@ function pkg.build(self)
         mix = synth.Mix(),
     }
 
-    local p  = theory.pitch('B2')
+    local p  = theory.pitch('C2')
     local m2 = theory.minor(2)
     for i = 0, pressButtons-1, 1 do
         local voice = buildVoice(i, modules.control, modules.voice.envelope, p:value())
@@ -111,7 +111,7 @@ function pkg.patch(self, modules)
     modules.mix:set { master = 1 }
     modules.mix:scope(0):set {
         input = modules.voice.mix:output(),
-        level = 1
+        level = modules.control:output('/1/fader5')
     }
 end
 
