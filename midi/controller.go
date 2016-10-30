@@ -162,7 +162,8 @@ func gateRolling(s *gateState) gateStateFunc {
 
 func gateDown(s *gateState) gateStateFunc {
 	s.value = 1
-	if s.event.Status == 144 {
+	switch s.event.Status {
+	case 144:
 		if s.event.Data2 > 0 {
 			if int(s.event.Data1) != s.control {
 				s.control = int(s.event.Data1)
@@ -177,6 +178,9 @@ func gateDown(s *gateState) gateStateFunc {
 				return gateUp
 			}
 		}
+	case 128:
+		s.control = -1
+		return gateUp
 	}
 	return gateDown
 }
