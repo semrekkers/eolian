@@ -1,6 +1,8 @@
 package midi
 
 import (
+	"fmt"
+
 	"github.com/brettbuddin/eolian/module"
 	"github.com/brettbuddin/musictheory"
 	"github.com/mitchellh/mapstructure"
@@ -23,12 +25,21 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return NewController(config.Device)
+
+		// Default to 16-31 CC numbers
+		if len(config.CCNumbers) == 0 {
+			for i := 16; i < 32; i++ {
+				config.CCNumbers = append(config.CCNumbers, i)
+			}
+		}
+
+		return NewController(config.Device, config.CCNumbers)
 	})
 }
 
 type ControllerConfig struct {
-	Device int
+	Device    int
+	CCNumbers []int `mapstructure:"cc_numbers"`
 }
 
 type Controller struct {
@@ -43,7 +54,7 @@ type Controller struct {
 	clockTick int
 }
 
-func NewController(deviceID int) (*Controller, error) {
+func NewController(deviceID int, ccNumbers []int) (*Controller, error) {
 	initMIDI()
 	stream, err := portmidi.NewInputStream(portmidi.DeviceID(deviceID), int64(module.FrameSize))
 	if err != nil {
@@ -85,17 +96,26 @@ func NewController(deviceID int) (*Controller, error) {
 			}),
 		},
 		{
-			Name: "modWheel",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlModWheel{Controller: m}
-			}),
-		},
-		{
 			Name: "pitchBend",
 			Provider: module.ReaderProviderFunc(func() module.Reader {
 				return &ctrlPitchBend{Controller: m}
 			}),
 		},
+		{
+			Name: "modWheel",
+			Provider: module.ReaderProviderFunc(func() module.Reader {
+				return &ctrlCC{Controller: m, number: 1}
+			}),
+		},
+	}
+
+	for _, n := range ccNumbers {
+		outs = append(outs, &module.Out{
+			Name: fmt.Sprintf("cc/%d", n),
+			Provider: module.ReaderProviderFunc(func() module.Reader {
+				return &ctrlCC{Controller: m, number: n}
+			}),
+		})
 	}
 
 	err = m.Expose(nil, outs)
@@ -259,7 +279,6 @@ func (reader *ctrlPitch) Read(out module.Frame) {
 
 type ctrlPitchBend struct {
 	*Controller
-	amount module.Value
 }
 
 func (reader *ctrlPitchBend) Read(out module.Frame) {
@@ -269,36 +288,34 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 		if e.Status == 224 && e.Data1 == 0 {
 			switch e.Data2 {
 			case 127:
-				reader.amount = 1
+				out[i] = 1
 			case 64:
-				reader.amount = 0
+				out[i] = 0
 			case 0:
-				reader.amount = -1
+				out[i] = -1
 			default:
-				reader.amount = module.Value((float64(e.Data2) - 64) / 64)
+				out[i] = module.Value((float64(e.Data2) - 64) / 64)
 			}
 		}
-		out[i] = reader.amount
 	}
 }
 
-type ctrlModWheel struct {
+type ctrlCC struct {
 	*Controller
-	amount module.Value
+	number int
 }
 
-func (reader *ctrlModWheel) Read(out module.Frame) {
+func (reader *ctrlCC) Read(out module.Frame) {
 	reader.read(out)
 	for i := range out {
 		e := reader.events[i]
-		if e.Status == 176 && e.Data1 == 1 {
+		if e.Status == 176 && int(e.Data1) == reader.number {
 			switch e.Data2 {
 			case 0:
-				reader.amount = 0
+				out[i] = 0
 			default:
-				reader.amount = module.Value(float64(e.Data2) / 127)
+				out[i] = module.Value(float64(e.Data2) / 127)
 			}
 		}
-		out[i] = reader.amount
 	}
 }
