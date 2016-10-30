@@ -7,10 +7,6 @@ import (
 	"github.com/gordonklaus/portaudio"
 )
 
-const (
-	channels = 1
-)
-
 type Engine struct {
 	module.IO
 	in *module.In
@@ -52,7 +48,7 @@ func (e *Engine) Errors() chan error {
 
 func (e *Engine) params() portaudio.StreamParameters {
 	params := portaudio.LowLatencyParameters(nil, e.device)
-	params.Output.Channels = channels
+	params.Output.Channels = 1
 	params.SampleRate = module.SampleRate
 	params.FramesPerBuffer = module.FrameSize
 	return params
