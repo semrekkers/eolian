@@ -1,6 +1,6 @@
 # Contributing
 
-I maintain a list of TODOs and ideas in the GitHub Project: https://github.com/brettbuddin/eolian/projects/1. Tackle whatever you like :D
+I maintain a list of TODOs and ideas in the [GitHub Project](https://github.com/brettbuddin/eolian/projects/1). Tackle whatever you like :D
 
 ## Instructions
 
