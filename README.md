@@ -68,18 +68,3 @@ Here's some example videos of things I've been able to get it to do at various s
 
 This project is very much in its infancy and there is still lots of work to be done. Wanna help out? Awesome! Mosey on over to
 [CONTRIBUTING.md](https://github.com/brettbuddin/eolian/blob/master/CONTRIBUTING.md) and submit your first Pull Request.
-
-## TODO
-
-- Swap out the minimal REPL with something more sophisticated
-- Live-remapping of MIDI controller inputs to controls in a patch (what does the Lua interface look like?)
-- REST API to view and manipulate the patch graph. D3 module graphs?
-- Improved filters (Butterworth or Chebyshev)
-- Different classifications of inputs (when they get updated)
-- Band-pass filter
-- Wavetable oscillators
-- Value range standardization
-- Better module introspection in the REPL
-- Other weird and groovy modules
-- More tests... of course...
-- More friendly error handling
