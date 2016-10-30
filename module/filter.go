@@ -65,7 +65,7 @@ func (filter *FourPole) Tick(in Value) Value {
 		clip = -1
 	}
 
-	out = clip + ((-clip + out) * 0.9840)
+	out = clip + ((-clip + out) * 0.995)
 	filter.after[0] += (-filter.after[0] + out) * cutoff
 	filter.after[1] += (-filter.after[1] + filter.after[0]) * cutoff
 	filter.after[2] += (-filter.after[2] + filter.after[1]) * cutoff
