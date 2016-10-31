@@ -27,19 +27,19 @@ func init() {
 		}
 
 		// Default to 16-31 CC numbers
-		if len(config.CCNumbers) == 0 {
+		if len(config.CCOutputs) == 0 {
 			for i := 16; i < 32; i++ {
-				config.CCNumbers = append(config.CCNumbers, i)
+				config.CCOutputs = append(config.CCOutputs, i)
 			}
 		}
 
-		return NewController(config.Device, config.CCNumbers)
+		return NewController(config.Device, config.CCOutputs)
 	})
 }
 
 type ControllerConfig struct {
 	Device    int
-	CCNumbers []int `mapstructure:"cc_numbers"`
+	CCOutputs []int `mapstructure:"ccOutputs"`
 }
 
 type Controller struct {
@@ -54,7 +54,7 @@ type Controller struct {
 	clockTick int
 }
 
-func NewController(deviceID int, ccNumbers []int) (*Controller, error) {
+func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 	initMIDI()
 	stream, err := portmidi.NewInputStream(portmidi.DeviceID(deviceID), int64(module.FrameSize))
 	if err != nil {
@@ -109,7 +109,7 @@ func NewController(deviceID int, ccNumbers []int) (*Controller, error) {
 		},
 	}
 
-	for _, n := range ccNumbers {
+	for _, n := range ccOutputs {
 		outs = append(outs, &module.Out{
 			Name: fmt.Sprintf("cc/%d", n),
 			Provider: module.ReaderProviderFunc(func() module.Reader {
