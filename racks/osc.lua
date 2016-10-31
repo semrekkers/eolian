@@ -34,6 +34,8 @@ function pkg.build(self)
     local modules = {
         control = synth.OSCServer{
             port = 8000,
+            -- clientHost = '192.168.1.6',
+            -- clientPort = 9000,
             addresses = {
                 -- Page 1
                 { path = '/1/fader1', interp = 'ms', max = 5000, min = 50 },
