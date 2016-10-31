@@ -72,9 +72,8 @@ type Multiplier struct {
 	in, multiplier *In
 
 	learn struct {
-		active bool
-		rate   int
-		last   Value
+		rate int
+		last Value
 	}
 
 	rate int
@@ -99,22 +98,17 @@ func (reader *Multiplier) Read(out Frame) {
 	for i := range out {
 		in := out[i]
 		if reader.learn.last < 0 && in > 0 {
-			reader.learn.active = true
-			reader.learn.rate = 0
-		} else if reader.learn.last > 0 && in < 0 {
-			reader.learn.active = false
 			reader.rate = reader.learn.rate
+			reader.learn.rate = 0
 		}
-		if reader.learn.active && in > 0 {
-			reader.learn.rate++
-		}
+		reader.learn.rate++
 		reader.learn.last = in
 
-		if Value(reader.rate)/multiplier[i] <= Value(reader.tick) {
+		if Value(reader.tick) < Value(reader.rate)/multiplier[i] {
 			out[i] = -1
-			reader.tick = 0
 		} else {
 			out[i] = 1
+			reader.tick = 0
 		}
 
 		reader.tick++
