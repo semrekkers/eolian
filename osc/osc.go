@@ -11,15 +11,19 @@ import (
 
 func init() {
 	module.Register("OSCServer", func(c module.Config) (module.Patcher, error) {
-		var config struct {
-			Port      int
-			Addresses []address
-		}
+		var config Config
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return NewServer(config.Port, config.Addresses)
+		return NewServer(config)
 	})
+}
+
+type Config struct {
+	Port       int
+	Addresses  []address
+	ClientHost string
+	ClientPort int
 }
 
 type address struct {
@@ -32,12 +36,13 @@ type address struct {
 type Server struct {
 	module.IO
 	*osc.Server
+	client *osc.Client
 
 	listener net.PacketConn
 	values   map[string]chan module.Value
 }
 
-func NewServer(port int, addresses []address) (*Server, error) {
+func NewServer(c Config) (*Server, error) {
 	io := &Server{
 		Server: &osc.Server{
 			Dispatcher: osc.NewOscDispatcher(),
@@ -45,8 +50,12 @@ func NewServer(port int, addresses []address) (*Server, error) {
 		values: map[string]chan module.Value{},
 	}
 
+	if c.ClientHost != "" && c.ClientPort > 0 {
+		io.client = osc.NewClient(c.ClientHost, c.ClientPort)
+	}
+
 	outs := []*module.Out{}
-	for _, addr := range addresses {
+	for _, addr := range c.Addresses {
 		io.values[addr.Path] = make(chan module.Value, 100)
 		func(addr address) {
 			outs = append(outs, &module.Out{
@@ -56,9 +65,15 @@ func NewServer(port int, addresses []address) (*Server, error) {
 				}),
 			})
 		}(addr)
+
+		if io.client != nil {
+			msg := osc.NewMessage(addr.Path)
+			msg.Append(int32(0))
+			io.client.Send(msg)
+		}
 	}
 
-	listener, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
+	listener, err := net.ListenPacket("udp", fmt.Sprintf(":%d", c.Port))
 	if err != nil {
 		return io, err
 	}

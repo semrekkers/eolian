@@ -89,7 +89,7 @@ function pkg.build(self)
     for i = 0, pressButtons-1, 1 do
         local voice = buildVoice(i, modules.control, modules.voice.envelope, p:value())
         modules.voice.mix:scope(i):set { input = voice.output }
-        p = p.transpose(m2)
+        p = p:transpose(m2)
     end
 
     return {
