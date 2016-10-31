@@ -33,6 +33,8 @@ return function(count)
                 spread:set { input = inputs.spread }
             end
         end,
-        output = mix:output()
+        output = function()
+            return mix:output()
+        end
     }
 end

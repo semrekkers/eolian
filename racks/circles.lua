@@ -100,7 +100,7 @@ function pkg.patch(self, modules)
         }
 
         t.lpf:set {
-            input  = t.supersaw.output,
+            input  = t.supersaw:output(),
             cutoff = hz(4000)
         }
 
