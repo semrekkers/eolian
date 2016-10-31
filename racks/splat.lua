@@ -59,6 +59,7 @@ function pkg.build(self)
         multiplier  = synth.ClockMultiply(),
         splat1      = splat(),
         splat2      = splat(),
+        splat3      = splat(),
         delay       = synth.FBComb(),
 
         mixer      = synth.Mix(),
@@ -81,16 +82,22 @@ function pkg.patch(self, modules)
 
     modules.splat1:set {
         gate  = modules.clock.multiple:output(0),
-        pitch = pitch('C2')
+        pitch = pitch('C3')
     }
 
     modules.splat2:set {
         gate  = modules.clock.multiple:output(1),
-        pitch = pitch('C3')
+        pitch = pitch('C2')
+    }
+
+    modules.splat3:set {
+        gate  = modules.clock.multiple:output(2),
+        pitch = pitch('C1')
     }
 
     modules.mixer:scope(0):set { input = modules.splat1:output() }
     modules.mixer:scope(1):set { input = modules.splat2:output() }
+    modules.mixer:scope(2):set { input = modules.splat3:output() }
 
     modules.delay:set {
         input    = modules.mixer:output(),
