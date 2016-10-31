@@ -62,6 +62,7 @@ function pkg.build(self)
         splat3      = splat(),
         delay       = synth.FBComb(),
 
+        noise      = synth.Noise(),
         mixer      = synth.Mix(),
         compressor = synth.Compress(),
         clipper    = synth.Clip(),
@@ -105,8 +106,9 @@ function pkg.patch(self, modules)
         gain     = 0.5,
     }
 
+    modules.noise:set { input = modules.delay:output(), max = 0.002 }
     modules.compressor:set {
-        input = modules.delay:output(),
+        input = modules.noise:output(),
     }
     modules.clipper:set {
         input = modules.compressor:output(),
