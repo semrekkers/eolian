@@ -14,7 +14,7 @@ local function splat()
 
     envelope:set {
         disableSustain = 1,
-        attack         = ms(10),
+        attack         = ms(800),
         decay          = ms(100),
         sustain        = 0.1,
         release        = ms(4500),
