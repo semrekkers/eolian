@@ -31,7 +31,7 @@ func NewOsc() (*Osc, error) {
 	m := &Osc{
 		pitch:          &In{Name: "pitch", Source: NewBuffer(zero)},
 		pitchMod:       &In{Name: "pitchMod", Source: NewBuffer(zero)},
-		pitchModAmount: &In{Name: "pitchModAmount", Source: NewBuffer(zero)},
+		pitchModAmount: &In{Name: "pitchModAmount", Source: NewBuffer(Value(1))},
 		amp:            &In{Name: "amp", Source: NewBuffer(Value(1))},
 		detune:         &In{Name: "detune", Source: NewBuffer(zero)},
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
