@@ -5,6 +5,9 @@ func init() {
 	Register("BinaryDivide", func(Config) (Patcher, error) { return NewBinary(Divide) })
 	Register("BinarySum", func(Config) (Patcher, error) { return NewBinary(Sum) })
 	Register("BinaryDifference", func(Config) (Patcher, error) { return NewBinary(Diff) })
+	Register("BinaryOR", func(Config) (Patcher, error) { return NewBinary(OR) })
+	Register("BinaryXOR", func(Config) (Patcher, error) { return NewBinary(XOR) })
+	Register("BinaryAND", func(Config) (Patcher, error) { return NewBinary(AND) })
 }
 
 type Binary struct {
@@ -40,3 +43,21 @@ func Multiply(a, b Value) Value { return a * b }
 func Divide(a, b Value) Value   { return a / b }
 func Sum(a, b Value) Value      { return a + b }
 func Diff(a, b Value) Value     { return a - b }
+func AND(a, b Value) Value {
+	if a > 0 && b > 0 {
+		return 1
+	}
+	return 0
+}
+func OR(a, b Value) Value {
+	if a > 0 || b > 0 {
+		return 1
+	}
+	return 0
+}
+func XOR(a, b Value) Value {
+	if (a > 0 && b <= 0) || (a <= 0 && b > 0) {
+		return 1
+	}
+	return 0
+}
