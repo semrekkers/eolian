@@ -47,17 +47,17 @@ func AND(a, b Value) Value {
 	if a > 0 && b > 0 {
 		return 1
 	}
-	return 0
+	return -1
 }
 func OR(a, b Value) Value {
 	if a > 0 || b > 0 {
 		return 1
 	}
-	return 0
+	return -1
 }
 func XOR(a, b Value) Value {
 	if (a > 0 && b <= 0) || (a <= 0 && b > 0) {
 		return 1
 	}
-	return 0
+	return -1
 }
