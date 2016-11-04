@@ -24,6 +24,6 @@ func absValue(v Value) Value {
 	return Value(math.Abs(float64(v)))
 }
 
-func exp(v Value) Value {
-	return Value(math.Exp(float64(v)))
+func expRatio(ratio, speed Value) Value {
+	return Value(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))
 }
