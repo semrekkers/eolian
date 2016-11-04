@@ -24,7 +24,7 @@ func NewADSR() (*ADSR, error) {
 		disableSustain: &In{Name: "disableSustain", Source: NewBuffer(zero)},
 
 		stateFunc: adsrIdle,
-		state:     &adsrState{},
+		state:     &adsrState{lastGate: -1},
 	}
 	err := m.Expose(
 		[]*In{m.gate, m.attack, m.decay, m.release, m.sustain, m.disableSustain, m.ratio},

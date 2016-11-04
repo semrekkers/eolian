@@ -46,6 +46,7 @@ func NewStageSequencer() (*StageSequencer, error) {
 		mode:      &In{Name: "mode", Source: NewBuffer(zero)},
 		slew:      newSlew(),
 		stages:    make([]stage, 8),
+		lastClock: -1,
 		lastStage: -1,
 	}
 
