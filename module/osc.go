@@ -20,6 +20,8 @@ type Osc struct {
 
 	state *oscStateFrames
 	reads int
+
+	phases map[WaveType]float64
 }
 
 type oscStateFrames struct {
@@ -37,6 +39,12 @@ func NewOsc() (*Osc, error) {
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
 		sync:           &In{Name: "sync", Source: NewBuffer(zero)},
 		state:          &oscStateFrames{},
+		phases: map[WaveType]float64{
+			Sine:     0,
+			Saw:      0,
+			Pulse:    0,
+			Triangle: 0,
+		},
 	}
 
 	err := m.Expose(
@@ -86,16 +94,16 @@ func (o *Osc) read(out Frame) {
 type oscOut struct {
 	*Osc
 	WaveType
-	last  Value
-	phase float64
+	last Value
 }
 
 func (reader *oscOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
-		bPhase := reader.phase / (2 * math.Pi)
+		phase := reader.phases[reader.WaveType]
+		bPhase := phase / (2 * math.Pi)
 		delta := float64(reader.state.pitch[i] + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
-		next := blepSample(reader.WaveType, reader.phase)*reader.state.amp[i] + reader.state.offset[i]
+		next := blepSample(reader.WaveType, phase)*reader.state.amp[i] + reader.state.offset[i]
 
 		switch reader.WaveType {
 		case Sine:
@@ -111,13 +119,14 @@ func (reader *oscOut) Read(out Frame) {
 		default:
 		}
 
-		reader.phase += float64(delta) * 2 * math.Pi
-		if reader.phase >= 2*math.Pi {
-			reader.phase -= 2 * math.Pi
+		phase += float64(delta) * 2 * math.Pi
+		if phase >= 2*math.Pi {
+			phase -= 2 * math.Pi
 		}
 		if reader.state.sync[i] > 0 {
-			reader.phase = 0
+			phase = 0
 		}
+		reader.phases[reader.WaveType] = phase
 		out[i] = next
 		reader.last = next
 	}
