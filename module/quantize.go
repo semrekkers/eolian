@@ -24,7 +24,7 @@ func init() {
 
 type Quantize struct {
 	IO
-	in, max *In
+	in      *In
 	pitches []*In
 
 	frames []Frame
@@ -33,12 +33,11 @@ type Quantize struct {
 func NewQuantize(size int) (*Quantize, error) {
 	m := &Quantize{
 		in:      &In{Name: "input", Source: zero},
-		max:     &In{Name: "max", Source: NewBuffer(zero)},
 		pitches: make([]*In, size),
 		frames:  make([]Frame, size),
 	}
 
-	inputs := []*In{m.in, m.max}
+	inputs := []*In{m.in}
 	for i := 0; i < size; i++ {
 		in := &In{
 			Name:   fmt.Sprintf("%d.pitch", i),
