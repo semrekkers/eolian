@@ -27,6 +27,7 @@ func TestForExplosions(t *testing.T) {
 		{"Fold", defaultOutput},
 		{"Glide", defaultOutput},
 		{"HPFilter", defaultOutput},
+		{"Interpolate", defaultOutput},
 		{"Invert", defaultOutput},
 		{"LPFilter", defaultOutput},
 		{"Mix", defaultOutput},

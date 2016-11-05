@@ -56,10 +56,13 @@ type Controller struct {
 
 func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 	initMIDI()
-	stream, err := portmidi.NewInputStream(portmidi.DeviceID(deviceID), int64(module.FrameSize))
+
+	id := portmidi.DeviceID(deviceID)
+	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("MIDI: %s (device %d)\n", portmidi.Info(id).Name, id)
 
 	m := &Controller{
 		Stream:    stream,
@@ -110,12 +113,14 @@ func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 	}
 
 	for _, n := range ccOutputs {
-		outs = append(outs, &module.Out{
-			Name: fmt.Sprintf("cc/%d", n),
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlCC{Controller: m, number: n}
-			}),
-		})
+		func(n int) {
+			outs = append(outs, &module.Out{
+				Name: fmt.Sprintf("cc/%d", n),
+				Provider: module.ReaderProviderFunc(func() module.Reader {
+					return &ctrlCC{Controller: m, number: n}
+				}),
+			})
+		}(n)
 	}
 
 	err = m.Expose(nil, outs)
@@ -303,6 +308,7 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 type ctrlCC struct {
 	*Controller
 	number int
+	value  module.Value
 }
 
 func (reader *ctrlCC) Read(out module.Frame) {
@@ -310,12 +316,8 @@ func (reader *ctrlCC) Read(out module.Frame) {
 	for i := range out {
 		e := reader.events[i]
 		if e.Status == 176 && int(e.Data1) == reader.number {
-			switch e.Data2 {
-			case 0:
-				out[i] = 0
-			default:
-				out[i] = module.Value(float64(e.Data2) / 127)
-			}
+			reader.value = module.Value(float64(e.Data2) / 127)
 		}
+		out[i] = reader.value
 	}
 }
