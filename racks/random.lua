@@ -6,17 +6,16 @@ function pkg.build(self)
             osc      = synth.Osc(),
             multiple = synth.Multiple(),
         },
-
         random = {
             trigger = synth.ClockDivide(),
-            series = synth.RandomSeries(),
-            quant  = synth.Quantize(),
+            series  = synth.RandomSeries(),
+            quant   = synth.Quantize(),
         },
 
-        adsr   = synth.ADSR(),
-        osc    = synth.Osc(),
-        mix    = synth.Mix(),
-        amp    = synth.BinaryMultiply(),
+        adsr = synth.ADSR(),
+        osc  = synth.Osc(),
+        mix  = synth.Mix(),
+        amp  = synth.BinaryMultiply(),
     }
     return {
         modules = modules,
@@ -43,6 +42,8 @@ function pkg.patch(self, modules)
             size    = 8,
         }
         r.quant:set { input = r.series:output('values') }
+
+        -- Cmin Penatonic
         r.quant:scope(0):set { pitch = pitch('C3') }
         r.quant:scope(1):set { pitch = pitch('Eb3') }
         r.quant:scope(2):set { pitch = pitch('F3') }
@@ -56,18 +57,18 @@ function pkg.patch(self, modules)
     end)
 
     modules.adsr:set {
-        gate    = modules.random.series:output('gate'),
-        attack  = ms(50),
+        gate    = modules.clock.multiple:output(2),
+        attack  = ms(30),
         decay   = ms(50),
-        sustain = 0.1,
-        release = ms(300),
+        sustain = 0.2,
+        release = ms(1000),
     }
     modules.osc:set {
         pitch = modules.random.quant:output(),
     }
 
     modules.mix:scope(0):set { input = modules.osc:output('sine') }
-    modules.mix:scope(1):set { input = modules.osc:output('pulse'), level = 0.5 }
+    modules.mix:scope(1):set { input = modules.osc:output('saw'), level = 0.05 }
     modules.amp:set {
         a = modules.mix:output(),
         b = modules.adsr:output(),
