@@ -41,8 +41,6 @@ function pkg.patch(self, modules)
             clock   = modules.clock.multiple:output(1),
             trigger = r.trigger:output(),
             size    = 8,
-            max     = 1,
-            min     = 0,
         }
         r.quant:set { input = r.series:output('values') }
         r.quant:scope(0):set { pitch = pitch('C3') }
