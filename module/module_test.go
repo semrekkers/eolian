@@ -33,7 +33,7 @@ func TestForExplosions(t *testing.T) {
 		{"Multiple", []string{"0", "1", "2", "3"}},
 		{"Noise", defaultOutput},
 		{"Osc", []string{"sine", "saw", "triangle", "pulse"}},
-		{"RandomSeries", defaultOutput},
+		{"RandomSeries", []string{"values", "gate"}},
 		{"Reverb", defaultOutput},
 		{"SampleHold", defaultOutput},
 		{"Sequence", []string{"gate", "pitch", "sync"}},

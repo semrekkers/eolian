@@ -10,6 +10,7 @@ function pkg.build(self)
         random = {
             trigger = synth.ClockDivide(),
             series = synth.RandomSeries(),
+            quant  = synth.Quantize { size = 6 },
         },
 
         adsr   = synth.ADSR(),
@@ -40,20 +41,27 @@ function pkg.patch(self, modules)
             clock   = modules.clock.multiple:output(1),
             trigger = r.trigger:output(),
             size    = 8,
-            max     = pitch('C3'),
-            min     = pitch('C1'),
+            max     = 1,
+            min     = 0,
         }
+        r.quant:set { input = r.series:output('values') }
+        r.quant:scope(0):set { pitch = pitch('C2') }
+        r.quant:scope(1):set { pitch = pitch('Eb2') }
+        r.quant:scope(2):set { pitch = pitch('F2') }
+        r.quant:scope(3):set { pitch = pitch('G2') }
+        r.quant:scope(4):set { pitch = pitch('Bb2') }
+        r.quant:scope(5):set { pitch = pitch('C3') }
     end)
 
     modules.adsr:set {
-        gate    = modules.clock.multiple:output(2),
+        gate    = modules.random.series:output('gate'),
         attack  = ms(50),
         decay   = ms(50),
-        sustain = 0.4,
-        release = ms(1000),
+        sustain = 0.1,
+        release = ms(300),
     }
     modules.osc:set {
-        pitch = modules.random.series:output(),
+        pitch = modules.random.quant:output(),
     }
 
     modules.mix:scope(0):set { input = modules.osc:output('pulse') }

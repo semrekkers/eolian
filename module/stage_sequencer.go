@@ -3,10 +3,23 @@ package module
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
-	Register("Sequence", func(c Config) (Patcher, error) { return NewStageSequencer() })
+	Register("Sequence", func(c Config) (Patcher, error) {
+		var config struct {
+			Stages int
+		}
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+		if config.Stages == 0 {
+			config.Stages = 8
+		}
+		return NewStageSequencer(config.Stages)
+	})
 }
 
 const (
@@ -37,7 +50,7 @@ type stage struct {
 	pitch, pulses, gateMode, glide *In
 }
 
-func NewStageSequencer() (*StageSequencer, error) {
+func NewStageSequencer(stages int) (*StageSequencer, error) {
 	m := &StageSequencer{
 		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
 		transpose: &In{Name: "transpose", Source: NewBuffer(Value(1))},
@@ -45,14 +58,14 @@ func NewStageSequencer() (*StageSequencer, error) {
 		glide:     &In{Name: "glide", Source: NewBuffer(zero)},
 		mode:      &In{Name: "mode", Source: NewBuffer(zero)},
 		slew:      newSlew(),
-		stages:    make([]stage, 8),
+		stages:    make([]stage, stages),
 		lastClock: -1,
 		lastStage: -1,
 	}
 
 	inputs := []*In{m.clock, m.transpose, m.reset, m.glide, m.mode}
 
-	for i := 0; i < 8; i++ {
+	for i := 0; i < stages; i++ {
 		m.stages[i] = stage{
 			pitch: &In{
 				Name:   fmt.Sprintf("%d.pitch", i),
