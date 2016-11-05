@@ -12,15 +12,24 @@ function pkg.build(self)
             quant   = synth.Quantize(),
         },
 
-        adsr = synth.ADSR(),
-        osc  = synth.Osc(),
-        mix  = synth.Mix(),
-        amp  = synth.BinaryMultiply(),
+
+        voice = {
+            adsr = synth.ADSR(),
+            osc  = synth.Osc(),
+            mix  = synth.Mix(),
+            amp  = synth.BinaryMultiply(),
+        },
+
+        delay = {
+            cutoff = synth.Osc(),
+            gain   = synth.Osc(),
+            delay  = synth.FilteredDelay(),
+        },
     }
     return {
         modules = modules,
         output = function()
-            return modules.amp:output()
+            return modules.delay.delay:output()
         end
     }
 end
@@ -56,23 +65,43 @@ function pkg.patch(self, modules)
         r.quant:scope(9):set { pitch = pitch('Bb4') }
     end)
 
-    modules.adsr:set {
-        gate    = modules.clock.multiple:output(2),
-        attack  = ms(30),
-        decay   = ms(50),
-        sustain = 0.2,
-        release = ms(1000),
-    }
-    modules.osc:set {
-        pitch = modules.random.quant:output(),
-    }
+    with(modules.voice, function(v)
+        v.adsr:set {
+            gate    = modules.clock.multiple:output(2),
+            attack  = ms(30),
+            decay   = ms(50),
+            sustain = 0.2,
+            release = ms(1000),
+        }
 
-    modules.mix:scope(0):set { input = modules.osc:output('sine') }
-    modules.mix:scope(1):set { input = modules.osc:output('saw'), level = 0.05 }
-    modules.amp:set {
-        a = modules.mix:output(),
-        b = modules.adsr:output(),
-    }
+        v.osc:set {
+            pitch = modules.random.quant:output(),
+        }
+        v.mix:scope(0):set { input = v.osc:output('pulse') }
+        v.mix:scope(1):set { input = v.osc:output('saw'), level = 0.5 }
+
+        v.amp:set {
+            a = v.mix:output(),
+            b = v.adsr:output(),
+        }
+    end)
+
+    with(modules.delay, function(d)
+        d.cutoff:set {
+            pitch = hz(0.1),
+            amp   = hz(5000),
+        }
+        d.gain:set {
+            pitch  = hz(0.2),
+            amp    = 0.2,
+            offset = 0.7
+        }
+        d.delay:set {
+            input  = modules.voice.amp:output(),
+            gain   = d.gain:output('sine'),
+            cutoff = d.cutoff:output('sine'),
+        }
+    end)
 end
 
 return pkg
