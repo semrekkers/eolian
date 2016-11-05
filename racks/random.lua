@@ -9,8 +9,7 @@ function pkg.build(self)
 
         random = {
             trigger = synth.ClockDivide(),
-            noise  = synth.Noise(),
-            series = synth.SeriesHold(),
+            series = synth.RandomSeries(),
         },
 
         adsr   = synth.ADSR(),
@@ -37,15 +36,12 @@ function pkg.patch(self, modules)
             input   = modules.clock.multiple:output(0),
             divisor = 32,
         }
-        r.noise:set {
-            max = pitch('C3'),
-            min = pitch('C1'),
-        }
         r.series:set {
-            input   = r.noise:output(),
             clock   = modules.clock.multiple:output(1),
             trigger = r.trigger:output(),
             size    = 8,
+            max     = pitch('C3'),
+            min     = pitch('C1'),
         }
     end)
 
