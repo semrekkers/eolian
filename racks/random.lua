@@ -10,7 +10,7 @@ function pkg.build(self)
         random = {
             trigger = synth.ClockDivide(),
             series = synth.RandomSeries(),
-            quant  = synth.Quantize { size = 6 },
+            quant  = synth.Quantize(),
         },
 
         adsr   = synth.ADSR(),
@@ -45,12 +45,16 @@ function pkg.patch(self, modules)
             min     = 0,
         }
         r.quant:set { input = r.series:output('values') }
-        r.quant:scope(0):set { pitch = pitch('C2') }
-        r.quant:scope(1):set { pitch = pitch('Eb2') }
-        r.quant:scope(2):set { pitch = pitch('F2') }
-        r.quant:scope(3):set { pitch = pitch('G2') }
-        r.quant:scope(4):set { pitch = pitch('Bb2') }
-        r.quant:scope(5):set { pitch = pitch('C3') }
+        r.quant:scope(0):set { pitch = pitch('C3') }
+        r.quant:scope(1):set { pitch = pitch('Eb3') }
+        r.quant:scope(2):set { pitch = pitch('F3') }
+        r.quant:scope(3):set { pitch = pitch('G3') }
+        r.quant:scope(4):set { pitch = pitch('Bb3') }
+        r.quant:scope(5):set { pitch = pitch('C4') }
+        r.quant:scope(6):set { pitch = pitch('Eb4') }
+        r.quant:scope(7):set { pitch = pitch('F4') }
+        r.quant:scope(8):set { pitch = pitch('G4') }
+        r.quant:scope(9):set { pitch = pitch('Bb4') }
     end)
 
     modules.adsr:set {
@@ -64,8 +68,8 @@ function pkg.patch(self, modules)
         pitch = modules.random.quant:output(),
     }
 
-    modules.mix:scope(0):set { input = modules.osc:output('pulse') }
-    modules.mix:scope(1):set { input = modules.osc:output('saw'), level = 0.5 }
+    modules.mix:scope(0):set { input = modules.osc:output('sine') }
+    modules.mix:scope(1):set { input = modules.osc:output('pulse'), level = 0.5 }
     modules.amp:set {
         a = modules.mix:output(),
         b = modules.adsr:output(),
