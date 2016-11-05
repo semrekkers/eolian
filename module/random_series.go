@@ -13,8 +13,8 @@ type RandomSeries struct {
 	clock, size, trigger *In
 	min, max             *In
 
-	lastTrigger, lastClock Value
-	idx, reads             int
+	lastSize, lastTrigger, lastClock Value
+	idx, reads                       int
 }
 
 func NewRandomSeries() (*RandomSeries, error) {
@@ -70,6 +70,7 @@ func (s *RandomSeries) read(out Frame) {
 					s.idx = 0
 				}
 			}
+			s.lastSize = size
 			s.lastTrigger = trigger[i]
 			s.lastClock = clock[i]
 		}
@@ -92,8 +93,8 @@ func (reader *randomSeriesOut) Read(out Frame) {
 	max := reader.max.LastFrame()
 
 	for i := range out {
-		size := clampValue(size[i], 1, randomSeriesMax)
-		if reader.lastTrigger < 0 && trigger[i] > 0 {
+		if (reader.lastTrigger < 0 && trigger[i] > 0) || (reader.lastSize != size[i]) {
+			size := clampValue(size[i], 1, randomSeriesMax)
 			for i := 0; i < int(size); i++ {
 				reader.memory[i] = randValue()*(max[i]-min[i]) + min[i]
 			}
