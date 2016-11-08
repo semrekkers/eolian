@@ -40,10 +40,7 @@ func NewMultipleSized(size int) (*Multiple, error) {
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
 		name := fmt.Sprintf("%d", i)
-		outputs = append(outputs, &Out{
-			Name:     name,
-			Provider: ReaderProviderFunc(func() Reader { return &multOut{m} }),
-		})
+		outputs = append(outputs, &Out{Name: name, Provider: Provide(&multOut{m})})
 	}
 
 	err := m.Expose([]*In{m.in}, outputs)

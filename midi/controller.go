@@ -72,53 +72,24 @@ func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 	outs := []*module.Out{
 		{
 			Name: "gate",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlGate{
-					Controller: m,
-					stateFunc:  gateUp,
-					state:      &gateState{control: -1},
-				}
+			Provider: module.Provide(&ctrlGate{
+				Controller: m,
+				stateFunc:  gateUp,
+				state:      &gateState{control: -1},
 			}),
 		},
-		{
-			Name: "pitch",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlPitch{Controller: m}
-			}),
-		},
-		{
-			Name: "sync",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlSync{Controller: m}
-			}),
-		},
-		{
-			Name: "reset",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlReset{Controller: m}
-			}),
-		},
-		{
-			Name: "pitchBend",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlPitchBend{Controller: m}
-			}),
-		},
-		{
-			Name: "modWheel",
-			Provider: module.ReaderProviderFunc(func() module.Reader {
-				return &ctrlCC{Controller: m, number: 1}
-			}),
-		},
+		{Name: "pitch", Provider: module.Provide(&ctrlPitch{Controller: m})},
+		{Name: "sync", Provider: module.Provide(&ctrlSync{Controller: m})},
+		{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
+		{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})},
+		{Name: "modWheel", Provider: module.Provide(&ctrlCC{Controller: m, number: 1})},
 	}
 
 	for _, n := range ccOutputs {
 		func(n int) {
 			outs = append(outs, &module.Out{
-				Name: fmt.Sprintf("cc/%d", n),
-				Provider: module.ReaderProviderFunc(func() module.Reader {
-					return &ctrlCC{Controller: m, number: n}
-				}),
+				Name:     fmt.Sprintf("cc/%d", n),
+				Provider: module.Provide(&ctrlCC{Controller: m, number: n}),
 			})
 		}(n)
 	}

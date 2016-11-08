@@ -93,18 +93,9 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 
 	err := m.Expose(inputs,
 		[]*Out{
-			{
-				Name:     "pitch",
-				Provider: ReaderProviderFunc(func() Reader { return &stageSeqPitch{StageSequencer: m} }),
-			},
-			{
-				Name:     "gate",
-				Provider: ReaderProviderFunc(func() Reader { return &stageSeqGate{m} }),
-			},
-			{
-				Name:     "sync",
-				Provider: ReaderProviderFunc(func() Reader { return &stageSeqSync{m} }),
-			},
+			{Name: "pitch", Provider: Provide(&stageSeqPitch{StageSequencer: m})},
+			{Name: "gate", Provider: Provide(&stageSeqGate{m})},
+			{Name: "sync", Provider: Provide(&stageSeqSync{m})},
 		},
 	)
 	return m, err

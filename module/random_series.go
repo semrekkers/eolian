@@ -34,16 +34,12 @@ func NewRandomSeries() (*RandomSeries, error) {
 		[]*In{m.size, m.trigger, m.clock, m.min, m.max},
 		[]*Out{
 			{
-				Name: "values",
-				Provider: ReaderProviderFunc(func() Reader {
-					return &randomSeriesOut{RandomSeries: m}
-				}),
+				Name:     "values",
+				Provider: Provide(&randomSeriesOut{RandomSeries: m}),
 			},
 			{
-				Name: "gate",
-				Provider: ReaderProviderFunc(func() Reader {
-					return &randomSeriesGate{RandomSeries: m}
-				}),
+				Name:     "gate",
+				Provider: Provide(&randomSeriesGate{RandomSeries: m}),
 			},
 		},
 	)

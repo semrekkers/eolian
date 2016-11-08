@@ -59,10 +59,8 @@ func NewServer(c Config) (*Server, error) {
 		io.values[addr.Path] = make(chan module.Value, 100)
 		func(addr address) {
 			outs = append(outs, &module.Out{
-				Name: addr.Path,
-				Provider: module.ReaderProviderFunc(func() module.Reader {
-					return io.newOut(addr)
-				}),
+				Name:     addr.Path,
+				Provider: module.Provide(io.newOut(addr)),
 			})
 		}(addr)
 

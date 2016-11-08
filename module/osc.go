@@ -58,18 +58,10 @@ func NewOsc() (*Osc, error) {
 			m.sync,
 		},
 		[]*Out{
-			{Name: "pulse", Provider: ReaderProviderFunc(func() Reader {
-				return &oscOut{Osc: m, WaveType: Pulse}
-			})},
-			{Name: "saw", Provider: ReaderProviderFunc(func() Reader {
-				return &oscOut{Osc: m, WaveType: Saw}
-			})},
-			{Name: "sine", Provider: ReaderProviderFunc(func() Reader {
-				return &oscOut{Osc: m, WaveType: Sine}
-			})},
-			{Name: "triangle", Provider: ReaderProviderFunc(func() Reader {
-				return &oscOut{Osc: m, WaveType: Triangle}
-			})},
+			{Name: "pulse", Provider: Provide(&oscOut{Osc: m, WaveType: Pulse})},
+			{Name: "saw", Provider: Provide(&oscOut{Osc: m, WaveType: Saw})},
+			{Name: "sine", Provider: Provide(&oscOut{Osc: m, WaveType: Sine})},
+			{Name: "triangle", Provider: Provide(&oscOut{Osc: m, WaveType: Triangle})},
 		},
 	)
 
@@ -130,10 +122,6 @@ func (reader *oscOut) Read(out Frame) {
 		out[i] = next
 		reader.last = next
 	}
-}
-
-func (o *oscOut) Reader() Reader {
-	return o
 }
 
 type WaveType int

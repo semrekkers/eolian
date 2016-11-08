@@ -43,14 +43,8 @@ func NewClock(deviceID int) (*Clock, error) {
 	}
 
 	outs := []*module.Out{
-		{
-			Name:     "pulse",
-			Provider: module.ReaderProviderFunc(func() module.Reader { return &clockPulse{m} }),
-		},
-		{
-			Name:     "reset",
-			Provider: module.ReaderProviderFunc(func() module.Reader { return &clockReset{m} }),
-		},
+		{Name: "pulse", Provider: module.Provide(&clockPulse{m})},
+		{Name: "reset", Provider: module.Provide(&clockReset{m})},
 	}
 
 	err = m.Expose(nil, outs)
