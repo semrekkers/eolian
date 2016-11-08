@@ -14,6 +14,7 @@ type RandomSeries struct {
 	min, max             *In
 
 	lastSize, lastTrigger, lastClock Value
+	memory, gateMemory               []Value
 	idx, reads                       int
 }
 
@@ -24,6 +25,8 @@ func NewRandomSeries() (*RandomSeries, error) {
 		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
 		min:         &In{Name: "min", Source: NewBuffer(zero)},
 		max:         &In{Name: "max", Source: NewBuffer(Value(1))},
+		memory:      make([]Value, randomSeriesMax),
+		gateMemory:  make([]Value, randomSeriesMax),
 		lastTrigger: -1,
 		lastClock:   -1,
 	}
@@ -33,19 +36,13 @@ func NewRandomSeries() (*RandomSeries, error) {
 			{
 				Name: "values",
 				Provider: ReaderProviderFunc(func() Reader {
-					return &randomSeriesOut{
-						RandomSeries: m,
-						memory:       make([]Value, randomSeriesMax),
-					}
+					return &randomSeriesOut{RandomSeries: m}
 				}),
 			},
 			{
 				Name: "gate",
 				Provider: ReaderProviderFunc(func() Reader {
-					return &randomSeriesGate{
-						RandomSeries: m,
-						memory:       make([]Value, randomSeriesMax),
-					}
+					return &randomSeriesGate{RandomSeries: m}
 				}),
 			},
 		},
@@ -82,7 +79,6 @@ func (s *RandomSeries) read(out Frame) {
 
 type randomSeriesOut struct {
 	*RandomSeries
-	memory []Value
 }
 
 func (reader *randomSeriesOut) Read(out Frame) {
@@ -105,7 +101,6 @@ func (reader *randomSeriesOut) Read(out Frame) {
 
 type randomSeriesGate struct {
 	*RandomSeries
-	memory []Value
 }
 
 func (reader *randomSeriesGate) Read(out Frame) {
@@ -119,13 +114,13 @@ func (reader *randomSeriesGate) Read(out Frame) {
 		if reader.lastTrigger < 0 && trigger[i] > 0 {
 			for i := 0; i < int(size); i++ {
 				if rand.Float32() > 0.25 {
-					reader.memory[i] = 1
+					reader.gateMemory[i] = 1
 				} else {
-					reader.memory[i] = -1
+					reader.gateMemory[i] = -1
 				}
 			}
 		}
-		if reader.memory[reader.idx] > 0 {
+		if reader.gateMemory[reader.idx] > 0 {
 			out[i] = clock[i]
 		} else {
 			out[i] = -1
