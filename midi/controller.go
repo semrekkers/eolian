@@ -180,8 +180,10 @@ func gateDown(s *gateState) gateStateFunc {
 			}
 		}
 	case 128:
-		s.control = -1
-		return gateUp
+		if int(s.event.Data1) == s.control {
+			s.control = -1
+			return gateUp
+		}
 	}
 	return gateDown
 }
