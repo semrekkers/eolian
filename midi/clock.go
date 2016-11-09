@@ -12,12 +12,15 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return NewClock(config.Device)
+		if config.FrameRate == 0 {
+			config.FrameRate = 24
+		}
+		return NewClock(config)
 	})
 }
 
 type ClockConfig struct {
-	Device int
+	Device, FrameRate int
 }
 
 type Clock struct {
@@ -30,15 +33,15 @@ type Clock struct {
 	events    []portmidi.Event
 }
 
-func NewClock(deviceID int) (*Clock, error) {
+func NewClock(config ClockConfig) (*Clock, error) {
 	initMIDI()
-	stream, err := portmidi.NewInputStream(portmidi.DeviceID(deviceID), int64(module.FrameSize))
+	stream, err := portmidi.NewInputStream(portmidi.DeviceID(config.Device), int64(module.FrameSize))
 	if err != nil {
 		return nil, err
 	}
 	m := &Clock{
 		Stream:    stream,
-		frameRate: 24,
+		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
 	}
 

@@ -33,13 +33,18 @@ func init() {
 			}
 		}
 
-		return NewController(config.Device, config.CCOutputs)
+		if config.FrameRate == 0 {
+			config.FrameRate = 25
+		}
+
+		return NewController(config)
 	})
 }
 
 type ControllerConfig struct {
 	Device    int
 	CCOutputs []int `mapstructure:"ccOutputs"`
+	FrameRate int
 }
 
 type Controller struct {
@@ -54,10 +59,10 @@ type Controller struct {
 	clockTick int
 }
 
-func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
+func NewController(config ControllerConfig) (*Controller, error) {
 	initMIDI()
 
-	id := portmidi.DeviceID(deviceID)
+	id := portmidi.DeviceID(config.Device)
 	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
 	if err != nil {
 		return nil, err
@@ -66,7 +71,7 @@ func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 
 	m := &Controller{
 		Stream:    stream,
-		frameRate: 25,
+		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
 	}
 	outs := []*module.Out{
@@ -85,7 +90,7 @@ func NewController(deviceID int, ccOutputs []int) (*Controller, error) {
 		{Name: "modWheel", Provider: module.Provide(&ctrlCC{Controller: m, number: 1})},
 	}
 
-	for _, n := range ccOutputs {
+	for _, n := range config.CCOutputs {
 		func(n int) {
 			outs = append(outs, &module.Out{
 				Name:     fmt.Sprintf("cc/%d", n),
