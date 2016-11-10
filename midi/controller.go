@@ -80,7 +80,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 			Provider: module.Provide(&ctrlGate{
 				Controller: m,
 				stateFunc:  gateUp,
-				state:      &gateState{control: -1},
+				state:      &gateState{which: -1},
 			}),
 		},
 		{Name: "pitch", Provider: module.Provide(&ctrlPitch{Controller: m})},
@@ -151,9 +151,9 @@ func (reader *ctrlGate) Read(out module.Frame) {
 }
 
 type gateState struct {
-	event   portmidi.Event
-	control int
-	value   module.Value
+	event portmidi.Event
+	which int
+	value module.Value
 }
 
 func gateRolling(s *gateState) gateStateFunc {
@@ -163,25 +163,27 @@ func gateRolling(s *gateState) gateStateFunc {
 
 func gateDown(s *gateState) gateStateFunc {
 	s.value = 1
+	which := int(s.event.Data1)
+
 	switch s.event.Status {
 	case 144:
 		if s.event.Data2 > 0 {
-			if int(s.event.Data1) != s.control {
-				s.control = int(s.event.Data1)
+			if which != s.which {
+				s.which = which
 				return gateRolling
 			} else {
-				s.control = -1
+				s.which = -1
 				return gateUp
 			}
 		} else {
-			if int(s.event.Data1) == s.control {
-				s.control = -1
+			if which == s.which {
+				s.which = -1
 				return gateUp
 			}
 		}
 	case 128:
-		if int(s.event.Data1) == s.control {
-			s.control = -1
+		if which == s.which {
+			s.which = -1
 			return gateUp
 		}
 	}
@@ -191,7 +193,7 @@ func gateDown(s *gateState) gateStateFunc {
 func gateUp(s *gateState) gateStateFunc {
 	s.value = -1
 	if s.event.Status == 144 && s.event.Data2 > 0 {
-		s.control = int(s.event.Data1)
+		s.which = int(s.event.Data1)
 		return gateDown
 	}
 	return gateUp
