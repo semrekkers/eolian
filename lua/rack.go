@@ -1,21 +1,35 @@
 package lua
 
-var rackLua = `
-Rack = {}
-
+var luaRack = `
 function with(o, fn)
 	return fn(o)
 end
 
-local loadrack = function(path)
+function inspect(o, prefix)
+	if type(o) == 'table' and prefix == nil then
+		if o['_type'] == 'module' then
+			print(o:inspect())
+			return
+		end
+	end
+	for k, v in pairs(o) do
+		if k ~= '_namespace' then
+			if prefix == nil then
+				prefix = ''
+			end
+			if type(v) == 'table' then
+				print(prefix .. k)
+				inspect(v, ' - ')
+			end
+		end
+	end
+end
+
+local loadfile = function(path)
 	local r = dofile(path)
-	if type(r.build) ~= 'function' then
-		error('rack at "' .. path .. '" does not implement "build" method.')
-	end
-	if type(r.patch) ~= 'function' then
-		error('rack at "' .. path .. '" does not implement "patch" method.')
-	end
-	return r
+    assert(type(r.build) == 'function', 'rack does not implement "build" method.')
+    assert(type(r.patch) == 'function', 'rack does not implement "patch" method.')
+    return r
 end
 
 local reset = function(v)
@@ -40,80 +54,45 @@ local close = function(v)
 	for _, s in pairs(v) do close(s) end
 end
 
-local rack = nil
-
-Rack.mount = function(r)
-	synth.Engine:set { input = r.output() }
-	rack = r
-end
-
-function Rack.inspect(o, prefix)
-	if type(o) == 'table' and prefix == nil then
-		if o['_type'] == 'module' then
-			print(o:inspect())
-			return
-		end
-	end
-	for k, v in pairs(o) do
-		if k ~= '_namespace' then
-			if prefix == nil then
-				prefix = ''
-			end
-			if type(v) == 'table' then
-				print(prefix .. k)
-				Rack.inspect(v, ' - ')
-			end
-		end
-	end
-end
+Rack = {
+    filepath = '',
+    path     = '',
+    modules  = nil
+}
 
 function Rack.clear()
 	synth.Engine:set { input = 0 }
 end
 
-function Rack.load(path)
-	local r = nil
-	local reload = function()
-		r = loadrack(path)
-		r.path = filepath.dir(path)
-	end
-	reload()
+function Rack.rebuild()
+    assert(Rack.modules ~= nil, 'no rackfile loaded.')
+    Rack.clear()
+	close(Rack.modules)
+
+    local r = loadfile(Rack.filepath)
 	local built = r:build()
-
-	assert(built.modules, 'modules should be exposed in the build action')
-	assert(built.output, 'output should be exposed in the build action')
-
 	r:patch(built.modules)
+    Rack.modules = built.modules
 
-	local obj = {
-		mount = function(self)
-			Rack.mount(self)
-		end,
-		output = function()
-			return built.output()
-		end,
-		rebuild = function(self)
-			reload()
-			Rack.clear()
-			close(built.modules)
-			built = r:build()
-			r:patch(built.modules)
-			self:mount()
-		end,
-		repatch = function()
-			reload()
-			reset(built.modules)
-			r:patch(built.modules)
-		end
-	}
-	setmetatable(obj, { 
-		__index = function(table, k)
-			if k == "modules" then
-				return built.modules
-			end
-			return rawget(built.modules, k)
-		end
-	})
-	return obj
+	synth.Engine:set { input = built.output() }
+end
+
+function Rack.repatch()
+    assert(Rack.modules ~= nil, 'no rackfile loaded.')
+	reset(Rack.modules)
+    local r = loadfile(Rack.filepath)
+	r:patch(Rack.modules)
+end
+
+function Rack.load(path)
+    local r = loadfile(path)
+
+    Rack.filepath = path
+	Rack.path     = filepath.dir(path)
+    Rack.modules  = with(r:build(), function(b)
+	    r:patch(b.modules)
+	    synth.Engine:set { input = b.output() }
+        return b.modules
+    end)
 end
 `

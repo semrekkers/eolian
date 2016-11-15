@@ -2,3 +2,5 @@ pkg/*
 vendor/pkg/*
 bin/*
 coverage.out
+
+lua/static.go
