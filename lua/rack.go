@@ -36,9 +36,9 @@ local reset = function(v)
 	if type(v) ~= 'table' then
 		return
 	end
-	if type(v.reset) == 'function' then 
+	if type(v.reset) == 'function' then
 		v.reset()
-		return 
+		return
 	end
 	for _, s in pairs(v) do reset(s) end
 end
@@ -47,9 +47,9 @@ local close = function(v)
 	if type(v) ~= 'table' then
 		return
 	end
-	if type(v.close) == 'function' then 
+	if type(v.close) == 'function' then
 		v.close()
-		return 
+		return
 	end
 	for _, s in pairs(v) do close(s) end
 end
@@ -70,7 +70,7 @@ function Rack.rebuild()
 	close(Rack.modules)
 
     local r = loadfile(Rack.filepath)
-	local built = r:build()
+	local built = r:build(Rack.path)
 	r:patch(built.modules)
     Rack.modules = built.modules
 
@@ -89,7 +89,7 @@ function Rack.load(path)
 
     Rack.filepath = path
 	Rack.path     = filepath.dir(path)
-    Rack.modules  = with(r:build(), function(b)
+    Rack.modules  = with(r:build(Rack.path), function(b)
 	    r:patch(b.modules)
 	    synth.Engine:set { input = b.output() }
         return b.modules

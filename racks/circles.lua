@@ -1,7 +1,7 @@
 local pkg = {}
 
-function pkg.build(self)
-    local supersaw = dofile(self.path .. '/voice/supersaw.lua')
+function pkg.build(self, path)
+    local supersaw = dofile(path .. '/voice/supersaw.lua')
 
     local modules = {
         -- controller = synth.MIDIController({ device = 2 }),
