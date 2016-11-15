@@ -29,9 +29,7 @@ $ make
 
 ```
 $ make install
-$ eolian
-> -- Load the Rack file (you should hear audio)
-> Rack.load('racks/circles.lua')
+$ eolian racks/circles.lua
 > 
 > -- Reload the file, rebuild the Rack and remount it
 > Rack.rebuild()
