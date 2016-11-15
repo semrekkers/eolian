@@ -35,7 +35,7 @@ $ eolian racks/circles.lua
 > Rack.rebuild()
 >
 > -- Reload the file and only repatch it
-> rack.repatch()
+> Rack.repatch()
 > 
 > -- Set inputs or repatch modules
 > inspect(Rack.modules.low.lpf)
