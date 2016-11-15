@@ -1,5 +1,5 @@
 PROJECT := github.com/brettbuddin/eolian
-BINPATH := bin/
+BINPATH := bin
 
 default: build
 

@@ -43,8 +43,8 @@ func NewVM(p module.Patcher) (*VM, error) {
 		state.Register(k, fn)
 	}
 
-	// Add lua functions
-	if err := state.DoString(rackLua); err != nil {
+	// Add rack behavior
+	if err := state.DoString(luaRack); err != nil {
 		return nil, err
 	}
 

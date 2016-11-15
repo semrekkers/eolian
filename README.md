@@ -30,26 +30,24 @@ $ make
 ```
 $ make install
 $ eolian
-> rack = Rack.load('racks/circles.lua')
->
-> -- Build and mount the Rack to the engine (you should hear audio)
-> rack:mount()
+> -- Load the Rack file (you should hear audio)
+> Rack.load('racks/circles.lua')
 > 
 > -- Reload the file, rebuild the Rack and remount it
-> rack:rebuild()
+> Rack.rebuild()
 >
 > -- Reload the file and only repatch it
-> rack:repatch()
+> rack.repatch()
 > 
 > -- Set inputs or repatch modules
-> Rack.inspect(rack.modules.low.lpf)
+> inspect(Rack.modules.low.lpf)
 inputs:
 - input: &{0xc420282510 output 0xc420282510}
 - cutoff: 3000.00Hz
 - resonance: 0
 outputs:
 - output (active)
-> rack.modules.low.lpf:set { cutoff = hz(2000) }
+> Rack.modules.low.lpf:set { cutoff = hz(2000) }
 ...
 ```
 Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can also find some example Rack setups in the [racks directory](https://github.com/brettbuddin/eolian/tree/master/racks).
