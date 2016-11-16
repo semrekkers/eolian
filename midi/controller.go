@@ -29,7 +29,7 @@ func init() {
 		// Default to 16-31 CC numbers
 		if len(config.CCOutputs) == 0 {
 			for i := 16; i < 32; i++ {
-				config.CCOutputs = append(config.CCOutputs, i)
+				config.CCOutputs = append(config.CCOutputs, CC{1, i})
 			}
 		}
 
@@ -47,7 +47,11 @@ func init() {
 
 type ControllerConfig struct {
 	Device, Polyphony, FrameRate int
-	CCOutputs                    []int `mapstructure:"ccOutputs"`
+	CCOutputs                    []CC `mapstructure:"ccOutputs"`
+}
+
+type CC struct {
+	Channel, Number int
 }
 
 type Controller struct {
@@ -84,16 +88,16 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	outs = append(outs,
 		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{Controller: m})},
 		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
-		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})},
-		&module.Out{Name: "modWheel", Provider: module.Provide(&ctrlCC{Controller: m, status: 176, number: 1})})
+		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})})
 
-	for _, n := range config.CCOutputs {
-		func(n int) {
+	for _, e := range config.CCOutputs {
+		func(e CC) {
+			offset := e.Channel - 1
 			outs = append(outs, &module.Out{
-				Name:     fmt.Sprintf("cc/%d", n),
-				Provider: module.Provide(&ctrlCC{Controller: m, status: 176, number: n}),
+				Name:     fmt.Sprintf("%d.cc/%d", offset, e.Number),
+				Provider: module.Provide(&ctrlCC{Controller: m, status: 176 + offset, number: e.Number}),
 			})
-		}(n)
+		}(e)
 	}
 
 	err = m.Expose(nil, outs)
@@ -353,7 +357,6 @@ func polyphonicOutputs(m *Controller, count int) []*module.Out {
 				}),
 			},
 				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{Controller: m, channelOffset: i})},
-				&module.Out{Name: fmt.Sprintf("%d.pitchBend", i), Provider: module.Provide(&ctrlCC{Controller: m, status: 224 + i, number: 0})},
 				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{Controller: m, channelOffset: i})})
 		}
 	}

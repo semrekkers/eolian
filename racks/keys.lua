@@ -17,11 +17,11 @@ function voice(midi, idx)
     local mult = synth.BinaryMultiply()
 
     pitch:set { input = midi:scope(idx):output('pitch') }
-    bend:set  { input = midi:scope(idx):output('pitchBend') }
+    bend:set  { input = midi:scope(idx):output("cc/1") }
 
-    high.osc:set  { pitch = pitch:output(0), pitchMod = bend:output(0), pitchModAmount = 0.1 }
+    high.osc:set  { pitch = pitch:output(0), pitchMod = bend:output(0), pitchModAmount = 0.0007 }
     low.pitch:set { a = pitch:output(1), b = 0.25 }
-    low.osc:set   { pitch = low.pitch:output(), pitchMod = bend:output(1), pitchModAmount = 0.1 }
+    low.osc:set   { pitch = low.pitch:output(), pitchMod = bend:output(1), pitchModAmount = 0.0007 }
 
     mix:scope(0):set { input = high.osc:output('saw') }
     mix:scope(1):set { input = low.osc:output('saw') }
@@ -43,9 +43,17 @@ function voice(midi, idx)
 end
 
 function pkg.build(self)
+    local ccOutputs = {}
+
+    -- Pressure
+    for i = 1,polyphony do
+        table.insert(ccOutputs, i+1, { channel = i, number = 1 })
+    end
+
     local midi = synth.MIDIController { 
         device    = 2,
         polyphony = polyphony,
+        ccOutputs = ccOutputs,
     }
 
     local voices = {}
