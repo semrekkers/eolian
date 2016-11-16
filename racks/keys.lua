@@ -4,9 +4,12 @@ local polyphony = 10
 
 function voice(midi, idx)
     local pitch = synth.Multiple()
-    local bend  = synth.Multiple()
     local high = {
         osc = synth.Osc(),
+    }
+    local mid = {
+        pitch = synth.BinaryMultiply(),
+        osc   = synth.Osc(),
     }
     local low = {
         pitch = synth.BinaryMultiply(),
@@ -17,21 +20,23 @@ function voice(midi, idx)
     local mult = synth.BinaryMultiply()
 
     pitch:set { input = midi:scope(idx):output('pitch') }
-    bend:set  { input = midi:scope(idx):output("cc/1") }
 
-    high.osc:set  { pitch = pitch:output(0), pitchMod = bend:output(0), pitchModAmount = 0.0007 }
-    low.pitch:set { a = pitch:output(1), b = 0.25 }
-    low.osc:set   { pitch = low.pitch:output(), pitchMod = bend:output(1), pitchModAmount = 0.0007 }
+    high.osc:set  { pitch = pitch:output(0) }
+    mid.pitch:set { a = pitch:output(1), b = 0.5 }
+    mid.osc:set   { pitch = mid.pitch:output() }
+    low.pitch:set { a = pitch:output(2), b = 0.25 }
+    low.osc:set   { pitch = low.pitch:output() }
 
-    mix:scope(0):set { input = high.osc:output('saw') }
-    mix:scope(1):set { input = low.osc:output('saw') }
+    mix:scope(0):set { input = high.osc:output('pulse') }
+    mix:scope(1):set { input = mid.osc:output('pulse') }
+    mix:scope(2):set { input = low.osc:output('saw') }
 
     adsr:set  {
         gate    = midi:scope(idx):output('gate'),
         attack  = ms(100),
         decay   = ms(100),
-        sustain = 0.8,
-        release = ms(1000),
+        sustain = 0.5,
+        release = ms(2000),
     }
     mult:set { a = mix:output(), b = adsr:output() }
 
@@ -43,17 +48,9 @@ function voice(midi, idx)
 end
 
 function pkg.build(self)
-    local ccOutputs = {}
-
-    -- Pressure
-    for i = 1,polyphony do
-        table.insert(ccOutputs, i+1, { channel = i, number = 1 })
-    end
-
     local midi = synth.MIDIController { 
         device    = 2,
         polyphony = polyphony,
-        ccOutputs = ccOutputs,
     }
 
     local voices = {}
