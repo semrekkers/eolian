@@ -37,14 +37,17 @@ func init() {
 			config.FrameRate = 25
 		}
 
+		if config.Polyphony < 1 {
+			config.Polyphony = 1
+		}
+
 		return NewController(config)
 	})
 }
 
 type ControllerConfig struct {
-	Device    int
-	CCOutputs []int `mapstructure:"ccOutputs"`
-	FrameRate int
+	Device, Polyphony, FrameRate int
+	CCOutputs                    []int `mapstructure:"ccOutputs"`
 }
 
 type Controller struct {
@@ -76,19 +79,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	}
 	outs := []*module.Out{}
 
-	for i := 0; i < 6; i++ {
-		outs = append(outs, &module.Out{
-			Name: fmt.Sprintf("%d.gate", i),
-			Provider: module.Provide(&ctrlGate{
-				Controller:    m,
-				stateFunc:     gateUp,
-				state:         &gateState{which: -1},
-				channelOffset: i,
-			}),
-		},
-			&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{Controller: m, channelOffset: i})},
-			&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{Controller: m, channelOffset: i})})
-	}
+	outs = append(outs, polyphonicOutputs(m, config.Polyphony)...)
 
 	outs = append(outs,
 		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{Controller: m})},
@@ -334,4 +325,37 @@ func (reader *ctrlCC) Read(out module.Frame) {
 		}
 		out[i] = reader.value
 	}
+}
+
+func polyphonicOutputs(m *Controller, count int) []*module.Out {
+	outs := []*module.Out{}
+
+	if count == 0 {
+		outs = append(outs, &module.Out{
+			Name: "gate",
+			Provider: module.Provide(&ctrlGate{
+				Controller: m,
+				stateFunc:  gateUp,
+				state:      &gateState{which: -1},
+			}),
+		},
+			&module.Out{Name: "pitch", Provider: module.Provide(&ctrlPitch{Controller: m})},
+			&module.Out{Name: "velocity", Provider: module.Provide(&ctrlVelocity{Controller: m})})
+	} else {
+		for i := 0; i < count; i++ {
+			outs = append(outs, &module.Out{
+				Name: fmt.Sprintf("%d.gate", i),
+				Provider: module.Provide(&ctrlGate{
+					Controller:    m,
+					stateFunc:     gateUp,
+					state:         &gateState{which: -1},
+					channelOffset: i,
+				}),
+			},
+				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{Controller: m, channelOffset: i})},
+				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{Controller: m, channelOffset: i})})
+		}
+	}
+
+	return outs
 }
