@@ -4,6 +4,7 @@ local polyphony = 10
 
 function voice(midi, idx)
     local pitch = synth.Multiple()
+    local bend  = synth.Multiple()
     local high = {
         osc = synth.Osc(),
     }
@@ -16,10 +17,11 @@ function voice(midi, idx)
     local mult = synth.BinaryMultiply()
 
     pitch:set { input = midi:scope(idx):output('pitch') }
+    bend:set  { input = midi:scope(idx):output('pitchBend') }
 
-    high.osc:set  { pitch = pitch:output(0) }
+    high.osc:set  { pitch = pitch:output(0), pitchMod = bend:output(0), pitchModAmount = 0.1 }
     low.pitch:set { a = pitch:output(1), b = 0.25 }
-    low.osc:set   { pitch = low.pitch:output() }
+    low.osc:set   { pitch = low.pitch:output(), pitchMod = bend:output(1), pitchModAmount = 0.1 }
 
     mix:scope(0):set { input = high.osc:output('saw') }
     mix:scope(1):set { input = low.osc:output('saw') }

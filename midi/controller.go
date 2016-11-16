@@ -85,13 +85,13 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{Controller: m})},
 		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
 		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})},
-		&module.Out{Name: "modWheel", Provider: module.Provide(&ctrlCC{Controller: m, number: 1})})
+		&module.Out{Name: "modWheel", Provider: module.Provide(&ctrlCC{Controller: m, status: 176, number: 1})})
 
 	for _, n := range config.CCOutputs {
 		func(n int) {
 			outs = append(outs, &module.Out{
 				Name:     fmt.Sprintf("cc/%d", n),
-				Provider: module.Provide(&ctrlCC{Controller: m, number: n}),
+				Provider: module.Provide(&ctrlCC{Controller: m, status: 176, number: n}),
 			})
 		}(n)
 	}
@@ -312,15 +312,15 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 
 type ctrlCC struct {
 	*Controller
-	number int
-	value  module.Value
+	status, number int
+	value          module.Value
 }
 
 func (reader *ctrlCC) Read(out module.Frame) {
 	reader.read(out)
 	for i := range out {
 		e := reader.events[i]
-		if e.Status == 176 && int(e.Data1) == reader.number {
+		if int(e.Status) == reader.status && int(e.Data1) == reader.number {
 			reader.value = module.Value(float64(e.Data2) / 127)
 		}
 		out[i] = reader.value
@@ -353,6 +353,7 @@ func polyphonicOutputs(m *Controller, count int) []*module.Out {
 				}),
 			},
 				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{Controller: m, channelOffset: i})},
+				&module.Out{Name: fmt.Sprintf("%d.pitchBend", i), Provider: module.Provide(&ctrlCC{Controller: m, status: 224 + i, number: 0})},
 				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{Controller: m, channelOffset: i})})
 		}
 	}
