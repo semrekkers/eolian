@@ -25,6 +25,7 @@ func NewGlide() (*Glide, error) {
 }
 
 func (reader *Glide) Read(out Frame) {
+	reader.in.Read(out)
 	rise, fall := reader.rise.ReadFrame(), reader.fall.ReadFrame()
 	for i := range out {
 		out[i] = reader.slew.Tick(out[i], rise[i], fall[i])

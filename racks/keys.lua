@@ -1,6 +1,6 @@
 local pkg = {}
 
-local polyphony = 10
+local polyphony = 6
 
 function voice(midi, idx)
     local pitch = synth.Multiple()
@@ -22,7 +22,7 @@ function voice(midi, idx)
     pitch:set { input = midi:scope(idx):output('pitch') }
 
     high.osc:set  { pitch = pitch:output(0) }
-    mid.pitch:set { a = pitch:output(1), b = 0.5 }
+    mid.pitch:set { a = pitch:output(1), b = 0.75 }
     mid.osc:set   { pitch = mid.pitch:output() }
     low.pitch:set { a = pitch:output(2), b = 0.25 }
     low.osc:set   { pitch = low.pitch:output() }
@@ -81,7 +81,7 @@ function pkg.patch(self, modules)
             m.mix:scope(i):set { input = m.voices[i+1]:output() }
         end
 
-        m.filter:set   { input = m.mix:output(), cutoff = hz(5000) }
+        m.filter:set   { input = m.mix:output(), cutoff = hz(3000) }
         m.delay:set    { input = m.filter:output(), gain = 0.4 }
         m.compress:set { input = m.delay:output() }
         m.clip:set     { input = m.compress:output(), max = 3 }
