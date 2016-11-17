@@ -27,16 +27,16 @@ function voice(midi, idx)
     low.pitch:set { a = pitch:output(2), b = 0.25 }
     low.osc:set   { pitch = low.pitch:output() }
 
-    mix:scope(0):set { input = high.osc:output('pulse') }
-    mix:scope(1):set { input = mid.osc:output('pulse') }
+    mix:scope(0):set { input = high.osc:output('saw') }
+    mix:scope(1):set { input = mid.osc:output('saw') }
     mix:scope(2):set { input = low.osc:output('saw') }
 
     adsr:set  {
         gate    = midi:scope(idx):output('gate'),
         attack  = ms(100),
-        decay   = ms(100),
-        sustain = 0.5,
-        release = ms(2000),
+        decay   = ms(50),
+        sustain = 0.9,
+        release = ms(3000),
     }
     mult:set { a = mix:output(), b = adsr:output() }
 
@@ -81,7 +81,7 @@ function pkg.patch(self, modules)
             m.mix:scope(i):set { input = m.voices[i+1]:output() }
         end
 
-        m.filter:set   { input = m.mix:output(), cutoff = hz(3000) }
+        m.filter:set   { input = m.mix:output(), cutoff = hz(5000) }
         m.delay:set    { input = m.filter:output(), gain = 0.4 }
         m.compress:set { input = m.delay:output() }
         m.clip:set     { input = m.compress:output(), max = 3 }
