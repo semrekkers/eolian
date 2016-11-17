@@ -18,7 +18,7 @@ type Binary struct {
 
 func NewBinary(op BinaryOp) (*Binary, error) {
 	m := &Binary{
-		a:  &In{Name: "a", Source: NewBuffer(zero)},
+		a:  &In{Name: "a", Source: zero},
 		b:  &In{Name: "b", Source: NewBuffer(zero)},
 		op: op,
 	}
@@ -32,10 +32,10 @@ func NewBinary(op BinaryOp) (*Binary, error) {
 type BinaryOp func(Value, Value) Value
 
 func (reader *Binary) Read(out Frame) {
-	a := reader.a.ReadFrame()
+	reader.a.Read(out)
 	b := reader.b.ReadFrame()
 	for i := range out {
-		out[i] = reader.op(a[i], b[i])
+		out[i] = reader.op(out[i], b[i])
 	}
 }
 
