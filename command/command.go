@@ -49,7 +49,9 @@ func Run(args []string) error {
 	}
 
 	if len(os.Args) > 1 {
-		vm.DoString(fmt.Sprintf("Rack.load('%s')", os.Args[1]))
+		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", os.Args[1])); err != nil {
+			fmt.Println(err)
+		}
 	}
 
 	return vm.REPL()
