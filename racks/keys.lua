@@ -1,6 +1,6 @@
 local pkg = {}
 
-local polyphony = 6
+local polyphony = 4
 
 function voice(midi, idx)
     local pitch = synth.Multiple()
