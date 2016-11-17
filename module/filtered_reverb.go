@@ -34,19 +34,19 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 	feedbackCount := len(c.Feedback)
 	allpassCount := len(c.Allpass)
 
-	inMultiple, err := NewMultipleSized(feedbackCount)
+	inMultiple, err := NewMultiple(feedbackCount)
 	if err != nil {
 		return nil, err
 	}
-	feedbackGainMultiple, err := NewMultipleSized(feedbackCount)
+	feedbackGainMultiple, err := NewMultiple(feedbackCount)
 	if err != nil {
 		return nil, err
 	}
-	feedbackCutoffMultiple, err := NewMultipleSized(feedbackCount)
+	feedbackCutoffMultiple, err := NewMultiple(feedbackCount)
 	if err != nil {
 		return nil, err
 	}
-	allpassGainMultiple, err := NewMultipleSized(allpassCount)
+	allpassGainMultiple, err := NewMultiple(allpassCount)
 	if err != nil {
 		return nil, err
 	}

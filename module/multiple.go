@@ -17,7 +17,7 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 4
 		}
-		return NewMultipleSized(config.Size)
+		return NewMultiple(config.Size)
 	})
 }
 
@@ -30,7 +30,7 @@ type Multiple struct {
 	reads int
 }
 
-func NewMultipleSized(size int) (*Multiple, error) {
+func NewMultiple(size int) (*Multiple, error) {
 	m := &Multiple{
 		in:    &In{Name: "input", Source: NewBuffer(zero)},
 		frame: make(Frame, FrameSize),
