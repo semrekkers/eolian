@@ -108,7 +108,7 @@ func (s *StageSequencer) read(out Frame) {
 		mode := s.mode.ReadFrame()
 		s.transpose.ReadFrame()
 
-		for i := 0; i < 8; i++ {
+		for i := 0; i < len(s.stages); i++ {
 			s.stages[i].pitch.ReadFrame()
 			s.stages[i].pulses.ReadFrame()
 			s.stages[i].gateMode.ReadFrame()
