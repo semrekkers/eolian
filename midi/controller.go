@@ -34,7 +34,7 @@ func init() {
 		}
 
 		if config.FrameRate == 0 {
-			config.FrameRate = 25
+			config.FrameRate = 24
 		}
 
 		if config.Polyphony < 1 {
