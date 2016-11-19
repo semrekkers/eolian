@@ -53,6 +53,7 @@ func (s *FileSource) loadData(path string) error {
 	}
 	defer file.Close()
 	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		if f, err := strconv.ParseFloat(scanner.Text(), 64); err == nil {
 			s.values = append(s.values, Value(f))

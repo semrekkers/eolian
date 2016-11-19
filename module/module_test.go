@@ -4,45 +4,48 @@ import "testing"
 
 var defaultOutput = []string{"output"}
 
-func TestForExplosions(t *testing.T) {
+func TestDefaultsForExplosions(t *testing.T) {
 	modules := []struct {
 		Name        string
+		Config      Config
 		OutputNames []string
 	}{
-		{"ADSR", defaultOutput},
-		{"AND", defaultOutput},
-		{"Allpass", defaultOutput},
-		{"Clip", defaultOutput},
-		{"Compress", defaultOutput},
-		{"Crossfade", defaultOutput},
-		{"Difference", defaultOutput},
-		{"Direct", defaultOutput},
-		{"Divide", defaultOutput},
-		{"Distort", defaultOutput},
-		{"FBComb", defaultOutput},
-		{"FFComb", defaultOutput},
-		{"FilteredDelay", defaultOutput},
-		{"Fold", defaultOutput},
-		{"Glide", defaultOutput},
-		{"HPFilter", defaultOutput},
-		{"Interpolate", defaultOutput},
-		{"Invert", defaultOutput},
-		{"LPFilter", defaultOutput},
-		{"Mix", defaultOutput},
-		{"Multiple", []string{"0", "1", "2", "3"}},
-		{"Multiply", defaultOutput},
-		{"Mod", defaultOutput},
-		{"Noise", defaultOutput},
-		{"OR", defaultOutput},
-		{"Osc", []string{"sine", "saw", "triangle", "pulse"}},
-		{"RandomSeries", []string{"values", "gate"}},
-		{"Reverb", defaultOutput},
-		{"SampleHold", defaultOutput},
-		{"Sequence", []string{"gate", "pitch", "sync"}},
-		{"Switch", defaultOutput},
-		{"Sum", defaultOutput},
-		{"Wrap", defaultOutput},
-		{"XOR", defaultOutput},
+		{"ADSR", nil, defaultOutput},
+		{"AND", nil, defaultOutput},
+		{"Allpass", nil, defaultOutput},
+		{"Clip", nil, defaultOutput},
+		{"Compress", nil, defaultOutput},
+		{"Crossfade", nil, defaultOutput},
+		{"Difference", nil, defaultOutput},
+		{"Direct", nil, defaultOutput},
+		{"Divide", nil, defaultOutput},
+		{"Distort", nil, defaultOutput},
+		{"FBComb", nil, defaultOutput},
+		{"FFComb", nil, defaultOutput},
+		{"FilteredDelay", nil, defaultOutput},
+		{"Fold", nil, defaultOutput},
+		{"FileSource", Config{"path": "test/dummy_source.txt"}, defaultOutput},
+		{"Glide", nil, defaultOutput},
+		{"HPFilter", nil, defaultOutput},
+		{"Loop", nil, defaultOutput},
+		{"Interpolate", nil, defaultOutput},
+		{"Invert", nil, defaultOutput},
+		{"LPFilter", nil, defaultOutput},
+		{"Mix", nil, defaultOutput},
+		{"Multiple", nil, []string{"0", "1", "2", "3"}},
+		{"Multiply", nil, defaultOutput},
+		{"Mod", nil, defaultOutput},
+		{"Noise", nil, defaultOutput},
+		{"OR", nil, defaultOutput},
+		{"Osc", nil, []string{"sine", "saw", "triangle", "pulse"}},
+		{"RandomSeries", nil, []string{"values", "gate"}},
+		{"Reverb", nil, defaultOutput},
+		{"SampleHold", nil, defaultOutput},
+		{"Sequence", nil, []string{"gate", "pitch", "sync"}},
+		{"Switch", nil, defaultOutput},
+		{"Sum", nil, defaultOutput},
+		{"Wrap", nil, defaultOutput},
+		{"XOR", nil, defaultOutput},
 	}
 
 	for _, m := range modules {
@@ -51,7 +54,7 @@ func TestForExplosions(t *testing.T) {
 			t.Error(err)
 		}
 
-		p, err := init(nil)
+		p, err := init(m.Config)
 		if err != nil {
 			t.Error(err)
 		}
