@@ -7,8 +7,10 @@ func init() {
 	Register("HPFilter", func(Config) (Patcher, error) { return NewFilter(HighPass) })
 }
 
+type FilterType int
+
 const (
-	LowPass int = iota
+	LowPass FilterType = iota
 	HighPass
 )
 
