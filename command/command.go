@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/brettbuddin/eolian/engine"
@@ -48,8 +47,8 @@ func Run(args []string) error {
 		return err
 	}
 
-	if len(os.Args) > 1 {
-		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", os.Args[1])); err != nil {
+	if len(set.Args()) > 0 {
+		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", set.Arg(0))); err != nil {
 			fmt.Println(err)
 		}
 	}
