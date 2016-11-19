@@ -46,7 +46,7 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 	return nil
 }
 
-// Patch assign's an input's reader to some source (Reader, Value, etc)
+// Patch assigns an input's reader to some source (Reader, Value, etc)
 func (inout *IO) Patch(name string, t interface{}) error {
 	inout.Lock()
 	defer inout.Unlock()
