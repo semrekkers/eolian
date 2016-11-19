@@ -17,7 +17,7 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 4
 		}
-		return NewMixSized(config.Size)
+		return NewMix(config.Size)
 	})
 }
 
@@ -30,7 +30,7 @@ type Mix struct {
 	names, levelNames []string
 }
 
-func NewMixSized(size int) (*Mix, error) {
+func NewMix(size int) (*Mix, error) {
 	m := &Mix{
 		master: &In{Name: "master", Source: NewBuffer(Value(1))},
 

@@ -61,7 +61,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 		allpasses: make([]*AllPass, allpassCount),
 	}
 
-	mixer, err := NewMixSized(feedbackCount)
+	mixer, err := NewMix(feedbackCount)
 	if err != nil {
 		return m, err
 	}

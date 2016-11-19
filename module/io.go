@@ -7,12 +7,16 @@ import (
 	"sync"
 )
 
+// IO is the input/output registry of a module. It manages the lifecycles of the ports; fascilitating connects and
+// disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
+// inside other structs that represent a module.
 type IO struct {
 	sync.Mutex
 	ins  map[string]*In
 	outs map[string]*Out
 }
 
+// Expose registers inputs and outputs of the module so that they can be used in patching
 func (io *IO) Expose(ins []*In, outs []*Out) error {
 	io.Lock()
 	defer io.Unlock()
@@ -42,13 +46,7 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 	return nil
 }
 
-func (io *IO) Unpatch(name string) error {
-	io.Lock()
-	defer io.Unlock()
-	io.lazyInit()
-	return io.Patch(name, zero)
-}
-
+// Patch assign's an input's reader to some source (Reader, Value, etc)
 func (inout *IO) Patch(name string, t interface{}) error {
 	inout.Lock()
 	defer inout.Unlock()
@@ -107,6 +105,7 @@ func (inout *IO) Patch(name string, t interface{}) error {
 	return nil
 }
 
+// Inputs lists all registered inputs
 func (io *IO) Inputs() map[string]*In {
 	io.Lock()
 	defer io.Unlock()
@@ -114,6 +113,7 @@ func (io *IO) Inputs() map[string]*In {
 	return io.ins
 }
 
+// Outputs lists all registered outputs
 func (io *IO) Outputs() map[string]*Out {
 	io.Lock()
 	defer io.Unlock()
@@ -121,6 +121,7 @@ func (io *IO) Outputs() map[string]*Out {
 	return io.outs
 }
 
+// Output realizes a registered output and returns it for patching
 func (io *IO) Output(name string) (Reader, error) {
 	io.Lock()
 	defer io.Unlock()
@@ -137,6 +138,7 @@ func (io *IO) Output(name string) (Reader, error) {
 	return nil, fmt.Errorf(`output "%s" doesn't exist`, name)
 }
 
+// OutputsActive returns the total count of actively patched outputs
 func (io *IO) OutputsActive() int {
 	io.Lock()
 	defer io.Unlock()
@@ -150,6 +152,7 @@ func (io *IO) OutputsActive() int {
 	return i
 }
 
+// Inspect returns a formatted string detailing the internal state of the module
 func (io *IO) Inspect() string {
 	io.Lock()
 	defer io.Unlock()
@@ -188,6 +191,8 @@ func (io *IO) lazyInit() {
 	}
 }
 
+// Reset disconnects all inputs from their sources (closing them in the process) and re-assigns the input to its
+// original default value
 func (io *IO) Reset() error {
 	io.Lock()
 	defer io.Unlock()
@@ -217,6 +222,7 @@ type Lister interface {
 	Outputs() map[string]*Out
 }
 
+// In is a module input
 type In struct {
 	sync.Mutex
 
@@ -227,12 +233,14 @@ type In struct {
 	initial Reader
 }
 
+// Read reads the output of the source into a Frame
 func (reader *In) Read(f Frame) {
 	reader.Lock()
 	reader.Source.Read(f)
 	reader.Unlock()
 }
 
+// SetSource sets the internal source to some Reader
 func (setter *In) SetSource(r Reader) {
 	setter.Lock()
 	defer setter.Unlock()
@@ -249,18 +257,21 @@ func (i *In) String() string {
 	return fmt.Sprintf("%v", i.Source)
 }
 
+// ReadFrame reads an entire frame into the buffered input
 func (i *In) ReadFrame() Frame {
 	i.Lock()
 	defer i.Unlock()
 	return i.Source.(*Buffer).ReadFrame()
 }
 
+// LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
 	i.Lock()
 	defer i.Unlock()
 	return i.Source.(*Buffer).Frame
 }
 
+// Close closes the input
 func (i *In) Close() error {
 	i.Lock()
 	defer i.Unlock()
@@ -270,6 +281,7 @@ func (i *In) Close() error {
 	return nil
 }
 
+// Out is a module output
 type Out struct {
 	Name     string
 	Provider ReaderProvider
@@ -278,10 +290,12 @@ type Out struct {
 	reader Reader
 }
 
+// IsActive returns whether or not there is a realized Reader assigned
 func (o *Out) IsActive() bool {
 	return o.reader != nil
 }
 
+// Close closes the output
 func (closer *Out) Close() error {
 	if v, ok := closer.reader.(Closer); ok {
 		return v.Close()
@@ -300,6 +314,7 @@ func (closer *ReaderCloser) Close() error {
 	return closer.io.closeOutput(closer.Name)
 }
 
+// Port represents the address of a specific port on a Patcher
 type Port struct {
 	Patcher
 	Port string
