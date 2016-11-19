@@ -19,7 +19,7 @@ func init() {
 
 type Loop struct {
 	IO
-	in, trigger, reset *In
+	in, trigger, reset, level *In
 
 	max, stop              int
 	memory                 []Value
@@ -35,6 +35,7 @@ func NewLoop(max int) (*Loop, error) {
 		in:          &In{Name: "input", Source: zero},
 		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
 		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
+		level:       &In{Name: "level", Source: NewBuffer(Value(1))},
 		memory:      make([]Value, length),
 		stop:        length,
 		max:         length,
@@ -52,6 +53,8 @@ func (reader *Loop) Read(out Frame) {
 	reader.in.Read(out)
 	trigger := reader.trigger.ReadFrame()
 	reset := reader.reset.ReadFrame()
+	level := reader.level.ReadFrame()
+
 	for i := range out {
 		if reader.lastReset < 0 && reset[i] > 0 {
 			reader.started = false
@@ -77,7 +80,7 @@ func (reader *Loop) Read(out Frame) {
 			reader.memory[reader.offset] += out[i]
 			reader.offset = (reader.offset + 1) % len(reader.memory)
 		} else {
-			out[i] = reader.memory[reader.offset] + out[i]
+			out[i] = reader.memory[reader.offset]*level[i] + out[i]
 			reader.offset = (reader.offset + 1) % reader.stop
 		}
 		reader.lastTrigger = trigger[i]
