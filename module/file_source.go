@@ -22,18 +22,16 @@ func init() {
 
 type FileSource struct {
 	IO
-	path   string
 	values []Value
 	idx    int
 }
 
 func NewFileSource(path string) (*FileSource, error) {
 	m := &FileSource{
-		path:   path,
 		values: []Value{},
 	}
 
-	if err := m.loadData(); err != nil {
+	if err := m.loadData(path); err != nil {
 		return nil, err
 	}
 
@@ -48,8 +46,8 @@ func (reader *FileSource) Read(out Frame) {
 	}
 }
 
-func (s *FileSource) loadData() error {
-	file, err := os.Open(s.path)
+func (s *FileSource) loadData(path string) error {
+	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
