@@ -58,6 +58,7 @@ func (reader *Loop) Read(out Frame) {
 	for i := range out {
 		if reader.lastReset < 0 && reset[i] > 0 {
 			reader.started = false
+			reader.recording = false
 			for i := range reader.memory {
 				reader.memory[i] = 0
 				reader.offset = 0
