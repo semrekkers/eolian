@@ -18,27 +18,9 @@ func init() {
 		}
 	}
 
-	Register("FFComb", setup(func(i int, c Config) (Patcher, error) {
-		m, err := NewFFComb(i)
-		if err != nil {
-			return nil, err
-		}
-		return m, nil
-	}))
-	Register("FBComb", setup(func(i int, c Config) (Patcher, error) {
-		m, err := NewFBComb(i)
-		if err != nil {
-			return nil, err
-		}
-		return m, nil
-	}))
-	Register("Allpass", setup(func(i int, c Config) (Patcher, error) {
-		m, err := NewAllPass(i)
-		if err != nil {
-			return nil, err
-		}
-		return m, nil
-	}))
+	Register("FFComb", setup(func(i int, c Config) (Patcher, error) { return NewFFComb(i) }))
+	Register("FBComb", setup(func(i int, c Config) (Patcher, error) { return NewFBComb(i) }))
+	Register("Allpass", setup(func(i int, c Config) (Patcher, error) { return NewAllPass(i) }))
 }
 
 type FFComb struct {
