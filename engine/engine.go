@@ -28,6 +28,8 @@ func New(deviceIndex int) (*Engine, error) {
 		return nil, fmt.Errorf("device index out of range")
 	}
 
+	fmt.Println("Output:", devices[deviceIndex].Name)
+
 	direct, err := module.NewDirect()
 	if err != nil {
 		return nil, err
