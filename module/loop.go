@@ -43,7 +43,7 @@ func NewLoop(max int) (*Loop, error) {
 		lastReset:   -1,
 	}
 	err := m.Expose(
-		[]*In{m.in, m.trigger, m.reset},
+		[]*In{m.in, m.trigger, m.reset, m.level},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
