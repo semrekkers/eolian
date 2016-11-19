@@ -17,7 +17,7 @@ function pkg.build(self)
             adsr = synth.ADSR(),
             osc  = synth.Osc(),
             mix  = synth.Mix(),
-            amp  = synth.BinaryMultiply(),
+            amp  = synth.Multiply(),
         },
 
         delay = {

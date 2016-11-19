@@ -10,17 +10,13 @@ func TestForExplosions(t *testing.T) {
 		OutputNames []string
 	}{
 		{"ADSR", defaultOutput},
+		{"AND", defaultOutput},
 		{"Allpass", defaultOutput},
-		{"BinaryAND", defaultOutput},
-		{"BinaryDifference", defaultOutput},
-		{"BinaryDivide", defaultOutput},
-		{"BinaryMultiply", defaultOutput},
-		{"BinaryOR", defaultOutput},
-		{"BinarySum", defaultOutput},
-		{"BinaryXOR", defaultOutput},
 		{"Clip", defaultOutput},
 		{"Compress", defaultOutput},
+		{"Difference", defaultOutput},
 		{"Direct", defaultOutput},
+		{"Divide", defaultOutput},
 		{"FBComb", defaultOutput},
 		{"FFComb", defaultOutput},
 		{"FilteredDelay", defaultOutput},
@@ -32,12 +28,16 @@ func TestForExplosions(t *testing.T) {
 		{"LPFilter", defaultOutput},
 		{"Mix", defaultOutput},
 		{"Multiple", []string{"0", "1", "2", "3"}},
+		{"Multiply", defaultOutput},
 		{"Noise", defaultOutput},
+		{"OR", defaultOutput},
 		{"Osc", []string{"sine", "saw", "triangle", "pulse"}},
 		{"RandomSeries", []string{"values", "gate"}},
 		{"Reverb", defaultOutput},
 		{"SampleHold", defaultOutput},
 		{"Sequence", []string{"gate", "pitch", "sync"}},
+		{"Sum", defaultOutput},
+		{"XOR", defaultOutput},
 	}
 
 	for _, m := range modules {

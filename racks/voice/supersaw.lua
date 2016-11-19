@@ -9,7 +9,7 @@ return function(count)
         scale:set { input = i }
 
         -- Create detune amount
-        local detune = synth.BinaryMultiply()
+        local detune = synth.Multiply()
         detune:set {
             a = spread:output(tostring(i)),
             b = scale:output()

@@ -8,7 +8,7 @@ end
 
 local function splat()
     local envelope = synth.ADSR()
-    local amp      = synth.BinaryMultiply()
+    local amp      = synth.Multiply()
     local osc      = synth.Osc()
     local filter   = synth.LPFilter()
 

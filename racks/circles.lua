@@ -18,14 +18,14 @@ function pkg.build(self, path)
             lfo      = synth.Osc(),
             mix      = synth.Mix(),
             lpf      = synth.LPFilter(),
-            amp      = synth.BinaryMultiply()
+            amp      = synth.Multiply()
         },
         low = {
             divider  = synth.ClockDivide(),
             sequence = synth.Sequence(),
             pitch    = synth.Multiple(),
             osc      = synth.Osc(),
-            subPitch = synth.BinaryMultiply(),
+            subPitch = synth.Multiply(),
             subOsc   = synth.Osc(),
             fold     = synth.Fold(),
             mix      = synth.Mix(),
@@ -36,7 +36,7 @@ function pkg.build(self, path)
             sequence   = synth.Sequence(),
             osc        = synth.Osc(),
             adsr       = synth.ADSR(),
-            amp        = synth.BinaryMultiply(),
+            amp        = synth.Multiply(),
         },
         effects = {
             reverb = synth.FilteredReverb(),

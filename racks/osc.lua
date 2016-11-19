@@ -6,7 +6,7 @@ function buildVoice(idx, control, envelope, pitch)
     local modules = {
         osc  = synth.Osc(),
         adsr = synth.ADSR(),
-        amp  = synth.BinaryMultiply(),
+        amp  = synth.Multiply(),
     }
     with(modules, function(t)
         t.osc:set { pitch = pitch }

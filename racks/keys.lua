@@ -8,16 +8,16 @@ function voice(midi, idx)
         osc = synth.Osc(),
     }
     local mid = {
-        pitch = synth.BinaryMultiply(),
+        pitch = synth.Multiply(),
         osc   = synth.Osc(),
     }
     local low = {
-        pitch = synth.BinaryMultiply(),
+        pitch = synth.Multiply(),
         osc   = synth.Osc(),
     }
     local mix  = synth.Mix()
     local adsr = synth.ADSR()
-    local mult = synth.BinaryMultiply()
+    local mult = synth.Multiply()
 
     pitch:set { input = midi:scope(idx):output('pitch') }
 

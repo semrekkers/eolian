@@ -10,7 +10,7 @@ function pkg.build(self)
         ks = {
             noise  = synth.Noise(),
             adsr   = synth.ADSR(),
-            amp    = synth.BinaryMultiply(),
+            amp    = synth.Multiply(),
             delay  = synth.FilteredDelay(),
             filter = synth.LPFilter(),
         },

@@ -1,13 +1,16 @@
 package module
 
+import "math"
+
 func init() {
-	Register("BinaryMultiply", func(Config) (Patcher, error) { return NewBinary(multiply) })
-	Register("BinaryDivide", func(Config) (Patcher, error) { return NewBinary(divide) })
-	Register("BinarySum", func(Config) (Patcher, error) { return NewBinary(sum) })
-	Register("BinaryDifference", func(Config) (Patcher, error) { return NewBinary(diff) })
-	Register("BinaryOR", func(Config) (Patcher, error) { return NewBinary(or) })
-	Register("BinaryXOR", func(Config) (Patcher, error) { return NewBinary(xor) })
-	Register("BinaryAND", func(Config) (Patcher, error) { return NewBinary(and) })
+	Register("Multiply", func(Config) (Patcher, error) { return NewBinary(multiply, 0, 0) })
+	Register("Divide", func(Config) (Patcher, error) { return NewBinary(divide, 0, 1) })
+	Register("Sum", func(Config) (Patcher, error) { return NewBinary(sum, 0, 0) })
+	Register("Difference", func(Config) (Patcher, error) { return NewBinary(diff, 0, 0) })
+	Register("Mod", func(Config) (Patcher, error) { return NewBinary(mod, 0, 1) })
+	Register("OR", func(Config) (Patcher, error) { return NewBinary(or, 0, 0) })
+	Register("XOR", func(Config) (Patcher, error) { return NewBinary(xor, 0, 0) })
+	Register("AND", func(Config) (Patcher, error) { return NewBinary(and, 0, 0) })
 }
 
 type Binary struct {
@@ -16,10 +19,10 @@ type Binary struct {
 	op   BinaryOp
 }
 
-func NewBinary(op BinaryOp) (*Binary, error) {
+func NewBinary(op BinaryOp, a, b Value) (*Binary, error) {
 	m := &Binary{
-		a:  &In{Name: "a", Source: zero},
-		b:  &In{Name: "b", Source: NewBuffer(zero)},
+		a:  &In{Name: "a", Source: a},
+		b:  &In{Name: "b", Source: NewBuffer(b)},
 		op: op,
 	}
 	err := m.Expose(
@@ -39,10 +42,11 @@ func (reader *Binary) Read(out Frame) {
 	}
 }
 
-func multiply(a, b Value) Value { return a * b }
-func divide(a, b Value) Value   { return a / b }
-func sum(a, b Value) Value      { return a + b }
 func diff(a, b Value) Value     { return a - b }
+func divide(a, b Value) Value   { return a / b }
+func mod(a, b Value) Value      { return Value(math.Mod(float64(a), float64(b))) }
+func multiply(a, b Value) Value { return a * b }
+func sum(a, b Value) Value      { return a + b }
 func and(a, b Value) Value {
 	if a > 0 && b > 0 {
 		return 1
