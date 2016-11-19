@@ -1,13 +1,13 @@
 package module
 
 func init() {
-	Register("BinaryMultiply", func(Config) (Patcher, error) { return NewBinary(Multiply) })
-	Register("BinaryDivide", func(Config) (Patcher, error) { return NewBinary(Divide) })
-	Register("BinarySum", func(Config) (Patcher, error) { return NewBinary(Sum) })
-	Register("BinaryDifference", func(Config) (Patcher, error) { return NewBinary(Diff) })
-	Register("BinaryOR", func(Config) (Patcher, error) { return NewBinary(OR) })
-	Register("BinaryXOR", func(Config) (Patcher, error) { return NewBinary(XOR) })
-	Register("BinaryAND", func(Config) (Patcher, error) { return NewBinary(AND) })
+	Register("BinaryMultiply", func(Config) (Patcher, error) { return NewBinary(multiply) })
+	Register("BinaryDivide", func(Config) (Patcher, error) { return NewBinary(divide) })
+	Register("BinarySum", func(Config) (Patcher, error) { return NewBinary(sum) })
+	Register("BinaryDifference", func(Config) (Patcher, error) { return NewBinary(diff) })
+	Register("BinaryOR", func(Config) (Patcher, error) { return NewBinary(or) })
+	Register("BinaryXOR", func(Config) (Patcher, error) { return NewBinary(xor) })
+	Register("BinaryAND", func(Config) (Patcher, error) { return NewBinary(and) })
 }
 
 type Binary struct {
@@ -39,23 +39,23 @@ func (reader *Binary) Read(out Frame) {
 	}
 }
 
-func Multiply(a, b Value) Value { return a * b }
-func Divide(a, b Value) Value   { return a / b }
-func Sum(a, b Value) Value      { return a + b }
-func Diff(a, b Value) Value     { return a - b }
-func AND(a, b Value) Value {
+func multiply(a, b Value) Value { return a * b }
+func divide(a, b Value) Value   { return a / b }
+func sum(a, b Value) Value      { return a + b }
+func diff(a, b Value) Value     { return a - b }
+func and(a, b Value) Value {
 	if a > 0 && b > 0 {
 		return 1
 	}
 	return -1
 }
-func OR(a, b Value) Value {
+func or(a, b Value) Value {
 	if a > 0 || b > 0 {
 		return 1
 	}
 	return -1
 }
-func XOR(a, b Value) Value {
+func xor(a, b Value) Value {
 	if (a > 0 && b <= 0) || (a <= 0 && b > 0) {
 		return 1
 	}
