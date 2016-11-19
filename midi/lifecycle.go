@@ -1,3 +1,4 @@
+// Package midi provides MIDI input handling
 package midi
 
 import (

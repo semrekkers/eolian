@@ -1,3 +1,4 @@
+// Package engine provides output through PortAudio
 package engine
 
 import (

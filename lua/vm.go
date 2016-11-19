@@ -1,3 +1,4 @@
+// Package lua provides a Lua scripting layer
 package lua
 
 import (

@@ -1,3 +1,4 @@
+// Package command provides the functionality of the executable
 package command
 
 import (

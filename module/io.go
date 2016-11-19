@@ -1,3 +1,4 @@
+// Package module provides built-in modules
 package module
 
 import (

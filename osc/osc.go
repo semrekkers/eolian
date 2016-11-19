@@ -1,3 +1,4 @@
+// Package osc provides Open Sound Control (OSC) input handling
 package osc
 
 import (
