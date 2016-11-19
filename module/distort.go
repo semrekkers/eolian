@@ -10,6 +10,10 @@ type Distort struct {
 	IO
 	in, gain         *In
 	offsetA, offsetB *In
+
+	dcBlock *DCBlock
+
+	lastIn, lastOut Value
 }
 
 func NewDistort() (*Distort, error) {
@@ -18,6 +22,7 @@ func NewDistort() (*Distort, error) {
 		gain:    &In{Name: "gain", Source: NewBuffer(Value(1))},
 		offsetA: &In{Name: "offsetA", Source: NewBuffer(zero)},
 		offsetB: &In{Name: "offsetB", Source: NewBuffer(zero)},
+		dcBlock: &DCBlock{},
 	}
 	err := m.Expose(
 		[]*In{m.in, m.offsetA, m.offsetB, m.gain},
@@ -30,8 +35,14 @@ func (reader *Distort) Read(out Frame) {
 	reader.in.Read(out)
 	offsetA, offsetB := reader.offsetA.ReadFrame(), reader.offsetB.ReadFrame()
 	gain := reader.gain.ReadFrame()
+
+	var num, denom float64
 	for i := range out {
-		out[i] = Value(math.Exp(float64(out[i]*offsetA[i]+gain[i])) - math.Exp(float64(out[i]*offsetB[i]+gain[i]))/
-			math.Exp(float64(out[i]*gain[i])) + math.Exp(float64(out[i]*-gain[i])))
+		num = math.Exp(float64(out[i]*(offsetA[i]+gain[i]))) -
+			math.Exp(float64(-out[i]*(offsetB[i]+gain[i])))
+		denom = math.Exp(float64(out[i]*gain[i])) +
+			math.Exp(float64(out[i]*-gain[i]))
+
+		out[i] = reader.dcBlock.Tick(Value(num / denom))
 	}
 }
