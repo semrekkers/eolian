@@ -25,21 +25,14 @@ type Mix struct {
 	IO
 	master          *In
 	sources, levels []*In
-
-	size              int
-	names, levelNames []string
 }
 
 func NewMix(size int) (*Mix, error) {
 	m := &Mix{
 		master: &In{Name: "master", Source: NewBuffer(Value(1))},
-
-		size:       size,
-		names:      []string{},
-		levelNames: []string{},
 	}
 	inputs := []*In{m.master}
-	for i := 0; i < m.size; i++ {
+	for i := 0; i < size; i++ {
 		in := &In{
 			Name:   fmt.Sprintf("%d.input", i),
 			Source: NewBuffer(zero),
@@ -58,14 +51,14 @@ func NewMix(size int) (*Mix, error) {
 
 func (reader *Mix) Read(out Frame) {
 	master := reader.master.ReadFrame()
-	for i := 0; i < reader.size; i++ {
+	for i := 0; i < len(reader.sources); i++ {
 		reader.sources[i].ReadFrame()
 		reader.levels[i].ReadFrame()
 	}
 
 	for i := range out {
 		var sum Value
-		for j := 0; j < reader.size; j++ {
+		for j := 0; j < len(reader.sources); j++ {
 			sum += reader.sources[j].LastFrame()[i] * reader.levels[j].LastFrame()[i]
 		}
 		out[i] = sum * master[i]
