@@ -22,7 +22,7 @@ func Lookup(name string) (InitFunc, error) {
 	return c, nil
 }
 
-// Register registeres an input under a specified name
+// Register registers an input under a specified name
 func Register(name string, fn func(Config) (Patcher, error)) {
 	if _, ok := Registry[name]; ok {
 		panic(fmt.Sprintf("%s already registered as a module", name))
