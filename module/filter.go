@@ -20,7 +20,7 @@ type Filter struct {
 	fourPole              *FourPole
 }
 
-func NewFilter(kind int) (*Filter, error) {
+func NewFilter(kind FilterType) (*Filter, error) {
 	m := &Filter{
 		in:        &In{Name: "input", Source: zero},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(zero)},
@@ -46,7 +46,7 @@ func (reader *Filter) Read(out Frame) {
 }
 
 type FourPole struct {
-	kind      int
+	kind      FilterType
 	cutoff    Value
 	resonance Value
 	after     [4]Value
