@@ -30,7 +30,7 @@ func Register(name string, fn func(Config) (Patcher, error)) {
 	Registry[name] = fn
 }
 
-// ReggisteredTypes returns a list of all registered module types
+// RegisteredTypes returns a list of all registered module types
 func RegisteredTypes() []string {
 	types := []string{}
 	for k := range Registry {
