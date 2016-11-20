@@ -28,45 +28,67 @@ type Tape struct {
 
 	state     *tapeState
 	stateFunc tapeStateFunc
+	reads     int
+
+	endOfSplice Frame
 }
 
 func NewTape(max int) (*Tape, error) {
 	m := &Tape{
-		in:        &In{Name: "input", Source: zero},
-		trigger:   &In{Name: "trigger", Source: NewBuffer(zero)},
-		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
-		bias:      &In{Name: "bias", Source: NewBuffer(zero)},
-		organize:  &In{Name: "organize", Source: NewBuffer(zero)},
-		splice:    &In{Name: "splice", Source: NewBuffer(zero)},
-		erase:     &In{Name: "erase", Source: NewBuffer(zero)},
-		stateFunc: tapeIdle,
-		state:     newTapeState(max * SampleRate),
+		in:          &In{Name: "input", Source: zero},
+		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
+		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
+		bias:        &In{Name: "bias", Source: NewBuffer(zero)},
+		organize:    &In{Name: "organize", Source: NewBuffer(zero)},
+		splice:      &In{Name: "splice", Source: NewBuffer(zero)},
+		erase:       &In{Name: "erase", Source: NewBuffer(zero)},
+		stateFunc:   tapeIdle,
+		state:       newTapeState(max * SampleRate),
+		endOfSplice: make(Frame, FrameSize),
 	}
 	err := m.Expose(
 		[]*In{m.in, m.trigger, m.reset, m.bias, m.splice, m.organize, m.erase},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{
+			{Name: "output", Provider: Provide(&tapeOut{Tape: m})},
+			{Name: "endOfSplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
+		},
 	)
 	return m, err
 }
 
-func (reader *Tape) Read(out Frame) {
-	reader.in.Read(out)
-	trigger := reader.trigger.ReadFrame()
-	reset := reader.reset.ReadFrame()
-	organize := reader.organize.ReadFrame()
-	splice := reader.splice.ReadFrame()
-	erase := reader.erase.ReadFrame()
-	bias := reader.bias.ReadFrame()
+func (t *Tape) read(out Frame) {
+	if t.reads == 0 {
+		t.in.Read(out)
+		t.trigger.ReadFrame()
+		t.reset.ReadFrame()
+		t.organize.ReadFrame()
+		t.splice.ReadFrame()
+		t.erase.ReadFrame()
+		t.bias.ReadFrame()
+	}
 
+	if outs := t.OutputsActive(); outs > 0 {
+		t.reads = (t.reads + 1) % outs
+	}
+}
+
+type tapeOut struct {
+	*Tape
+}
+
+func (reader *tapeOut) Read(out Frame) {
+	reader.read(out)
 	for i := range out {
 		reader.state.in = out[i]
-		reader.state.organize = organize[i]
-		reader.state.trigger = trigger[i]
-		reader.state.reset = reset[i]
-		reader.state.splice = splice[i]
-		reader.state.erase = erase[i]
+		reader.state.organize = reader.organize.LastFrame()[i]
+		reader.state.trigger = reader.trigger.LastFrame()[i]
+		reader.state.reset = reader.reset.LastFrame()[i]
+		reader.state.splice = reader.splice.LastFrame()[i]
+		reader.state.erase = reader.erase.LastFrame()[i]
+		reader.state.endOfSplice = false
 
 		reader.stateFunc = reader.stateFunc(reader.state)
+		bias := reader.bias.LastFrame()
 
 		if bias[i] > 0 {
 			out[i] = (1-bias[i])*out[i] + reader.state.out
@@ -76,16 +98,32 @@ func (reader *Tape) Read(out Frame) {
 			out[i] = out[i] + reader.state.out
 		}
 
-		reader.state.lastTrigger = trigger[i]
-		reader.state.lastReset = reset[i]
-		reader.state.lastSplice = splice[i]
-		reader.state.lastErase = erase[i]
+		reader.state.lastTrigger = reader.state.trigger
+		reader.state.lastReset = reader.state.reset
+		reader.state.lastSplice = reader.state.splice
+		reader.state.lastErase = reader.state.erase
+		if reader.state.endOfSplice {
+			reader.endOfSplice[i] = 1
+		} else {
+			reader.endOfSplice[i] = -1
+		}
+	}
+}
+
+type tapeEndOfSplice struct {
+	*Tape
+}
+
+func (reader *tapeEndOfSplice) Read(out Frame) {
+	for i := range out {
+		out[i] = reader.endOfSplice[i]
 	}
 }
 
 type tapeState struct {
 	in, out, organize, reset, trigger, splice, erase Value
 	lastTrigger, lastReset, lastSplice, lastErase    Value
+	endOfSplice                                      bool
 
 	splices            *splices
 	memory             []Value
@@ -159,6 +197,7 @@ func tapePlayback(s *tapeState) tapeStateFunc {
 	if s.offset >= s.splices.At(s.end) {
 		s.start, s.end = s.splices.GetRange(s.organize)
 		s.offset = s.splices.At(s.start)
+		s.endOfSplice = true
 	}
 	return tapePlayback
 }
