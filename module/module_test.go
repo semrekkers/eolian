@@ -30,7 +30,7 @@ func TestDefaultsForExplosions(t *testing.T) {
 		{"Interpolate", nil, defaultOutput},
 		{"Invert", nil, defaultOutput},
 		{"LPFilter", nil, defaultOutput},
-		{"Loop", nil, defaultOutput},
+		{"Tape", nil, defaultOutput},
 		{"Mix", nil, defaultOutput},
 		{"Mod", nil, defaultOutput},
 		{"Multiple", nil, []string{"0", "1", "2", "3"}},

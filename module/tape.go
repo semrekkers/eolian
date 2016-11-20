@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Register("Loop", func(c Config) (Patcher, error) {
+	Register("Tape", func(c Config) (Patcher, error) {
 		var config struct {
 			Max int
 		}
@@ -17,21 +17,21 @@ func init() {
 		if config.Max == 0 {
 			config.Max = 10
 		}
-		return NewLoop(config.Max)
+		return NewTape(config.Max)
 	})
 }
 
-type Loop struct {
+type Tape struct {
 	IO
 	in, trigger, reset, level *In
 	organize, splice, erase   *In
 
-	state     *loopState
-	stateFunc loopStateFunc
+	state     *tapeState
+	stateFunc tapeStateFunc
 }
 
-func NewLoop(max int) (*Loop, error) {
-	m := &Loop{
+func NewTape(max int) (*Tape, error) {
+	m := &Tape{
 		in:        &In{Name: "input", Source: zero},
 		trigger:   &In{Name: "trigger", Source: NewBuffer(zero)},
 		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
@@ -39,8 +39,8 @@ func NewLoop(max int) (*Loop, error) {
 		organize:  &In{Name: "organize", Source: NewBuffer(zero)},
 		splice:    &In{Name: "splice", Source: NewBuffer(zero)},
 		erase:     &In{Name: "erase", Source: NewBuffer(zero)},
-		stateFunc: loopIdle,
-		state:     newLoopState(max * SampleRate),
+		stateFunc: tapeIdle,
+		state:     newTapeState(max * SampleRate),
 	}
 	err := m.Expose(
 		[]*In{m.in, m.trigger, m.reset, m.level, m.splice, m.organize, m.erase},
@@ -49,7 +49,7 @@ func NewLoop(max int) (*Loop, error) {
 	return m, err
 }
 
-func (reader *Loop) Read(out Frame) {
+func (reader *Tape) Read(out Frame) {
 	reader.in.Read(out)
 	trigger := reader.trigger.ReadFrame()
 	reset := reader.reset.ReadFrame()
@@ -75,7 +75,7 @@ func (reader *Loop) Read(out Frame) {
 	}
 }
 
-type loopState struct {
+type tapeState struct {
 	in, out, organize, reset, trigger, splice, erase Value
 	lastTrigger, lastReset, lastSplice, lastErase    Value
 
@@ -84,8 +84,8 @@ type loopState struct {
 	start, end, offset int
 }
 
-func newLoopState(max int) *loopState {
-	return &loopState{
+func newTapeState(max int) *tapeState {
+	return &tapeState{
 		memory:      make([]Value, max),
 		lastTrigger: -1,
 		lastReset:   -1,
@@ -94,32 +94,32 @@ func newLoopState(max int) *loopState {
 	}
 }
 
-type loopStateFunc func(*loopState) loopStateFunc
+type tapeStateFunc func(*tapeState) tapeStateFunc
 
-func loopIdle(s *loopState) loopStateFunc {
+func tapeIdle(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
 		s.offset = 0
 		s.splices = newSplices()
-		return loopRecording
+		return tapeRecording
 	}
-	return loopIdle
+	return tapeIdle
 }
 
-func loopRecording(s *loopState) loopStateFunc {
+func tapeRecording(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
 		s.splices.Add(s.offset)
 		s.start, s.end, s.offset = 0, 1, 0
-		return loopPlayback
+		return tapePlayback
 	}
 	s.memory[s.offset] = s.in
 	s.offset = (s.offset + 1) % len(s.memory)
-	return loopRecording
+	return tapeRecording
 }
 
-func loopPlayback(s *loopState) loopStateFunc {
+func tapePlayback(s *tapeState) tapeStateFunc {
 	if s.lastReset < 0 && s.reset > 0 {
 		s.offset = 0
-		return loopIdle
+		return tapeIdle
 	}
 	if s.lastSplice < 0 && s.splice > 0 {
 		s.splices.Add(s.offset)
@@ -138,7 +138,7 @@ func loopPlayback(s *loopState) loopStateFunc {
 		s.start, s.end = s.splices.GetRange(s.organize)
 		s.offset = s.splices.At(s.start)
 	}
-	return loopPlayback
+	return tapePlayback
 }
 
 func newSplices() *splices {
