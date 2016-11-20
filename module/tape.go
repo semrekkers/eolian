@@ -79,6 +79,7 @@ func (reader *Tape) Read(out Frame) {
 		reader.state.lastTrigger = trigger[i]
 		reader.state.lastReset = reset[i]
 		reader.state.lastSplice = splice[i]
+		reader.state.lastErase = erase[i]
 	}
 }
 
