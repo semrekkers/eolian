@@ -29,7 +29,7 @@ func (reader *Crossfade) Read(out Frame) {
 		if bias[i] > 0 {
 			out[i] = (1-bias[i])*a[i] + b[i]
 		} else if bias[i] < 0 {
-			out[i] = a[i] + (1-bias[i])*b[i]
+			out[i] = a[i] + (1+bias[i])*b[i]
 		} else {
 			out[i] = a[i] + b[i]
 		}

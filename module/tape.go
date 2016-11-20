@@ -23,8 +23,8 @@ func init() {
 
 type Tape struct {
 	IO
-	in, trigger, reset, level *In
-	organize, splice, erase   *In
+	in, trigger, reset, bias *In
+	organize, splice, erase  *In
 
 	state     *tapeState
 	stateFunc tapeStateFunc
@@ -35,7 +35,7 @@ func NewTape(max int) (*Tape, error) {
 		in:        &In{Name: "input", Source: zero},
 		trigger:   &In{Name: "trigger", Source: NewBuffer(zero)},
 		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
-		level:     &In{Name: "level", Source: NewBuffer(Value(1))},
+		bias:      &In{Name: "bias", Source: NewBuffer(zero)},
 		organize:  &In{Name: "organize", Source: NewBuffer(zero)},
 		splice:    &In{Name: "splice", Source: NewBuffer(zero)},
 		erase:     &In{Name: "erase", Source: NewBuffer(zero)},
@@ -43,7 +43,7 @@ func NewTape(max int) (*Tape, error) {
 		state:     newTapeState(max * SampleRate),
 	}
 	err := m.Expose(
-		[]*In{m.in, m.trigger, m.reset, m.level, m.splice, m.organize, m.erase},
+		[]*In{m.in, m.trigger, m.reset, m.bias, m.splice, m.organize, m.erase},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
@@ -56,7 +56,7 @@ func (reader *Tape) Read(out Frame) {
 	organize := reader.organize.ReadFrame()
 	splice := reader.splice.ReadFrame()
 	erase := reader.erase.ReadFrame()
-	level := reader.level.ReadFrame()
+	bias := reader.bias.ReadFrame()
 
 	for i := range out {
 		reader.state.in = out[i]
@@ -67,7 +67,14 @@ func (reader *Tape) Read(out Frame) {
 		reader.state.erase = erase[i]
 
 		reader.stateFunc = reader.stateFunc(reader.state)
-		out[i] = reader.state.out*level[i] + out[i]
+
+		if bias[i] > 0 {
+			out[i] = (1-bias[i])*out[i] + reader.state.out
+		} else if bias[i] < 0 {
+			out[i] = out[i] + (1+bias[i])*reader.state.out
+		} else {
+			out[i] = out[i] + reader.state.out
+		}
 
 		reader.state.lastTrigger = trigger[i]
 		reader.state.lastReset = reset[i]
