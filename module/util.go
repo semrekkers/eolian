@@ -27,3 +27,17 @@ func absValue(v Value) Value {
 func expRatio(ratio, speed Value) Value {
 	return Value(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))
 }
+
+func minInt(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
+func maxInt(x, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}
