@@ -94,6 +94,7 @@ type tapeState struct {
 
 func newTapeState(max int) *tapeState {
 	return &tapeState{
+		start:       0,
 		memory:      make([]Value, max),
 		lastTrigger: -1,
 		lastReset:   -1,
@@ -105,26 +106,39 @@ func newTapeState(max int) *tapeState {
 type tapeStateFunc func(*tapeState) tapeStateFunc
 
 func tapeIdle(s *tapeState) tapeStateFunc {
-	if s.lastTrigger < 0 && s.trigger > 0 {
-		s.offset = 0
+	if fn := handleTrigger(s); fn != nil {
 		s.splices = newSplices()
-		return tapeRecording
+		return fn
 	}
 	return tapeIdle
 }
 
 func tapeRecording(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
-		s.splices.Add(s.offset)
-		s.start, s.end, s.offset = 0, 1, 0
+		if s.splices.Count() == 0 {
+			s.splices.Add(s.offset)
+			s.end = 1
+		}
+		s.offset = s.start
 		return tapePlayback
 	}
 	s.memory[s.offset] = s.in
-	s.offset = (s.offset + 1) % len(s.memory)
+
+	if s.splices.Count() == 0 {
+		s.offset = (s.offset + 1) % len(s.memory)
+	} else {
+		s.offset++
+		if s.offset >= s.splices.At(s.end) {
+			s.offset = s.splices.At(s.start)
+		}
+	}
 	return tapeRecording
 }
 
 func tapePlayback(s *tapeState) tapeStateFunc {
+	if fn := handleTrigger(s); fn != nil {
+		return fn
+	}
 	if s.lastReset < 0 && s.reset > 0 {
 		s.offset = 0
 		return tapeIdle
@@ -149,6 +163,14 @@ func tapePlayback(s *tapeState) tapeStateFunc {
 	return tapePlayback
 }
 
+func handleTrigger(s *tapeState) tapeStateFunc {
+	if s.lastTrigger < 0 && s.trigger > 0 {
+		s.offset = s.start
+		return tapeRecording
+	}
+	return nil
+}
+
 func newSplices() *splices {
 	return &splices{
 		indexes: []int{0},
@@ -161,6 +183,10 @@ type splices struct {
 
 func (b *splices) Add(i int) {
 	b.indexes = append(b.indexes, i)
+}
+
+func (b *splices) Count() int {
+	return len(b.indexes) - 1
 }
 
 func (b *splices) At(i int) int {
