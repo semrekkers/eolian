@@ -168,6 +168,7 @@ func tapeRecording(s *tapeState) tapeStateFunc {
 		s.offset++
 		if s.offset >= s.splices.At(s.end) {
 			s.offset = s.splices.At(s.start)
+			return tapePlayback
 		}
 	}
 	return tapeRecording
