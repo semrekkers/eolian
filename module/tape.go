@@ -184,7 +184,6 @@ func tapePlayback(s *tapeState) tapeStateFunc {
 	}
 	if s.lastSplice < 0 && s.splice > 0 {
 		s.splices.Add(s.offset)
-		s.splices.Sort()
 		s.start, s.end = s.splices.GetRange(s.organize)
 		s.offset = s.splices.At(s.start)
 	}
@@ -223,6 +222,7 @@ type splices struct {
 
 func (b *splices) Add(i int) {
 	b.indexes = append(b.indexes, i)
+	sort.Sort(&indexSorter{b.indexes})
 }
 
 func (b *splices) Count() int {
@@ -238,10 +238,6 @@ func (b *splices) Erase(end int) {
 		return
 	}
 	b.indexes = append(b.indexes[:end], b.indexes[end+1:]...)
-}
-
-func (b *splices) Sort() {
-	sort.Sort(&indexSorter{b.indexes})
 }
 
 func (b *splices) GetRange(organize Value) (int, int) {
