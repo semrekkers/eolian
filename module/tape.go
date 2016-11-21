@@ -179,7 +179,8 @@ func tapePlayback(s *tapeState) tapeStateFunc {
 		return fn
 	}
 	if s.lastReset < 0 && s.reset > 0 {
-		s.offset = 0
+		s.splices = newSplices()
+		s.memory = make([]Value, len(s.memory))
 		return tapeIdle
 	}
 	if s.lastSplice < 0 && s.splice > 0 {
