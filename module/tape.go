@@ -132,6 +132,7 @@ type tapeState struct {
 
 func newTapeState(max int) *tapeState {
 	return &tapeState{
+		splices:     newSplices(),
 		start:       0,
 		memory:      make([]Value, max),
 		lastTrigger: -1,
@@ -145,7 +146,6 @@ type tapeStateFunc func(*tapeState) tapeStateFunc
 
 func tapeIdle(s *tapeState) tapeStateFunc {
 	if fn := handleTrigger(s); fn != nil {
-		s.splices = newSplices()
 		return fn
 	}
 	return tapeIdle
@@ -204,7 +204,7 @@ func tapePlayback(s *tapeState) tapeStateFunc {
 
 func handleTrigger(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
-		s.offset = s.start
+		s.offset = s.splices.At(s.start)
 		return tapeRecording
 	}
 	return nil
