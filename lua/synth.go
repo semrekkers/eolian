@@ -84,33 +84,14 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 				self := state.CheckTable(1)
 				raw := state.CheckTable(2)
 				namespace := getNamespace(self)
-				inputs := gluamapper.ToGoValue(raw, mapperOpts).(map[interface{}]interface{})
 
-				for key, raw := range inputs {
-					name := strings.Join(append(namespace, key.(string)), ".")
-
-					if ud, ok := raw.(*lua.LUserData); ok {
-						if out, ok := ud.Value.(module.Patcher); ok {
-							if err := p.Patch(name, out); err != nil {
-								state.RaiseError("%s", err.Error())
-							}
-						} else if v, ok := ud.Value.(module.Valuer); ok {
-							if err := p.Patch(name, v); err != nil {
-								state.RaiseError("%s", err.Error())
-							}
-						} else {
-							state.RaiseError("not a patcher (%T)", ud.Value)
-						}
-					} else if n, ok := raw.(lua.LNumber); ok {
-						if err := p.Patch(name, float64(n)); err != nil {
-							state.RaiseError("%s", err.Error())
-						}
-					} else {
-						if err := p.Patch(name, raw); err != nil {
-							state.RaiseError("%s", err.Error())
-						}
-					}
+				mapped := gluamapper.ToGoValue(raw, mapperOpts)
+				inputs, ok := mapped.(map[interface{}]interface{})
+				if !ok {
+					state.RaiseError("expected table, but got %T instead", mapped)
 				}
+				setInputs(state, p, namespace, inputs)
+
 				return 0
 			},
 			"scope": func(state *lua.LState) int {
@@ -154,4 +135,41 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	state.SetFuncs(table, funcs)
 
 	return table
+}
+
+func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) {
+	for key, raw := range inputs {
+		full := append(namespace, key.(string))
+
+		if inputs, ok := raw.(map[interface{}]interface{}); ok {
+			setInputs(state, p, full, inputs)
+			continue
+		}
+
+		name := strings.Join(full, ".")
+
+		switch v := raw.(type) {
+		case *lua.LUserData:
+			switch mv := v.Value.(type) {
+			case module.Patcher:
+				if err := p.Patch(name, mv); err != nil {
+					state.RaiseError("%s", err.Error())
+				}
+			case module.Valuer:
+				if err := p.Patch(name, mv); err != nil {
+					state.RaiseError("%s", err.Error())
+				}
+			default:
+				state.RaiseError("not a patcher (%T)", mv)
+			}
+		case lua.LNumber:
+			if err := p.Patch(name, float64(v)); err != nil {
+				state.RaiseError("%s", err.Error())
+			}
+		default:
+			if err := p.Patch(name, raw); err != nil {
+				state.RaiseError("%s", err.Error())
+			}
+		}
+	}
 }
