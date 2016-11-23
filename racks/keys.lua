@@ -47,7 +47,7 @@ function voice(midi, idx)
     }
 end
 
-function pkg.build(self)
+function pkg:build()
     local midi = synth.MIDIController { 
         device    = 2,
         polyphony = polyphony,
@@ -69,7 +69,7 @@ function pkg.build(self)
     }
 end
 
-function pkg.patch(self, modules)
+function pkg:patch(modules)
     with(modules, function(m)
         for i = 0,polyphony-1 do
             m.mix:scope(i):set { input = m.voices[i+1]:output() }
