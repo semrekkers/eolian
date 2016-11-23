@@ -1,16 +1,16 @@
-local pkg = {}
+local rack = {}
 
 -- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
 
-function pkg:build()
+function rack:build()
     return {
         -- Rack composition
     }
 end
 
-function pkg:patch(modules)
+function rack:patch(modules)
     -- Patch configuration
     return 0
 end
 
-return pkg
+return rack
