@@ -60,9 +60,10 @@ func (vm *VM) REPL() error {
 	fmt.Println("Press Ctrl-D to exit")
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:          "> ",
-		HistoryFile:     "/tmp/carrier.tmp",
+		HistoryFile:     "/tmp/eolian.tmp",
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
+		AutoComplete:    readline.SegmentFunc(vm.completion),
 	})
 	if err != nil {
 		return err
@@ -91,6 +92,35 @@ func (vm *VM) REPL() error {
 		}
 	}
 	return nil
+}
+
+func (vm *VM) completion(line [][]rune, pos int) [][]rune {
+	if len(line) > 1 {
+		return [][]rune{}
+	}
+	input := string(line[0])
+	parts := strings.Split(input, ".")
+
+	table := vm.GetGlobal("_G").(*lua.LTable)
+	for _, part := range parts {
+		table.ForEach(func(k, v lua.LValue) {
+			if part == k.String() {
+				if vt, ok := v.(*lua.LTable); ok {
+					table = vt
+				}
+			}
+		})
+	}
+
+	candidates := [][]rune{}
+	table.ForEach(func(k, v lua.LValue) {
+		c := k.String()
+		if len(parts) > 1 {
+			c = strings.Join(append(parts[:len(parts)-1], k.String()), ".")
+		}
+		candidates = append(candidates, []rune(c))
+	})
+	return candidates
 }
 
 func hz(state *lua.LState) int {
