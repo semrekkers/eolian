@@ -50,7 +50,7 @@ end
 local pkg = {}
 
 function pkg.build(self)
-    local modules = {
+    return {
         clock = {
             osc      = synth.Osc(),
             multiple = synth.Multiple(),
@@ -66,12 +66,6 @@ function pkg.build(self)
         mixer      = synth.Mix(),
         compressor = synth.Compress(),
         clipper    = synth.Clip(),
-    }
-    return {
-        modules = modules,
-        output  = function()
-            return modules.clipper:output()
-        end
     }
 end
 
@@ -114,6 +108,7 @@ function pkg.patch(self, modules)
         input = modules.compressor:output(),
         max   = 2,
     }
+    return modules.clipper:output()
 end
 
 return pkg

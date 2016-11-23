@@ -1,7 +1,7 @@
 local pkg = {}
 
 function pkg.build(self)
-    local modules = {
+    return {
         clock  = {
             osc      = synth.Osc(),
             multiple = synth.Multiple(),
@@ -25,12 +25,6 @@ function pkg.build(self)
             gain   = synth.Osc(),
             delay  = synth.FilteredDelay(),
         },
-    }
-    return {
-        modules = modules,
-        output = function()
-            return modules.delay.delay:output()
-        end
     }
 end
 
@@ -102,6 +96,8 @@ function pkg.patch(self, modules)
             cutoff = d.cutoff:output('sine'),
         }
     end)
+
+    return modules.delay.delay:output()
 end
 
 return pkg

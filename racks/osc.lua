@@ -23,15 +23,12 @@ function buildVoice(idx, control, envelope, pitch)
             b = t.adsr:output()
         }
     end)
-    return {
-        output = modules.amp:output()
-    }
 end
 
 function pkg.build(self)
     local pressButtons = 16
 
-    local modules = {
+    return {
         control = synth.OSCServer{
             port = 8000,
             -- clientHost = '192.168.1.6',
@@ -97,7 +94,6 @@ function pkg.build(self)
     return {
         modules = modules,
         output = function()
-            return modules.mix:output()
         end
     }
 end
@@ -115,6 +111,8 @@ function pkg.patch(self, modules)
         input = modules.voice.mix:output(),
         level = modules.control:output('/1/fader5')
     }
+
+    return modules.mix:output()
 end
 
 return pkg

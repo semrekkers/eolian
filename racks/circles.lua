@@ -3,7 +3,7 @@ local pkg = {}
 function pkg.build(self, path)
     local supersaw = dofile(path .. '/voice/supersaw.lua')
 
-    local modules = {
+    return {
         -- controller = synth.MIDIController({ device = 2 }),
         mix = synth.Mix(),
         clock = {
@@ -44,12 +44,6 @@ function pkg.build(self, path)
             noise  = synth.Noise()
         },
         compressor = synth.Compress()
-    }
-    return {
-        modules = modules,
-        output = function()
-            return modules.compressor:output()
-        end
     }
 end
 
@@ -210,6 +204,8 @@ function pkg.patch(self, modules)
     end)
 
     modules.compressor:set { input = modules.effects.noise:output() }
+
+    return modules.compressor:output()
 end
 
 return pkg

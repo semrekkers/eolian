@@ -58,7 +58,7 @@ function pkg.build(self)
         table.insert(voices, i+1, voice(midi, i))
     end
 
-    local modules = {
+    return {
         midi     = midi,
         voices   = voices,
         mix      = synth.Mix { size = polyphony },
@@ -66,12 +66,6 @@ function pkg.build(self)
         delay    = synth.FBComb(),
         compress = synth.Compress(),
         clip     = synth.Clip(),
-    }
-    return {
-        modules = modules,
-        output = function()
-            return modules.clip:output()
-        end
     }
 end
 
@@ -86,6 +80,8 @@ function pkg.patch(self, modules)
         m.compress:set { input = m.delay:output() }
         m.clip:set     { input = m.compress:output(), max = 3 }
     end)
+
+    return modules.clip:output()
 end
 
 return pkg

@@ -1,7 +1,7 @@
 local pkg = {}
 
 function pkg.build(self)
-    local modules = {
+    return {
         mix = synth.Mix(),
         clock = {
             osc      = synth.Osc(),
@@ -15,12 +15,6 @@ function pkg.build(self)
             filter = synth.LPFilter(),
         },
         compress = synth.Compress(),
-    }
-    return {
-        modules = modules,
-        output = function()
-            return modules.compress:output()
-        end
     }
 end
 
@@ -64,6 +58,8 @@ function pkg.patch(self, modules)
     -- 
     modules.mix:scope(0):set { input = modules.ks.filter:output() }
     modules.compress:set { input = modules.mix:output() }
+
+    return modules.compress:output()
 end
 
 return pkg

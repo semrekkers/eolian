@@ -69,12 +69,10 @@ function Rack.rebuild()
 	Rack.clear()
 	close(Rack.modules)
 
-	local r = loadfile(Rack.filepath)
-	local built = r:build(Rack.path)
-	r:patch(built.modules)
-	Rack.modules = built.modules
+	local r      = loadfile(Rack.filepath)
+	Rack.modules = r:build(Rack.path)
 
-	synth.Engine:set { input = built.output() }
+	synth.Engine:set { input = r:patch(Rack.modules) }
 end
 
 function Rack.repatch()
@@ -90,8 +88,7 @@ function Rack.load(path)
 	Rack.filepath = path
 	Rack.path	  = filepath.dir(path)
 	Rack.modules  = with(r:build(Rack.path), function(b)
-		r:patch(b.modules)
-		synth.Engine:set { input = b.output() }
+		synth.Engine:set { input = r:patch(b) }
 		return b.modules
 	end)
 end
