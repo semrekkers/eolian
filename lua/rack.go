@@ -87,9 +87,9 @@ function Rack.load(path)
 
 	Rack.filepath = path
 	Rack.path	  = filepath.dir(path)
-	Rack.modules  = with(r:build(Rack.path), function(b)
-		synth.Engine:set { input = r:patch(b) }
-		return b.modules
+	Rack.modules  = with(r:build(Rack.path), function(modules)
+		synth.Engine:set { input = r:patch(modules) }
+		return modules
 	end)
 end
 `
