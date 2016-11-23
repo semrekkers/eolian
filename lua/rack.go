@@ -8,7 +8,7 @@ end
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if o['_type'] == 'module' then
-			print(o:inspect())
+			print(o:info())
 			return
 		end
 	end

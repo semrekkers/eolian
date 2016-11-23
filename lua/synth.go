@@ -1,6 +1,7 @@
 package lua
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/brettbuddin/eolian/module"
@@ -58,13 +59,19 @@ func getNamespace(table *lua.LTable) []string {
 func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
-			"inspect": func(state *lua.LState) int {
+			"info": func(state *lua.LState) int {
 				str := "(no info)"
 				if v, ok := p.(module.Inspecter); ok {
 					str = v.Inspect()
 				}
 				state.Push(lua.LString(str))
 				return 1
+			},
+			"inspect": func(state *lua.LState) int {
+				if v, ok := p.(module.Inspecter); ok {
+					fmt.Println(v.Inspect())
+				}
+				return 0
 			},
 			"output": func(state *lua.LState) int {
 				self := state.CheckTable(1)
