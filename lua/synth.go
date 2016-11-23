@@ -98,7 +98,6 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 					state.RaiseError("expected table, but got %T instead", mapped)
 				}
 				setInputs(state, p, namespace, inputs)
-
 				return 0
 			},
 			"scope": func(state *lua.LState) int {
