@@ -1,6 +1,6 @@
-local pkg = {}
+local rack = {}
 
-function pkg.build(self, path)
+function rack.build(self, path)
     local supersaw = dofile(path .. '/voice/supersaw.lua')
 
     return {
@@ -47,7 +47,7 @@ function pkg.build(self, path)
     }
 end
 
-function pkg.patch(self, modules)
+function rack.patch(self, modules)
     --
     -- Clock
     --
@@ -208,4 +208,4 @@ function pkg.patch(self, modules)
     return modules.compressor:output()
 end
 
-return pkg
+return rack

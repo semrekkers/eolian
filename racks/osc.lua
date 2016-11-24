@@ -2,7 +2,7 @@ local pkg = {}
 
 -- Uses the OSC mapping provided by TouchOSC's Simple layout
 
-function buildVoice(idx, control, envelope, pitch)
+local function buildVoice(idx, control, envelope, pitch)
     local modules = {
         osc  = synth.Osc(),
         adsr = synth.ADSR(),

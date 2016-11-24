@@ -1,8 +1,6 @@
-local pkg = {}
-
 local polyphony = 4
 
-function voice(midi, idx)
+local function voice(midi, idx)
     local pitch = synth.Multiple()
     local high = {
         osc = synth.Osc(),
@@ -47,7 +45,9 @@ function voice(midi, idx)
     }
 end
 
-function pkg:build()
+local rack = {}
+
+function rack:build()
     local midi = synth.MIDIController { 
         device    = 2,
         polyphony = polyphony,
@@ -69,7 +69,7 @@ function pkg:build()
     }
 end
 
-function pkg:patch(modules)
+function rack:patch(modules)
     with(modules, function(m)
         for i = 0,polyphony-1 do
             m.mix:scope(i):set { input = m.voices[i+1]:output() }
@@ -84,4 +84,4 @@ function pkg:patch(modules)
     return modules.clip:output()
 end
 
-return pkg
+return rack

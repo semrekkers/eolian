@@ -47,9 +47,9 @@ local function splat()
     }
 end
 
-local pkg = {}
+local rack = {}
 
-function pkg.build(self)
+function rack.build(self)
     return {
         clock = {
             osc      = synth.Osc(),
@@ -69,7 +69,7 @@ function pkg.build(self)
     }
 end
 
-function pkg.patch(self, modules)
+function rack.patch(self, modules)
     with(modules.clock, function(c)
         c.osc:set      { pitch = hz(0.25) }
         c.multiple:set { input = c.osc:output('pulse') }
@@ -111,4 +111,4 @@ function pkg.patch(self, modules)
     return modules.clipper:output()
 end
 
-return pkg
+return rack

@@ -1,6 +1,6 @@
-local pkg = {}
+local rack = {}
 
-function pkg.build(self)
+function rack.build(self)
     return {
         clock  = {
             osc      = synth.Osc(),
@@ -28,7 +28,7 @@ function pkg.build(self)
     }
 end
 
-function pkg.patch(self, modules)
+function rack.patch(self, modules)
     with(modules.clock, function(c)
         c.osc:set      { pitch = hz(9) }
         c.multiple:set { input = c.osc:output('pulse') }
@@ -100,4 +100,4 @@ function pkg.patch(self, modules)
     return modules.delay.delay:output()
 end
 
-return pkg
+return rack
