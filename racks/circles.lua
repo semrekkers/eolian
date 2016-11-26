@@ -4,7 +4,6 @@ function rack.build(self, path)
     local supersaw = dofile(path .. '/voice/supersaw.lua')
 
     return {
-        -- controller = synth.MIDIController({ device = 2 }),
         mix = synth.Mix(),
         clock = {
             osc      = synth.Osc(),

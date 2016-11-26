@@ -26,11 +26,8 @@ func init() {
 			return nil, err
 		}
 
-		// Default to 16-31 CC numbers
-		if len(config.CCOutputs) == 0 {
-			for i := 16; i < 32; i++ {
-				config.CCOutputs = append(config.CCOutputs, CC{1, i})
-			}
+		if len(config.Channels) == 0 {
+			config.Channels = []int{1}
 		}
 
 		if config.FrameRate == 0 {
@@ -47,7 +44,7 @@ func init() {
 
 type ControllerConfig struct {
 	Device, Polyphony, FrameRate int
-	CCOutputs                    []CC `mapstructure:"ccOutputs"`
+	Channels                     []int
 }
 
 type CC struct {
@@ -90,14 +87,19 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
 		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})})
 
-	for _, e := range config.CCOutputs {
-		func(e CC) {
-			offset := e.Channel - 1
-			outs = append(outs, &module.Out{
-				Name:     fmt.Sprintf("%d.cc/%d", offset, e.Number),
-				Provider: module.Provide(&ctrlCC{Controller: m, status: 176 + offset, number: e.Number}),
-			})
-		}(e)
+	for _, c := range config.Channels {
+		for n := 0; n < 128; n++ {
+			func(c, n int) {
+				outs = append(outs, &module.Out{
+					Name: fmt.Sprintf("cc.%d.%d", c, n),
+					Provider: module.Provide(&ctrlCC{
+						Controller: m,
+						status:     176 + (c - 1),
+						number:     n,
+					}),
+				})
+			}(c, n)
+		}
 	}
 
 	err = m.Expose(nil, outs)
