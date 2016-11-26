@@ -16,7 +16,7 @@ local function voice(midi, idx)
     pitch:set { input = midi:scope(idx):output('pitch') }
 
     high.osc:set  { pitch = pitch:output(0) }
-    low.pitch:set { a = pitch:output(1), b = 0.25 }
+    low.pitch:set { a = pitch:output(1), b = 0.5 }
     low.osc:set   { pitch = low.pitch:output() }
 
     mix:scope(0):set { input = high.osc:output('saw') }
