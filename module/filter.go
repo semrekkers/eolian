@@ -23,7 +23,7 @@ type Filter struct {
 func NewFilter(kind FilterType) (*Filter, error) {
 	m := &Filter{
 		in:        &In{Name: "input", Source: zero},
-		cutoff:    &In{Name: "cutoff", Source: NewBuffer(zero)},
+		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
 		fourPole:  &FourPole{kind: kind},
 	}
