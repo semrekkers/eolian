@@ -5,10 +5,6 @@ local function voice(midi, idx)
     local high = {
         osc = synth.Osc(),
     }
-    local mid = {
-        pitch = synth.Multiply(),
-        osc   = synth.Osc(),
-    }
     local low = {
         pitch = synth.Multiply(),
         osc   = synth.Osc(),
@@ -20,14 +16,11 @@ local function voice(midi, idx)
     pitch:set { input = midi:scope(idx):output('pitch') }
 
     high.osc:set  { pitch = pitch:output(0) }
-    mid.pitch:set { a = pitch:output(1), b = 0.75 }
-    mid.osc:set   { pitch = mid.pitch:output() }
-    low.pitch:set { a = pitch:output(2), b = 0.25 }
+    low.pitch:set { a = pitch:output(1), b = 0.25 }
     low.osc:set   { pitch = low.pitch:output() }
 
     mix:scope(0):set { input = high.osc:output('saw') }
-    mix:scope(1):set { input = mid.osc:output('saw') }
-    mix:scope(2):set { input = low.osc:output('saw') }
+    mix:scope(1):set { input = low.osc:output('saw') }
 
     adsr:set  {
         gate    = midi:scope(idx):output('gate'),
