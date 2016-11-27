@@ -327,7 +327,7 @@ func (reader *ctrlCC) Read(out module.Frame) {
 	for i := range out {
 		e := reader.events[i]
 		if int(e.Status) == reader.status && int(e.Data1) == reader.number {
-			reader.value = (module.Value(float64(e.Data2)/127) + reader.value) * 0.5
+			reader.value = module.Value(float64(e.Data2) / 127)
 		}
 		out[i] = reader.value
 	}
