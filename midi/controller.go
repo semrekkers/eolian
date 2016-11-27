@@ -26,8 +26,8 @@ func init() {
 			return nil, err
 		}
 
-		if len(config.Channels) == 0 {
-			config.Channels = []int{1}
+		if len(config.CCChannels) == 0 {
+			config.CCChannels = []int{1}
 		}
 
 		if config.FrameRate == 0 {
@@ -44,7 +44,7 @@ func init() {
 
 type ControllerConfig struct {
 	Device, Polyphony, FrameRate int
-	Channels                     []int
+	CCChannels                   []int `mapstructure:"ccChannels"`
 }
 
 type CC struct {
@@ -87,7 +87,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
 		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})})
 
-	for _, c := range config.Channels {
+	for _, c := range config.CCChannels {
 		for n := 0; n < 128; n++ {
 			func(c, n int) {
 				outs = append(outs, &module.Out{
