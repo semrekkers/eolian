@@ -1,7 +1,22 @@
 package module
 
+import "github.com/mitchellh/mapstructure"
+
 func init() {
-	Register("Interpolate", func(Config) (Patcher, error) { return NewInterpolate() })
+	Register("Interpolate", func(c Config) (Patcher, error) {
+		var config InterpolateConfig
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+		if config.Max == 0 {
+			config.Max = 1
+		}
+		return NewInterpolate(config)
+	})
+}
+
+type InterpolateConfig struct {
+	Min, Max Value
 }
 
 type Interpolate struct {
@@ -9,11 +24,11 @@ type Interpolate struct {
 	in, max, min *In
 }
 
-func NewInterpolate() (*Interpolate, error) {
+func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
 	m := &Interpolate{
 		in:  &In{Name: "input", Source: zero},
-		max: &In{Name: "max", Source: NewBuffer(Value(1))},
-		min: &In{Name: "min", Source: NewBuffer(zero)},
+		max: &In{Name: "max", Source: NewBuffer(config.Max)},
+		min: &In{Name: "min", Source: NewBuffer(config.Min)},
 	}
 	err := m.Expose(
 		[]*In{m.in, m.max, m.min},

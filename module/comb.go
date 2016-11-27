@@ -12,7 +12,7 @@ func init() {
 				return nil, err
 			}
 			if config.Size == 0 {
-				config.Size = 100
+				config.Size = 10000
 			}
 			return f(int(SampleRate/1000*float64(config.Size)), c)
 		}
@@ -34,7 +34,7 @@ type FFComb struct {
 func NewFFComb(size int) (*FFComb, error) {
 	m := &FFComb{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(1))},
+		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}
@@ -65,7 +65,7 @@ type FBComb struct {
 func NewFBComb(size int) (*FBComb, error) {
 	m := &FBComb{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(1))},
+		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}
@@ -97,7 +97,7 @@ type AllPass struct {
 func NewAllPass(size int) (*AllPass, error) {
 	m := &AllPass{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(1))},
+		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}

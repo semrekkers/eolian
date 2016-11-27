@@ -28,7 +28,17 @@ func buildConstructor(init module.InitFunc) func(state *lua.LState) int {
 			table := state.CheckTable(1)
 			fields := gluamapper.ToGoValue(table, mapperOpts).(map[interface{}]interface{})
 			for k, v := range fields {
-				config[k.(string)] = v
+				switch asserted := v.(type) {
+				case *lua.LUserData:
+					switch ud := asserted.Value.(type) {
+					case module.Valuer:
+						config[k.(string)] = ud.Value()
+					default:
+						state.RaiseError("unconvertible userdata assigned: %T", ud)
+					}
+				default:
+					config[k.(string)] = v
+				}
 			}
 		}
 
