@@ -18,7 +18,7 @@ type FilteredDelay struct {
 func NewFilteredDelay(size int) (*FilteredDelay, error) {
 	m := &FilteredDelay{
 		in:        &In{Name: "input", Source: zero},
-		duration:  &In{Name: "duration", Source: NewBuffer(Value(0.5))},
+		duration:  &In{Name: "duration", Source: NewBuffer(Value(0.01))},
 		gain:      &In{Name: "gain", Source: NewBuffer(Value(0.98))},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
