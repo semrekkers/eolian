@@ -17,18 +17,24 @@ func init() {
 
 type InterpolateConfig struct {
 	Min, Max Value
+	Smooth   bool
 }
 
 type Interpolate struct {
 	IO
 	in, max, min *In
+
+	smooth bool
+	after  [2]Value
 }
 
 func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
 	m := &Interpolate{
-		in:  &In{Name: "input", Source: zero},
-		max: &In{Name: "max", Source: NewBuffer(config.Max)},
-		min: &In{Name: "min", Source: NewBuffer(config.Min)},
+		in:     &In{Name: "input", Source: zero},
+		max:    &In{Name: "max", Source: NewBuffer(config.Max)},
+		min:    &In{Name: "min", Source: NewBuffer(config.Min)},
+		smooth: config.Smooth,
+		after:  [2]Value{},
 	}
 	err := m.Expose(
 		[]*In{m.in, m.max, m.min},
@@ -44,5 +50,10 @@ func (reader *Interpolate) Read(out Frame) {
 
 	for i := range out {
 		out[i] = out[i]*(max[i]-min[i]) + min[i]
+		if reader.smooth {
+			reader.after[0] += (-reader.after[0] + out[i]) * 0.5
+			reader.after[1] += (-reader.after[1] + reader.after[0]) * 0.5
+			out[i] = reader.after[1]
+		}
 	}
 }
