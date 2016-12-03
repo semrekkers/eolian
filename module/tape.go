@@ -85,7 +85,7 @@ func (reader *tapeOut) Read(out Frame) {
 		reader.state.reset = reader.reset.LastFrame()[i]
 		reader.state.splice = reader.splice.LastFrame()[i]
 		reader.state.erase = reader.erase.LastFrame()[i]
-		reader.state.endOfSplice = false
+		reader.state.atSpliceEnd = false
 
 		reader.stateFunc = reader.stateFunc(reader.state)
 		bias := reader.bias.LastFrame()
@@ -102,7 +102,7 @@ func (reader *tapeOut) Read(out Frame) {
 		reader.state.lastReset = reader.state.reset
 		reader.state.lastSplice = reader.state.splice
 		reader.state.lastErase = reader.state.erase
-		if reader.state.endOfSplice {
+		if reader.state.atSpliceEnd {
 			reader.endOfSplice[i] = 1
 		} else {
 			reader.endOfSplice[i] = -1
@@ -123,22 +123,58 @@ func (reader *tapeEndOfSplice) Read(out Frame) {
 type tapeState struct {
 	in, out, organize, reset, trigger, splice, erase Value
 	lastTrigger, lastReset, lastSplice, lastErase    Value
-	endOfSplice                                      bool
 
-	splices            *splices
-	memory             []Value
-	start, end, offset int
+	splices *splices
+	memory  []Value
+
+	offset, recordingEnd   int
+	eraseHoldCount         int
+	spliceStart, spliceEnd int
+	atSpliceEnd            bool
 }
 
 func newTapeState(max int) *tapeState {
 	return &tapeState{
 		splices:     newSplices(),
-		start:       0,
+		spliceStart: 0,
 		memory:      make([]Value, max),
 		lastTrigger: -1,
 		lastReset:   -1,
 		lastSplice:  -1,
 		lastErase:   -1,
+	}
+}
+
+func (s *tapeState) addSplice() {
+	s.splices.Add(s.offset)
+	s.spliceStart, s.spliceEnd = s.splices.GetRange(s.organize)
+	s.offset = s.splices.At(s.spliceStart)
+}
+
+func (s *tapeState) removeSplice() {
+	s.eraseHoldCount = 0
+	s.splices.Erase(s.spliceEnd)
+	s.spliceStart, s.spliceEnd = s.splices.GetRange(s.organize)
+}
+
+func (s *tapeState) clear(memory bool) {
+	s.splices = newSplices()
+	if memory {
+		s.memory = make([]Value, len(s.memory))
+		s.recordingEnd = 0
+	} else {
+		s.splices.Add(s.recordingEnd)
+	}
+	s.offset, s.spliceStart, s.spliceEnd = 0, 0, 1
+}
+
+func (s *tapeState) playback() {
+	s.out = s.memory[s.offset]
+	s.offset++
+	if s.offset >= s.splices.At(s.spliceEnd) {
+		s.spliceStart, s.spliceEnd = s.splices.GetRange(s.organize)
+		s.offset = s.splices.At(s.spliceStart)
+		s.atSpliceEnd = true
 	}
 }
 
@@ -154,10 +190,11 @@ func tapeIdle(s *tapeState) tapeStateFunc {
 func tapeRecording(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
 		if s.splices.Count() == 0 {
+			s.recordingEnd = s.offset
 			s.splices.Add(s.offset)
-			s.end = 1
+			s.spliceEnd = 1
 		}
-		s.offset = s.start
+		s.offset = s.spliceStart
 		return tapePlayback
 	}
 	s.memory[s.offset] = s.in
@@ -166,47 +203,51 @@ func tapeRecording(s *tapeState) tapeStateFunc {
 		s.offset = (s.offset + 1) % len(s.memory)
 	} else {
 		s.offset++
-		if s.offset >= s.splices.At(s.end) {
-			s.offset = s.splices.At(s.start)
+		if s.offset >= s.splices.At(s.spliceEnd) {
+			s.offset = s.splices.At(s.spliceStart)
 			return tapePlayback
 		}
 	}
 	return tapeRecording
 }
 
+func tapeErasing(s *tapeState) tapeStateFunc {
+	if s.eraseHoldCount > 2*SampleRate {
+		s.eraseHoldCount = 0
+		s.clear(false)
+		return tapePlayback
+	}
+	s.eraseHoldCount++
+	if s.lastErase > 0 && s.erase < 0 {
+		s.removeSplice()
+		return tapePlayback
+	}
+	s.playback()
+	return tapeErasing
+}
+
 func tapePlayback(s *tapeState) tapeStateFunc {
 	if fn := handleTrigger(s); fn != nil {
 		return fn
 	}
-	if s.lastReset < 0 && s.reset > 0 {
-		s.splices = newSplices()
-		s.memory = make([]Value, len(s.memory))
-		s.start = 0
-		return tapeIdle
-	}
 	if s.lastSplice < 0 && s.splice > 0 {
-		s.splices.Add(s.offset)
-		s.start, s.end = s.splices.GetRange(s.organize)
-		s.offset = s.splices.At(s.start)
+		s.addSplice()
+		return tapePlayback
 	}
 	if s.lastErase < 0 && s.erase > 0 {
-		s.splices.Erase(s.end)
-		s.start, s.end = s.splices.GetRange(s.organize)
+		return tapeErasing
 	}
-
-	s.out = s.memory[s.offset]
-	s.offset++
-	if s.offset >= s.splices.At(s.end) {
-		s.start, s.end = s.splices.GetRange(s.organize)
-		s.offset = s.splices.At(s.start)
-		s.endOfSplice = true
+	if s.lastReset < 0 && s.reset > 0 {
+		s.clear(true)
+		return tapeIdle
 	}
+	s.playback()
 	return tapePlayback
 }
 
 func handleTrigger(s *tapeState) tapeStateFunc {
 	if s.lastTrigger < 0 && s.trigger > 0 {
-		s.offset = s.splices.At(s.start)
+		s.offset = s.splices.At(s.spliceStart)
 		return tapeRecording
 	}
 	return nil
