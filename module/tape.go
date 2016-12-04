@@ -174,12 +174,16 @@ func (s *tapeState) erase() {
 	s.offset, s.spliceStart, s.spliceEnd, s.recordingEnd = 0, 0, 0, 0
 }
 
+func (s *tapeState) resetPlayhead() {
+	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
+	s.offset = s.markers.At(s.spliceStart)
+}
+
 func (s *tapeState) playback() {
 	s.out = s.memory[s.offset]
 	s.offset++
 	if s.offset >= s.markers.At(s.spliceEnd) {
-		s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
-		s.offset = s.markers.At(s.spliceStart)
+		s.resetPlayhead()
 		s.atSpliceEnd = true
 	}
 }
@@ -193,6 +197,7 @@ func tapeIdle(s *tapeState) tapeStateFunc {
 		return next
 	}
 	if s.recordingEnd != 0 && s.play > 0 {
+		s.resetPlayhead()
 		return tapePlay
 	}
 	return tapeIdle
