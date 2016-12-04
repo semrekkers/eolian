@@ -42,6 +42,7 @@ func TestDefaultsForExplosions(t *testing.T) {
 		{"Reverb", nil, defaultOutput},
 		{"SampleHold", nil, defaultOutput},
 		{"Sequence", nil, []string{"gate", "pitch", "sync"}},
+		{"GateSequence", nil, []string{"on", "off"}},
 		{"Sum", nil, defaultOutput},
 		{"Switch", nil, defaultOutput},
 		{"Wrap", nil, defaultOutput},
