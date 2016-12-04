@@ -43,11 +43,22 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < steps; i++ {
 		m.steps[i] = &In{Name: fmt.Sprintf("%d.status", i), Source: NewBuffer(zero)}
+		inputs = append(inputs, m.steps[i])
 	}
 
 	if err := m.Expose(inputs, []*Out{
-		&Out{Name: "on", Provider: Provide(&gateSequencerOut{GateSequencer: m})},
-		&Out{Name: "off", Provider: Provide(&gateSequencerOut{GateSequencer: m})},
+		&Out{Name: "on", Provider: Provide(
+			&gateSequencerOut{
+				GateSequencer: m,
+				onBeat:        true,
+				lastStep:      -1,
+			})},
+		&Out{Name: "off", Provider: Provide(
+			&gateSequencerOut{
+				GateSequencer: m,
+				onBeat:        false,
+				lastStep:      -1,
+			})},
 	}); err != nil {
 		return nil, err
 	}
@@ -80,19 +91,25 @@ func (s *GateSequencer) read(out Frame) {
 
 type gateSequencerOut struct {
 	*GateSequencer
-	onBeat bool
+	onBeat   bool
+	lastStep int
 }
 
 func (reader *gateSequencerOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
 		status := reader.steps[reader.step].LastFrame()[i]
-		if reader.onBeat && status > 0 {
-			out[i] = 1
-		} else if !reader.onBeat && status <= 0 {
-			out[i] = 1
-		} else {
+		if reader.step != reader.lastStep {
 			out[i] = -1
+		} else {
+			if reader.onBeat && status > 0 {
+				out[i] = 1
+			} else if !reader.onBeat && status <= 0 {
+				out[i] = 1
+			} else {
+				out[i] = -1
+			}
 		}
+		reader.lastStep = reader.step
 	}
 }
