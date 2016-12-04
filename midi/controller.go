@@ -55,10 +55,9 @@ type Controller struct {
 	module.IO
 	*portmidi.Stream
 
-	frameRate   int
-	events      []portmidi.Event
-	eventStream <-chan portmidi.Event
-	reads       int
+	frameRate int
+	events    []portmidi.Event
+	reads     int
 
 	lastClock module.Value
 	clockTick int
@@ -103,8 +102,6 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		}
 	}
 
-	m.eventStream = m.Stream.Listen()
-
 	err = m.Expose(nil, outs)
 	return m, nil
 }
@@ -115,9 +112,13 @@ func (c *Controller) read(out module.Frame) {
 			if c.Stream == nil {
 				continue
 			}
-			select {
-			case c.events[i] = <-c.eventStream:
-			default:
+			events, err := c.Stream.Read(1)
+			if err != nil {
+				panic(err)
+			}
+			if len(events) == 1 {
+				c.events[i] = events[0]
+			} else {
 				c.events[i] = portmidi.Event{}
 			}
 		}
