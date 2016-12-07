@@ -7,13 +7,13 @@ end
 
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
-		if o['_type'] == 'module' then
+		if o['__type'] == 'module' then
 			print(o:info())
 			return
 		end
 	end
 	for k, v in pairs(o) do
-		if k ~= '_namespace' then
+		if k ~= '__namespace' then
 			if prefix == nil then
 				prefix = ''
 			end

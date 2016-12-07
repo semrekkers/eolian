@@ -54,7 +54,7 @@ func buildConstructor(init module.InitFunc) func(state *lua.LState) int {
 }
 
 func getNamespace(table *lua.LTable) []string {
-	raw := table.RawGet(lua.LString("_namespace")).(*lua.LTable)
+	raw := table.RawGet(lua.LString("__namespace")).(*lua.LTable)
 	namespace := gluamapper.ToGoValue(raw, mapperOpts)
 
 	segs := []string{}
@@ -85,7 +85,6 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 			},
 			"output": func(state *lua.LState) int {
 				self := state.CheckTable(1)
-
 				name := "output"
 				if state.GetTop() > 1 {
 					name = state.ToString(2)
@@ -110,24 +109,8 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 				setInputs(state, p, namespace, inputs)
 				return 0
 			},
-			"scope": func(state *lua.LState) int {
-				self := state.CheckTable(1)
-
-				newNamespace := state.NewTable()
-				namespace := self.RawGet(lua.LString("_namespace")).(*lua.LTable)
-				namespace.ForEach(func(_, v lua.LValue) { newNamespace.Append(v) })
-
-				name := state.ToString(2)
-				newNamespace.Append(lua.LString(name))
-
-				proxy := state.NewTable()
-				proxy.RawSet(lua.LString("_namespace"), newNamespace)
-				mt := state.NewTable()
-				mt.RawSet(lua.LString("__index"), self)
-				state.SetMetatable(proxy, mt)
-				state.Push(proxy)
-				return 1
-			},
+			"scope": scopedOutput(p),
+			"ns":    scopedOutput(p),
 			"reset": func(state *lua.LState) int {
 				if err := p.Reset(); err != nil {
 					state.RaiseError("%s", err.Error())
@@ -146,8 +129,8 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	}(p)
 
 	table := state.NewTable()
-	state.RawSet(table, lua.LString("_namespace"), state.NewTable())
-	state.RawSet(table, lua.LString("_type"), lua.LString("module"))
+	state.RawSet(table, lua.LString("__namespace"), state.NewTable())
+	state.RawSet(table, lua.LString("__type"), lua.LString("module"))
 	state.SetFuncs(table, funcs)
 
 	return table
@@ -187,5 +170,26 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 				state.RaiseError("%s", err.Error())
 			}
 		}
+	}
+}
+
+func scopedOutput(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+
+		newNamespace := state.NewTable()
+		namespace := self.RawGet(lua.LString("__namespace")).(*lua.LTable)
+		namespace.ForEach(func(_, v lua.LValue) { newNamespace.Append(v) })
+
+		name := state.ToString(2)
+		newNamespace.Append(lua.LString(name))
+
+		proxy := state.NewTable()
+		proxy.RawSet(lua.LString("__namespace"), newNamespace)
+		mt := state.NewTable()
+		mt.RawSet(lua.LString("__index"), self)
+		state.SetMetatable(proxy, mt)
+		state.Push(proxy)
+		return 1
 	}
 }
