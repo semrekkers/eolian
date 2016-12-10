@@ -42,7 +42,7 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < steps; i++ {
-		m.steps[i] = &In{Name: fmt.Sprintf("%d.status", i), Source: NewBuffer(zero)}
+		m.steps[i] = &In{Name: fmt.Sprintf("%d.mode", i), Source: NewBuffer(zero)}
 		inputs = append(inputs, m.steps[i])
 	}
 
@@ -98,13 +98,13 @@ type gateSequencerOut struct {
 func (reader *gateSequencerOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
-		status := reader.steps[reader.step].LastFrame()[i]
+		mode := reader.steps[reader.step].LastFrame()[i]
 		if reader.step != reader.lastStep {
 			out[i] = -1
 		} else {
-			if reader.onBeat && status > 0 {
+			if reader.onBeat && mode > 0 {
 				out[i] = 1
-			} else if !reader.onBeat && status <= 0 {
+			} else if !reader.onBeat && mode <= 0 {
 				out[i] = 1
 			} else {
 				out[i] = -1
