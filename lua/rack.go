@@ -5,6 +5,22 @@ function with(o, fn)
 	return fn(o)
 end
 
+function inputProxy(m)
+	return function(_, inputs)
+		m:set(inputs)
+	end
+end
+
+function outputProxy(m)
+	return function(_, output)
+		if output == nil then
+			return m:output()
+		else
+			return m:output(output)
+		end
+	end
+end
+
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if o['__type'] == 'module' then
