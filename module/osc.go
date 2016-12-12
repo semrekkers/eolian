@@ -7,11 +7,10 @@ func init() {
 }
 
 const (
-	Pulse WaveType = iota
+	Pulse WaveShape = iota
 	Saw
 	Sine
 	Triangle
-	Sub
 )
 
 type Osc struct {
@@ -22,7 +21,7 @@ type Osc struct {
 	state *oscStateFrames
 	reads int
 
-	phases map[WaveType]float64
+	phases map[string]float64
 }
 
 type oscStateFrames struct {
@@ -40,12 +39,12 @@ func NewOsc() (*Osc, error) {
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
 		sync:           &In{Name: "sync", Source: NewBuffer(zero)},
 		state:          &oscStateFrames{},
-		phases: map[WaveType]float64{
-			Sine:     0,
-			Saw:      0,
-			Pulse:    0,
-			Triangle: 0,
-			Sub:      0,
+		phases: map[string]float64{
+			"sine":     0,
+			"saw":      0,
+			"pulse":    0,
+			"triangle": 0,
+			"sub":      0,
 		},
 	}
 
@@ -60,15 +59,24 @@ func NewOsc() (*Osc, error) {
 			m.sync,
 		},
 		[]*Out{
-			{Name: "pulse", Provider: Provide(&oscOut{Osc: m, WaveType: Pulse})},
-			{Name: "saw", Provider: Provide(&oscOut{Osc: m, WaveType: Saw})},
-			{Name: "sine", Provider: Provide(&oscOut{Osc: m, WaveType: Sine})},
-			{Name: "triangle", Provider: Provide(&oscOut{Osc: m, WaveType: Triangle})},
-			{Name: "sub", Provider: Provide(&oscOut{Osc: m, WaveType: Sub})},
+			{Name: "pulse", Provider: m.out("pulse", Pulse, 1)},
+			{Name: "saw", Provider: m.out("saw", Saw, 1)},
+			{Name: "sine", Provider: m.out("sine", Sine, 1)},
+			{Name: "triangle", Provider: m.out("triangle", Triangle, 1)},
+			{Name: "sub", Provider: m.out("sub", Pulse, 0.5)},
 		},
 	)
 
 	return m, err
+}
+
+func (o *Osc) out(name string, shape WaveShape, multiplier float64) ReaderProvider {
+	return Provide(&oscOut{
+		Osc:        o,
+		WaveShape:  shape,
+		name:       name,
+		multiplier: multiplier,
+	})
 }
 
 func (o *Osc) read(out Frame) {
@@ -88,28 +96,25 @@ func (o *Osc) read(out Frame) {
 
 type oscOut struct {
 	*Osc
-	WaveType
-	last Value
+	WaveShape
+	name       string
+	multiplier float64
+	last       Value
 }
 
 func (reader *oscOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
-		phase := reader.phases[reader.WaveType]
+		phase := reader.phases[reader.name]
 		bPhase := phase / (2 * math.Pi)
-		pitch := reader.state.pitch[i]
-		if reader.WaveType == Sub {
-			pitch *= 0.5
-		}
+		pitch := reader.state.pitch[i] * Value(reader.multiplier)
 		delta := float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
-		next := blepSample(reader.WaveType, phase)*reader.state.amp[i] + reader.state.offset[i]
+		next := blepSample(reader.WaveShape, phase)*reader.state.amp[i] + reader.state.offset[i]
 
-		switch reader.WaveType {
+		switch reader.WaveShape {
 		case Sine:
 		case Saw:
 			next -= blep(bPhase, delta)
-		case Sub:
-			fallthrough
 		case Pulse:
 			next += blep(bPhase, delta)
 			next -= blep(math.Mod(bPhase+0.5, 1), delta)
@@ -127,23 +132,21 @@ func (reader *oscOut) Read(out Frame) {
 		if reader.state.sync[i] > 0 {
 			phase = 0
 		}
-		reader.phases[reader.WaveType] = phase
+		reader.phases[reader.name] = phase
 		out[i] = next
 		reader.last = next
 	}
 }
 
-type WaveType int
+type WaveShape int
 
-func blepSample(waveType WaveType, phase float64) Value {
-	switch waveType {
+func blepSample(WaveShape WaveShape, phase float64) Value {
+	switch WaveShape {
 	case Sine:
 		return Value(math.Sin(phase))
 	case Saw:
 		return Value(2.0*phase/(2*math.Pi) - 1.0)
 	case Triangle:
-		fallthrough
-	case Sub:
 		fallthrough
 	case Pulse:
 		if phase < math.Pi {
