@@ -25,7 +25,7 @@ local function buildVoice(idx, control, envelope, pitch)
     end)
 end
 
-function pkg.build(self)
+function pkg:build(env)
     local pressButtons = 16
 
     return {
@@ -98,7 +98,7 @@ function pkg.build(self)
     }
 end
 
-function pkg.patch(self, modules)
+function pkg:patch(env, modules)
     with(modules.voice.envelope, function(t)
         t.attack:set         { input = modules.control:output('/1/fader1') }
         t.decay:set          { input = modules.control:output('/1/fader2') }

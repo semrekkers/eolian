@@ -1,6 +1,6 @@
 local rack = {}
 
-function rack.build(self)
+function rack:build()
     return {
         clock  = {
             osc      = synth.Osc(),
@@ -28,7 +28,7 @@ function rack.build(self)
     }
 end
 
-function rack.patch(self, modules)
+function rack:patch(env, modules)
     with(modules.clock, function(c)
         c.osc:set      { pitch = hz(9) }
         c.multiple:set { input = c.osc:output('pulse') }

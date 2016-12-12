@@ -71,9 +71,14 @@ local close = function(v)
 end
 
 Rack = {
-	filepath = '',
-	path	 = '',
-	modules  = nil
+	env = {
+		filepath = '',
+		path	 = '',
+		require  = function(self, path)
+			return dofile(self.path .. '/' .. path)
+		end
+	},
+	modules = nil
 }
 
 function Rack.clear()
@@ -85,24 +90,25 @@ function Rack.rebuild()
 	Rack.clear()
 	close(Rack.modules)
 
-	local r      = loadfile(Rack.filepath)
-	Rack.modules = r:build(Rack.path)
-	synth.Engine:set { input = r:patch(Rack.modules) }
+	local r      = loadfile(Rack.env.filepath)
+	Rack.modules = r:build(Rack.env)
+	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
 end
 
 function Rack.repatch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 	reset(Rack.modules)
-	local r = loadfile(Rack.filepath)
-	synth.Engine:set { input = r:patch(Rack.modules) }
+	local r = loadfile(Rack.env.filepath)
+	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
 end
 
 function Rack.load(path)
 	local r = loadfile(path)
 
-	Rack.filepath = path
-	Rack.path	  = filepath.dir(path)
-	Rack.modules  = r:build(Rack.path)
-	synth.Engine:set { input = r:patch(Rack.modules) }
+	Rack.env.filepath = path
+	Rack.env.path	  = filepath.dir(path)
+	Rack.modules      = r:build(Rack.env)
+
+	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
 end
 `

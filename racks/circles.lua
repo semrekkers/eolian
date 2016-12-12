@@ -1,7 +1,7 @@
 local rack = {}
 
-function rack.build(self, path)
-    local supersaw = dofile(path .. '/voice/supersaw.lua')
+function rack:build(env)
+    local supersaw = env:require('voice/supersaw.lua')
 
     return {
         mix = synth.Mix(),
@@ -46,7 +46,7 @@ function rack.build(self, path)
     }
 end
 
-function rack.patch(self, modules)
+function rack:patch(env, modules)
     --
     -- Clock
     --

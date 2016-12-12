@@ -1,6 +1,6 @@
 local pkg = {}
 
-function pkg.build(self)
+function pkg:build(env)
     return {
         mix = synth.Mix(),
         clock = {
@@ -18,7 +18,7 @@ function pkg.build(self)
     }
 end
 
-function pkg.patch(self, modules)
+function pkg:patch(env, modules)
     --
     -- Clock
     --

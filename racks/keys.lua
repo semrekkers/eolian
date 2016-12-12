@@ -40,7 +40,7 @@ end
 
 local rack = {}
 
-function rack:build()
+function rack:build(env)
     local midi = synth.MIDIController { 
         device    = 2,
         polyphony = polyphony,
@@ -62,7 +62,7 @@ function rack:build()
     }
 end
 
-function rack:patch(modules)
+function rack:patch(env, modules)
     with(modules, function(m)
         for i = 0,polyphony-1 do
             m.mix:scope(i):set { input = m.voices[i+1]:output() }
