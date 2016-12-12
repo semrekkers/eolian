@@ -73,7 +73,7 @@ func NewOsc() (*Osc, error) {
 func (o *Osc) out(name string, shape WaveShape, multiplier float64) ReaderProvider {
 	return Provide(&oscOut{
 		Osc:        o,
-		WaveShape:  shape,
+		shape:      shape,
 		name:       name,
 		multiplier: multiplier,
 	})
@@ -96,8 +96,8 @@ func (o *Osc) read(out Frame) {
 
 type oscOut struct {
 	*Osc
-	WaveShape
 	name       string
+	shape      WaveShape
 	multiplier float64
 	last       Value
 }
@@ -109,9 +109,9 @@ func (reader *oscOut) Read(out Frame) {
 		bPhase := phase / (2 * math.Pi)
 		pitch := reader.state.pitch[i] * Value(reader.multiplier)
 		delta := float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
-		next := blepSample(reader.WaveShape, phase)*reader.state.amp[i] + reader.state.offset[i]
+		next := blepSample(reader.shape, phase)*reader.state.amp[i] + reader.state.offset[i]
 
-		switch reader.WaveShape {
+		switch reader.shape {
 		case Sine:
 		case Saw:
 			next -= blep(bPhase, delta)
@@ -140,8 +140,8 @@ func (reader *oscOut) Read(out Frame) {
 
 type WaveShape int
 
-func blepSample(WaveShape WaveShape, phase float64) Value {
-	switch WaveShape {
+func blepSample(shape WaveShape, phase float64) Value {
+	switch shape {
 	case Sine:
 		return Value(math.Sin(phase))
 	case Saw:
