@@ -11,6 +11,7 @@ const (
 	Saw
 	Sine
 	Triangle
+	Sub
 )
 
 type Osc struct {
@@ -44,6 +45,7 @@ func NewOsc() (*Osc, error) {
 			Saw:      0,
 			Pulse:    0,
 			Triangle: 0,
+			Sub:      0,
 		},
 	}
 
@@ -62,7 +64,7 @@ func NewOsc() (*Osc, error) {
 			{Name: "saw", Provider: Provide(&oscOut{Osc: m, WaveType: Saw})},
 			{Name: "sine", Provider: Provide(&oscOut{Osc: m, WaveType: Sine})},
 			{Name: "triangle", Provider: Provide(&oscOut{Osc: m, WaveType: Triangle})},
-			{Name: "sub", Provider: Provide(&oscOut{Osc: m, WaveType: Pulse, multiplier: 0.5})},
+			{Name: "sub", Provider: Provide(&oscOut{Osc: m, WaveType: Sub})},
 		},
 	)
 
@@ -87,8 +89,7 @@ func (o *Osc) read(out Frame) {
 type oscOut struct {
 	*Osc
 	WaveType
-	multiplier float64
-	last       Value
+	last Value
 }
 
 func (reader *oscOut) Read(out Frame) {
@@ -97,8 +98,8 @@ func (reader *oscOut) Read(out Frame) {
 		phase := reader.phases[reader.WaveType]
 		bPhase := phase / (2 * math.Pi)
 		pitch := reader.state.pitch[i]
-		if reader.multiplier > 0 {
-			pitch *= Value(reader.multiplier)
+		if reader.WaveType == Sub {
+			pitch *= 0.5
 		}
 		delta := float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
 		next := blepSample(reader.WaveType, phase)*reader.state.amp[i] + reader.state.offset[i]
@@ -107,6 +108,8 @@ func (reader *oscOut) Read(out Frame) {
 		case Sine:
 		case Saw:
 			next -= blep(bPhase, delta)
+		case Sub:
+			fallthrough
 		case Pulse:
 			next += blep(bPhase, delta)
 			next -= blep(math.Mod(bPhase+0.5, 1), delta)
@@ -139,6 +142,8 @@ func blepSample(waveType WaveType, phase float64) Value {
 	case Saw:
 		return Value(2.0*phase/(2*math.Pi) - 1.0)
 	case Triangle:
+		fallthrough
+	case Sub:
 		fallthrough
 	case Pulse:
 		if phase < math.Pi {
