@@ -52,6 +52,7 @@ func (inout *IO) Patch(name string, t interface{}) error {
 	inout.Lock()
 	defer inout.Unlock()
 	inout.lazyInit()
+	name = canonicalPort(name)
 	input, ok := inout.ins[name]
 	if !ok {
 		return fmt.Errorf(`unknown input "%s"`, name)
@@ -127,6 +128,7 @@ func (io *IO) Output(name string) (Reader, error) {
 	io.Lock()
 	defer io.Unlock()
 	io.lazyInit()
+	name = canonicalPort(name)
 	if o, ok := io.outs[name]; ok {
 		if o.IsActive() {
 			return nil, fmt.Errorf(`output "%s" is already patched`, name)
@@ -176,6 +178,7 @@ func (inout *IO) closeOutput(name string) error {
 	inout.Lock()
 	defer inout.Unlock()
 	inout.lazyInit()
+	name = canonicalPort(name)
 	if o, ok := inout.outs[name]; ok {
 		o.reader = nil
 		return nil
@@ -319,4 +322,8 @@ func (closer *ReaderCloser) Close() error {
 type Port struct {
 	Patcher
 	Port string
+}
+
+func canonicalPort(v string) string {
+	return strings.Replace(v, "/", ".", -1)
 }
