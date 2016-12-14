@@ -3,7 +3,9 @@ package module
 import "math"
 
 func init() {
-	Register("Osc", func(Config) (Patcher, error) { return NewOsc() })
+	f := func(Config) (Patcher, error) { return NewOsc() }
+	Register("Osc", f)
+	Register("Oscillator", f)
 }
 
 const (
