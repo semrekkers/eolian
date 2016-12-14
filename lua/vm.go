@@ -116,7 +116,11 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 	table.ForEach(func(k, v lua.LValue) {
 		c := k.String()
 		if len(parts) > 1 {
-			c = strings.Join(append(parts[:len(parts)-1], k.String()), ".")
+			last := len(parts) - 1
+			c = strings.Join(append(parts[:last], k.String()), ".")
+			if strings.HasPrefix(parts[last], "__") {
+				return
+			}
 		}
 		candidates = append(candidates, []rune(c))
 	})
