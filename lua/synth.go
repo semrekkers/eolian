@@ -97,9 +97,23 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 				return 1
 			},
 			"set": func(state *lua.LState) int {
-				self := state.CheckTable(1)
-				raw := state.CheckTable(2)
-				namespace := getNamespace(self)
+				var (
+					self   *lua.LTable
+					prefix []string
+					raw    *lua.LTable
+				)
+
+				top := state.GetTop()
+				if top == 2 {
+					self = state.CheckTable(1)
+					raw = state.CheckTable(2)
+				} else if top == 3 {
+					self = state.CheckTable(1)
+					prefix = strings.Split(state.CheckAny(2).String(), ".")
+					raw = state.CheckTable(3)
+				}
+
+				namespace := append(getNamespace(self), prefix...)
 
 				mapped := gluamapper.ToGoValue(raw, mapperOpts)
 				inputs, ok := mapped.(map[interface{}]interface{})
