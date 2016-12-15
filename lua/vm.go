@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/brettbuddin/eolian/module"
 	"github.com/chzyer/readline"
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
+)
+
+const (
+	historyFileVar     = "EOLIAN_HISTORY_FILE"
+	defaultHistoryFile = "/tmp/eolian.tmp"
 )
 
 var (
@@ -58,9 +64,15 @@ func (vm *VM) LoadFile(path string) error {
 
 func (vm *VM) REPL() error {
 	fmt.Println("Press Ctrl-D to exit")
+
+	history := defaultHistoryFile
+	if env := os.Getenv(historyFileVar); env != "" {
+		history = env
+	}
+
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:          "> ",
-		HistoryFile:     "/tmp/eolian.tmp",
+		HistoryFile:     history,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 		AutoComplete:    readline.SegmentFunc(vm.completion),
