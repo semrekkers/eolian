@@ -102,8 +102,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		}
 	}
 
-	err = m.Expose(nil, outs)
-	return m, nil
+	return m, m.Expose(nil, outs)
 }
 
 func (c *Controller) read(out module.Frame) {
