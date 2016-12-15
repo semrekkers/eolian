@@ -57,54 +57,50 @@ func (inout *IO) Patch(name string, t interface{}) error {
 	if !ok {
 		return fmt.Errorf(`unknown input "%s"`, name)
 	}
-
 	if err := input.Close(); err != nil {
 		return err
 	}
+	reader, err := patchReader(t)
+	if err != nil {
+		return err
+	}
+	input.SetSource(reader)
+	return nil
+}
 
-	var (
-		reader Reader
-		err    error
-	)
-
+func patchReader(t interface{}) (Reader, error) {
 	switch v := t.(type) {
 	case Port:
-		if reader, err = v.Patcher.Output(v.Port); err != nil {
-			return err
-		}
+		return v.Patcher.Output(v.Port)
 	case Value:
-		reader = v
+		return v, nil
 	case Pitch:
-		reader = v
+		return v, nil
 	case Hz:
-		reader = v
+		return v, nil
 	case MS:
-		reader = v
+		return v, nil
 	case string:
 		if floatV, err := strconv.ParseFloat(v, 64); err == nil {
-			reader = Value(floatV)
+			return Value(floatV), nil
 		} else if intV, err := strconv.Atoi(v); err == nil {
-			reader = Value(intV)
+			return Value(intV), nil
 		} else {
 			r, err := ParseValueString(v)
 			if err != nil {
-				return err
+				return nil, err
 			}
-			reader = r.(ReadValuer)
+			return r.(ReadValuer), nil
 		}
 	case int:
-		reader = Value(v)
+		return Value(v), nil
 	case float64:
-		reader = Value(v)
+		return Value(v), nil
 	case Reader:
-		reader = v
+		return v, nil
 	default:
-		return fmt.Errorf(`unpatchable source value %v (%T)`, v, v)
+		return nil, fmt.Errorf(`unpatchable source value %v (%T)`, v, v)
 	}
-
-	input.SetSource(reader)
-
-	return nil
 }
 
 // Inputs lists all registered inputs
