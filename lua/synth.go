@@ -9,7 +9,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func OpenSynth(state *lua.LState, p module.Patcher) int {
+func openSynth(state *lua.LState, p module.Patcher) int {
 	fns := map[string]lua.LGFunction{}
 	for name, t := range module.Registry {
 		fns[name] = buildConstructor(t)

@@ -56,13 +56,10 @@ function Rack.repatch()
 end
 
 function Rack.load(path)
-	local loadFunc = dofile(path)
-
 	Rack.env.filepath  = path
 	Rack.env.path	   = filepath.dir(path)
-	local build, patch = loadFunc(Rack.env)
+	local build, patch = dofile(path)(Rack.env)
 	Rack.modules       = build(Rack.env)
-
 	synth.Engine:set { input = patch(Rack.modules) }
 end
 `

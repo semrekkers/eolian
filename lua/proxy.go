@@ -2,7 +2,7 @@ package lua
 
 import lua "github.com/yuin/gopher-lua"
 
-func PreloadSynthProxy(state *lua.LState) int {
+func preloadSynthProxy(state *lua.LState) int {
 	mod := state.SetFuncs(state.NewTable(), proxyFuncs)
 	state.Push(mod)
 	return 1

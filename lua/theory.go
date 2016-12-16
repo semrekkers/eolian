@@ -6,7 +6,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func OpenTheory(state *lua.LState) int {
+func preloadTheory(state *lua.LState) int {
 	module := state.RegisterModule("theory", theoryFuncs)
 	state.Push(module)
 	return 1
