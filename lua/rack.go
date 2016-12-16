@@ -1,33 +1,6 @@
 package lua
 
 var luaRack = `
-function inspect(o, prefix)
-	if type(o) == 'table' and prefix == nil then
-		if o['__type'] == 'module' then
-			print(o:info())
-			return
-		end
-	end
-	for k, v in pairs(o) do
-		if k ~= '__namespace' then
-			if prefix == nil then
-				prefix = ''
-			end
-			if type(v) == 'table' then
-				print(prefix .. k)
-				inspect(v, ' - ')
-			end
-		end
-	end
-end
-
-local loadfile = function(path)
-	local r = dofile(path)
-	-- assert(type(r.build) == 'function', 'rack does not implement "build" method.')
-	-- assert(type(r.patch) == 'function', 'rack does not implement "patch" method.')
-	return r
-end
-
 local reset = function(v)
 	if type(v) ~= 'table' then
 		return
