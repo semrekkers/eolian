@@ -41,17 +41,20 @@ func NewVM(p module.Patcher) (*VM, error) {
 	lua.OpenBase(state)
 	lua.OpenDebug(state)
 	lua.OpenString(state)
+
 	OpenFilePath(state)
 	OpenSynth(state, p)
 	OpenTheory(state)
 
-	// Add go functions
+	state.PreloadModule("synth.proxy", PreloadSynthProxy)
+
 	for k, fn := range globalFuncs {
 		state.Register(k, fn)
 	}
-
-	// Add rack behavior
 	if err := state.DoString(luaRack); err != nil {
+		return nil, err
+	}
+	if err := state.DoString(luaUtil); err != nil {
 		return nil, err
 	}
 
