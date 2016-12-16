@@ -43,8 +43,8 @@ end
 
 local loadfile = function(path)
 	local r = dofile(path)
-	assert(type(r.build) == 'function', 'rack does not implement "build" method.')
-	assert(type(r.patch) == 'function', 'rack does not implement "patch" method.')
+	-- assert(type(r.build) == 'function', 'rack does not implement "build" method.')
+	-- assert(type(r.patch) == 'function', 'rack does not implement "patch" method.')
 	return r
 end
 
@@ -90,25 +90,26 @@ function Rack.rebuild()
 	Rack.clear()
 	close(Rack.modules)
 
-	local r      = loadfile(Rack.env.filepath)
-	Rack.modules = r:build(Rack.env)
-	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
+	local build, patch = dofile(Rack.env.filepath)(Rack.env)
+	Rack.modules = build()
+	synth.Engine:set { input = patch(Rack.modules) }
 end
 
 function Rack.repatch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 	reset(Rack.modules)
-	local r = loadfile(Rack.env.filepath)
-	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
+	local _, patch = dofile(Rack.env.filepath)(Rack.env)
+	synth.Engine:set { input = patch(Rack.modules) }
 end
 
 function Rack.load(path)
-	local r = loadfile(path)
+	local loadFunc = dofile(path)
 
-	Rack.env.filepath = path
-	Rack.env.path	  = filepath.dir(path)
-	Rack.modules      = r:build(Rack.env)
+	Rack.env.filepath  = path
+	Rack.env.path	   = filepath.dir(path)
+	local build, patch = loadFunc(Rack.env)
+	Rack.modules       = build(Rack.env)
 
-	synth.Engine:set { input = r:patch(Rack.env, Rack.modules) }
+	synth.Engine:set { input = patch(Rack.modules) }
 end
 `

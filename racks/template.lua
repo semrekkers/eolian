@@ -1,16 +1,13 @@
-local rack = {}
-
 -- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
 
-function rack:build(env)
-    return {
-        -- Rack composition
-    }
-end
+return function(env)
+    local function build()
+        return {}
+    end
 
-function rack:patch(env, modules)
-    -- Patch configuration
-    return 0
-end
+    local function patch(modules)
+        return 0
+    end
 
-return rack
+    return build, patch
+end
