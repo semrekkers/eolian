@@ -8,12 +8,14 @@ import (
 	"sync"
 )
 
+// Patcher is the patching behavior of a module
 type Patcher interface {
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
 	Reset() error
 }
 
+// Lister is the port listing behavior of a module
 type Lister interface {
 	Inputs() map[string]*In
 	Outputs() map[string]*Out

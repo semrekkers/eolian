@@ -24,11 +24,6 @@ type Closer interface {
 	Close() error
 }
 
-type ReaderCloser interface {
-	Reader
-	Closer
-}
-
 type Inspecter interface {
 	Inspect() string
 }
