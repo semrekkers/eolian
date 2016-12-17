@@ -22,7 +22,7 @@ return function(env)
             delay = {
                 cutoff = synth.Osc(),
                 gain   = synth.Osc(),
-                delay  = synth.FilteredDelay(),
+                delay  = synth.FilteredFBComb(),
             },
         }
     end

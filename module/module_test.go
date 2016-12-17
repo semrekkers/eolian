@@ -37,7 +37,7 @@ func TestRegisteredModules(t *testing.T) {
 		{"FBComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 		{"FFComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 		{"FileSource", Config{"path": "test/dummy_source.txt"}, nil, defaultOutput},
-		{"FilteredDelay", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
+		{"FilteredFBComb", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
 		{"FilteredReverb", nil, []string{"input", "gain", "feedback"}, defaultOutput},
 		{"Fold", nil, []string{"input", "level"}, defaultOutput},
 		{"GateSequence", Config{"steps": 2}, []string{

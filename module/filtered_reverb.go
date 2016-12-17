@@ -26,7 +26,7 @@ type FilteredReverb struct {
 	IO
 	in, feedback, cutoff, gain *In
 
-	fbs       []*FilteredDelay
+	fbs       []*FilteredFBComb
 	allpasses []*AllPass
 }
 
@@ -57,7 +57,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 		cutoff:   &In{Name: "cutoff", Source: feedbackCutoffMultiple.in},
 		gain:     &In{Name: "gain", Source: allpassGainMultiple.in},
 
-		fbs:       make([]*FilteredDelay, feedbackCount),
+		fbs:       make([]*FilteredFBComb, feedbackCount),
 		allpasses: make([]*AllPass, allpassCount),
 	}
 
@@ -67,7 +67,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 	}
 	for i, s := range c.Feedback {
 		name := fmt.Sprintf("%d", i)
-		m.fbs[i], err = NewFilteredDelay(s)
+		m.fbs[i], err = NewFilteredFBComb(s)
 		if err != nil {
 			return m, err
 		}

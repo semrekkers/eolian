@@ -1,12 +1,12 @@
 package module
 
 func init() {
-	Register("FilteredDelay", func(Config) (Patcher, error) { return NewFilteredDelay(defaultDelay) })
+	Register("FilteredFBComb", func(Config) (Patcher, error) { return NewFilteredFBComb(defaultDelay) })
 }
 
 const defaultDelay = 10000
 
-type FilteredDelay struct {
+type FilteredFBComb struct {
 	IO
 	in, duration, gain, cutoff, resonance *In
 
@@ -15,8 +15,8 @@ type FilteredDelay struct {
 	last   Value
 }
 
-func NewFilteredDelay(size int) (*FilteredDelay, error) {
-	m := &FilteredDelay{
+func NewFilteredFBComb(size int) (*FilteredFBComb, error) {
+	m := &FilteredFBComb{
 		in:        &In{Name: "input", Source: zero},
 		duration:  &In{Name: "duration", Source: NewBuffer(Value(0.01))},
 		gain:      &In{Name: "gain", Source: NewBuffer(Value(0.98))},
@@ -33,7 +33,7 @@ func NewFilteredDelay(size int) (*FilteredDelay, error) {
 	return m, err
 }
 
-func (reader *FilteredDelay) Read(out Frame) {
+func (reader *FilteredFBComb) Read(out Frame) {
 	reader.in.Read(out)
 	gain := reader.gain.ReadFrame()
 	duration := reader.duration.ReadFrame()
