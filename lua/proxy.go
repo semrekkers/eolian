@@ -31,7 +31,7 @@ func proxyInputs(state *lua.LState) int {
 func proxyOutputs(state *lua.LState) int {
 	module := state.CheckTable(1)
 	fn := state.NewFunction(func(state *lua.LState) int {
-		if state.GetTop() == 2 {
+		if state.GetTop() == 1 {
 			state.CallByParam(lua.P{
 				Fn:      module.RawGet(lua.LString("output")),
 				Protect: true,
