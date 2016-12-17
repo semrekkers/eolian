@@ -1,3 +1,4 @@
+PKG?=$(shell go list ./... | grep -v /vendor/)
 PROJECT := github.com/brettbuddin/eolian
 BINPATH := bin
 
@@ -13,10 +14,10 @@ build: govendor
 	go build -o $(BINPATH)/eolian -v $(PROJECT)/cmd/eolian
 
 test: govendor
-	go test -test.timeout=1000s $(PROJECT)/...
+	go test -test.timeout=1000s -cover $(PKG)
 
 install: govendor
-	go install $(INSTALL_FLAGS) -v $(PROJECT)/...
+	go install $(INSTALL_FLAGS) -v $(PKG)
 
 clean:
 	go clean $(PROJECT)/...
