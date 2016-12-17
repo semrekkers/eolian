@@ -8,6 +8,17 @@ import (
 	"sync"
 )
 
+type Patcher interface {
+	Patch(string, interface{}) error
+	Output(string) (*Out, error)
+	Reset() error
+}
+
+type Lister interface {
+	Inputs() map[string]*In
+	Outputs() map[string]*Out
+}
+
 // IO is the input/output registry of a module. It manages the lifecycles of the ports; fascilitating connects and
 // disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
 // inside other structs that represent a module.
@@ -26,7 +37,6 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 		if _, ok := io.ins[in.Name]; ok {
 			return fmt.Errorf(`duplicate input exposed "%s"`, in.Name)
 		}
-		in.io = io
 		if b, ok := in.Source.(*Buffer); ok {
 			in.initial = b.Reader
 		} else {
@@ -41,7 +51,6 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 		if out.Provider == nil {
 			return fmt.Errorf(`provider must be set for output "%s"`, out.Name)
 		}
-		out.io = io
 		io.outs[out.Name] = out
 	}
 	return nil
@@ -83,8 +92,6 @@ func patchReader(t interface{}) (Reader, error) {
 	case string:
 		if floatV, err := strconv.ParseFloat(v, 64); err == nil {
 			return Value(floatV), nil
-		} else if intV, err := strconv.Atoi(v); err == nil {
-			return Value(intV), nil
 		} else {
 			r, err := ParseValueString(v)
 			if err != nil {
@@ -120,7 +127,7 @@ func (io *IO) Outputs() map[string]*Out {
 }
 
 // Output realizes a registered output and returns it for patching
-func (io *IO) Output(name string) (Reader, error) {
+func (io *IO) Output(name string) (*Out, error) {
 	io.Lock()
 	defer io.Unlock()
 	io.lazyInit()
@@ -129,10 +136,8 @@ func (io *IO) Output(name string) (Reader, error) {
 		if o.IsActive() {
 			return nil, fmt.Errorf(`output "%s" is already patched`, name)
 		}
-
-		r := &ReaderCloser{io, name, o.Provider.Reader()}
-		io.outs[name].reader = r
-		return r, nil
+		o.reader = o.Provider.Reader()
+		return o, nil
 	}
 	return nil, fmt.Errorf(`output "%s" doesn't exist`, name)
 }
@@ -170,18 +175,6 @@ func (io *IO) Inspect() string {
 	return strings.TrimRight(out, "\n")
 }
 
-func (inout *IO) closeOutput(name string) error {
-	inout.Lock()
-	defer inout.Unlock()
-	inout.lazyInit()
-	name = canonicalPort(name)
-	if o, ok := inout.outs[name]; ok {
-		o.reader = nil
-		return nil
-	}
-	return fmt.Errorf(`output "%s" doesn't exist`, name)
-}
-
 func (io *IO) lazyInit() {
 	if io.ins == nil {
 		io.ins = map[string]*In{}
@@ -211,40 +204,21 @@ func (io *IO) Reset() error {
 	return nil
 }
 
-type Patcher interface {
-	Patch(string, interface{}) error
-	Output(string) (Reader, error)
-	Reset() error
-}
-
-type Lister interface {
-	Inputs() map[string]*In
-	Outputs() map[string]*Out
-}
-
 // In is a module input
 type In struct {
-	sync.Mutex
-
 	Source Reader
 	Name   string
 
-	io      *IO
 	initial Reader
 }
 
 // Read reads the output of the source into a Frame
 func (reader *In) Read(f Frame) {
-	reader.Lock()
 	reader.Source.Read(f)
-	reader.Unlock()
 }
 
 // SetSource sets the internal source to some Reader
 func (setter *In) SetSource(r Reader) {
-	setter.Lock()
-	defer setter.Unlock()
-
 	switch v := setter.Source.(type) {
 	case SourceSetter:
 		v.SetSource(r)
@@ -259,24 +233,18 @@ func (i *In) String() string {
 
 // ReadFrame reads an entire frame into the buffered input
 func (i *In) ReadFrame() Frame {
-	i.Lock()
-	defer i.Unlock()
 	return i.Source.(*Buffer).ReadFrame()
 }
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
-	i.Lock()
-	defer i.Unlock()
 	return i.Source.(*Buffer).Frame
 }
 
 // Close closes the input
 func (i *In) Close() error {
-	i.Lock()
-	defer i.Unlock()
-	if closer, ok := i.Source.(Closer); ok {
-		return closer.Close()
+	if c, ok := i.Source.(Closer); ok {
+		return c.Close()
 	}
 	return nil
 }
@@ -285,9 +253,7 @@ func (i *In) Close() error {
 type Out struct {
 	Name     string
 	Provider ReaderProvider
-
-	io     *IO
-	reader Reader
+	reader   Reader
 }
 
 // IsActive returns whether or not there is a realized Reader assigned
@@ -295,23 +261,15 @@ func (o *Out) IsActive() bool {
 	return o.reader != nil
 }
 
-// Close closes the output
-func (closer *Out) Close() error {
-	if v, ok := closer.reader.(Closer); ok {
-		return v.Close()
+func (o *Out) Read(out Frame) {
+	if o.reader != nil {
+		o.reader.Read(out)
 	}
-	closer.reader = nil
+}
+
+func (o *Out) Close() error {
+	o.reader = nil
 	return nil
-}
-
-type ReaderCloser struct {
-	io   *IO
-	Name string
-	Reader
-}
-
-func (closer *ReaderCloser) Close() error {
-	return closer.io.closeOutput(closer.Name)
 }
 
 // Port represents the address of a specific port on a Patcher

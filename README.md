@@ -13,7 +13,7 @@ Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Pat
 
 ## Dependencies
 
-- [Go 1.6](http://golang.org)+
+- [Go 1.7](http://golang.org)+
 - [PortAudio](http://www.portaudio.com/)
 - [PortMIDI](http://portmedia.sourceforge.net/portmidi/)
 

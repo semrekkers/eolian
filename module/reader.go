@@ -24,6 +24,11 @@ type Closer interface {
 	Close() error
 }
 
+type ReaderCloser interface {
+	Reader
+	Closer
+}
+
 type Inspecter interface {
 	Inspect() string
 }
@@ -47,8 +52,8 @@ func (reader *Buffer) ReadFrame() Frame {
 }
 
 func (closer *Buffer) Close() error {
-	if rcloser, ok := closer.Reader.(Closer); ok {
-		return rcloser.Close()
+	if c, ok := closer.Reader.(Closer); ok {
+		return c.Close()
 	}
 	return nil
 }

@@ -1,6 +1,10 @@
 package module
 
-import "testing"
+import (
+	"testing"
+
+	"gopkg.in/go-playground/assert.v1"
+)
 
 func TestRegister(t *testing.T) {
 	name := "UltraMegaSuperCrusher"
@@ -11,21 +15,15 @@ func TestRegister(t *testing.T) {
 		return expected, nil
 	})
 
-	if init, err := Lookup(name); err == nil {
-		p, err := init(Config{"key": "hello"})
-		if err != nil {
-			t.Error(err)
-		}
-		if expected != p {
-			t.Errorf("expected=%v actual=%v", expected, p)
-		}
-	} else {
-		t.Error("lookup should have been successful for %s", name)
-	}
+	init, err := Lookup(name)
+	assert.Equal(t, err, nil)
 
-	if _, err := Lookup("unknown"); err == nil {
-		t.Error("lookup should have been failed for unknown module")
-	}
+	p, err := init(Config{"key": "hello"})
+	assert.Equal(t, err, nil)
+	assert.Equal(t, expected, p)
+
+	_, err = Lookup("unknown")
+	assert.NotEqual(t, err, nil)
 }
 
 type mockPatcher struct {
@@ -33,5 +31,5 @@ type mockPatcher struct {
 }
 
 func (p mockPatcher) Patch(string, interface{}) error { return nil }
-func (p mockPatcher) Output(string) (Reader, error)   { return nil, nil }
+func (p mockPatcher) Output(string) (*Out, error)     { return nil, nil }
 func (p mockPatcher) Reset() error                    { return nil }
