@@ -50,7 +50,7 @@ func Run(args []string) error {
 
 	if len(set.Args()) > 0 {
 		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", set.Arg(0))); err != nil {
-			fmt.Println(err)
+			return err
 		}
 	}
 

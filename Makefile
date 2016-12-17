@@ -22,4 +22,4 @@ install: govendor
 clean:
 	go clean $(PROJECT)/...
 
-.PHONY: build test install clean
+.PHONY: build test install clean coverage

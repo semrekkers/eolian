@@ -31,22 +31,28 @@ func proxyInputs(state *lua.LState) int {
 func proxyOutputs(state *lua.LState) int {
 	module := state.CheckTable(1)
 	fn := state.NewFunction(func(state *lua.LState) int {
-		output := state.CheckTable(2)
-		if output == nil {
+		if state.GetTop() == 2 {
 			state.CallByParam(lua.P{
 				Fn:      module.RawGet(lua.LString("output")),
 				Protect: true,
 				NRet:    1,
 			}, module)
 			return 1
-		} else {
+		} else if output := state.CheckAny(2); output != nil {
 			state.CallByParam(lua.P{
 				Fn:      module.RawGet(lua.LString("output")),
 				Protect: true,
 				NRet:    1,
 			}, module, output)
+			return 1
+		} else {
+			state.CallByParam(lua.P{
+				Fn:      module.RawGet(lua.LString("output")),
+				Protect: true,
+				NRet:    1,
+			}, module)
+			return 1
 		}
-		return 1
 	})
 	state.Push(fn)
 	return 1

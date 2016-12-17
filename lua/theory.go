@@ -13,14 +13,15 @@ func preloadTheory(state *lua.LState) int {
 }
 
 var theoryFuncs = map[string]lua.LGFunction{
-	"pitch":           newPitch,
-	"perfect":         newPerfectInterval,
-	"augmented":       newAugmentedInterval,
-	"doublyAugmented": newDoublyAugmentedInterval,
-	"major":           newMajorInterval,
-	"minor":           newMinorInterval,
-	"diminished":      newDiminishedInterval,
-	"octave":          newOctaveInterval,
+	"pitch":            newPitch,
+	"perfect":          newPerfectInterval,
+	"augmented":        newAugmentedInterval,
+	"doublyAugmented":  newDoublyAugmentedInterval,
+	"major":            newMajorInterval,
+	"minor":            newMinorInterval,
+	"diminished":       newDiminishedInterval,
+	"doublyDiminished": newDoublyDiminishedInterval,
+	"octave":           newOctaveInterval,
 }
 
 func newPerfectInterval(state *lua.LState) int {

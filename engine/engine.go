@@ -67,6 +67,7 @@ func (e *Engine) Run() {
 
 	if err = stream.Start(); err != nil {
 		e.errors <- err
+		return
 	}
 	<-e.stop
 
