@@ -25,7 +25,7 @@ func TestRegisteredModules(t *testing.T) {
 		}, defaultOutput},
 		{"AND", nil, []string{"a", "b"}, defaultOutput},
 		{"Allpass", nil, []string{"input", "duration", "gain"}, defaultOutput},
-		{"Clip", nil, []string{"input", "max"}, defaultOutput},
+		{"Clip", nil, []string{"input", "level"}, defaultOutput},
 		{"ClockMultiply", nil, []string{"input", "multiplier"}, defaultOutput},
 		{"ClockDivide", nil, []string{"input", "divisor"}, defaultOutput},
 		{"Compress", nil, []string{"input", "attack", "release"}, defaultOutput},
