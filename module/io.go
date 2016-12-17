@@ -206,6 +206,7 @@ func (io *IO) Reset() error {
 
 // In is a module input
 type In struct {
+	sync.Mutex
 	Source Reader
 	Name   string
 
@@ -214,11 +215,15 @@ type In struct {
 
 // Read reads the output of the source into a Frame
 func (reader *In) Read(f Frame) {
+	reader.Lock()
 	reader.Source.Read(f)
+	reader.Unlock()
 }
 
 // SetSource sets the internal source to some Reader
 func (setter *In) SetSource(r Reader) {
+	setter.Lock()
+	defer setter.Unlock()
 	switch v := setter.Source.(type) {
 	case SourceSetter:
 		v.SetSource(r)
@@ -228,21 +233,29 @@ func (setter *In) SetSource(r Reader) {
 }
 
 func (i *In) String() string {
+	i.Lock()
+	defer i.Unlock()
 	return fmt.Sprintf("%v", i.Source)
 }
 
 // ReadFrame reads an entire frame into the buffered input
 func (i *In) ReadFrame() Frame {
+	i.Lock()
+	defer i.Unlock()
 	return i.Source.(*Buffer).ReadFrame()
 }
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
+	i.Lock()
+	defer i.Unlock()
 	return i.Source.(*Buffer).Frame
 }
 
 // Close closes the input
 func (i *In) Close() error {
+	i.Lock()
+	defer i.Unlock()
 	if c, ok := i.Source.(Closer); ok {
 		return c.Close()
 	}
