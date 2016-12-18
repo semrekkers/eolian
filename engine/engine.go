@@ -31,12 +31,8 @@ func New(deviceIndex int) (*Engine, error) {
 
 	fmt.Println("Output:", devices[deviceIndex].Name)
 
-	direct, err := module.NewDirect()
-	if err != nil {
-		return nil, err
-	}
 	m := &Engine{
-		in:     &module.In{Name: "input", Source: module.NewBuffer(direct.In)},
+		in:     &module.In{Name: "input", Source: module.NewBuffer(module.Value(0))},
 		errors: make(chan error),
 		stop:   make(chan error),
 		device: devices[deviceIndex],

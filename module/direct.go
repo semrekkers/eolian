@@ -6,20 +6,20 @@ func init() {
 
 type Direct struct {
 	IO
-	In *In
+	in *In
 }
 
 func NewDirect() (*Direct, error) {
 	m := &Direct{
-		In: &In{Name: "input", Source: zero},
+		in: &In{Name: "input", Source: zero},
 	}
 	err := m.Expose(
-		[]*In{m.In},
+		[]*In{m.in},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
 }
 
 func (reader *Direct) Read(out Frame) {
-	reader.In.Read(out)
+	reader.in.Read(out)
 }
