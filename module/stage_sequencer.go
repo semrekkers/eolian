@@ -261,7 +261,7 @@ func mapPatternMode(v Value) int {
 }
 
 func mapGateMode(v Value) int {
-	switch v {
+	switch int(v) {
 	case 0:
 		return gateModeRest
 	case 1:
