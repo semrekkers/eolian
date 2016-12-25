@@ -125,7 +125,7 @@ func TestRegisteredModules(t *testing.T) {
 			"organize",
 			"splice",
 			"unsplice",
-		}, []string{"output", "endOfSplice"}},
+		}, []string{"output", "endsplice"}},
 		{"TempoDetect", nil, []string{"tap"}, defaultOutput},
 		{"Wrap", nil, []string{"input", "level"}, defaultOutput},
 		{"XOR", nil, []string{"a", "b"}, defaultOutput},

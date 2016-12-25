@@ -51,7 +51,7 @@ func NewTape(max int) (*Tape, error) {
 		[]*In{m.in, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
 		[]*Out{
 			{Name: "output", Provider: Provide(&tapeOut{Tape: m})},
-			{Name: "endOfSplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
+			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
 		},
 	)
 	return m, err
