@@ -95,6 +95,7 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 		[]*Out{
 			{Name: "pitch", Provider: Provide(&stageSeqPitch{StageSequencer: m})},
 			{Name: "gate", Provider: Provide(&stageSeqGate{m})},
+			{Name: "endstage", Provider: Provide(&stageSeqEndStage{m})},
 			{Name: "sync", Provider: Provide(&stageSeqSync{m})},
 		},
 	)
@@ -240,6 +241,21 @@ func (reader *stageSeqSync) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
 		if reader.stage == 0 && reader.pulse == 0 {
+			out[i] = 1
+		} else {
+			out[i] = -1
+		}
+	}
+}
+
+type stageSeqEndStage struct {
+	*StageSequencer
+}
+
+func (reader *stageSeqEndStage) Read(out Frame) {
+	reader.read(out)
+	for i := range out {
+		if reader.lastStage != reader.stage {
 			out[i] = 1
 		} else {
 			out[i] = -1

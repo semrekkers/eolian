@@ -113,7 +113,7 @@ func TestRegisteredModules(t *testing.T) {
 			"1.mode",
 			"1.pitch",
 			"1.pulses",
-		}, []string{"gate", "pitch", "sync"}},
+		}, []string{"gate", "pitch", "sync", "endstage"}},
 		{"Sum", nil, []string{"a", "b"}, defaultOutput},
 		{"Switch", nil, []string{"clock", "reset"}, defaultOutput},
 		{"Tape", nil, []string{
