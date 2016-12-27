@@ -55,6 +55,8 @@ Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for 
 Here's some example videos of things I've been able to get it to do at various stages during development:
 
 - [Alien patch](https://www.instagram.com/p/BOIuYXQj2im/)
+- [Tape exploration](https://www.instagram.com/p/BNU5G1RjfT7/)
+- [Quantizer](https://www.instagram.com/p/BN21tK5Anog/)
 - [Tinkering with FilteredReverb](https://www.instagram.com/p/BLxTrABjGhG/)
 - [4-Pole filter](https://www.instagram.com/p/BKCLIGYjU_F/)
 - [Karplus-Strong #1](https://www.instagram.com/p/BKx7jIpjL4O/)
