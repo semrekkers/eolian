@@ -60,8 +60,9 @@ func newScale(state *lua.LState) int {
 		state.RaiseError("unknown scale intervals %s", scale)
 	}
 
+	octaves := state.CheckInt(3)
 	state.Push(&lua.LUserData{
-		Value: musictheory.NewScale(root, intervals),
+		Value: musictheory.NewScale(root, intervals, octaves),
 	})
 	return 1
 }
