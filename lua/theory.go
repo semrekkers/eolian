@@ -22,6 +22,48 @@ var theoryFuncs = map[string]lua.LGFunction{
 	"diminished":       newDiminishedInterval,
 	"doublyDiminished": newDoublyDiminishedInterval,
 	"octave":           newOctaveInterval,
+	"scale":            newScale,
+}
+
+func newScale(state *lua.LState) int {
+	pitch := state.CheckString(1)
+	root, err := musictheory.ParsePitch(pitch)
+	if err != nil {
+		state.RaiseError(err.Error())
+	}
+	var (
+		scale     = state.CheckString(2)
+		intervals []musictheory.Interval
+	)
+	switch scale {
+	case "chromatic":
+		intervals = musictheory.ChromaticIntervals
+	case "major":
+		intervals = musictheory.MajorIntervals
+	case "minor":
+		intervals = musictheory.MinorIntervals
+	case "ionion":
+		intervals = musictheory.IonianIntervals
+	case "dorian":
+		intervals = musictheory.DorianIntervals
+	case "phrygian":
+		intervals = musictheory.PhrygianIntervals
+	case "aeolian":
+		intervals = musictheory.AeolianIntervals
+	case "lydian":
+		intervals = musictheory.LydianIntervals
+	case "mixolydian":
+		intervals = musictheory.MixolydianIntervals
+	case "locrian":
+		intervals = musictheory.LocrianIntervals
+	default:
+		state.RaiseError("unknown scale intervals %s", scale)
+	}
+
+	state.Push(&lua.LUserData{
+		Value: musictheory.NewScale(root, intervals),
+	})
+	return 1
 }
 
 func newPerfectInterval(state *lua.LState) int {
