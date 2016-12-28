@@ -66,11 +66,12 @@ func newScale(state *lua.LState) int {
 		t     = state.NewTable()
 	)
 	for i, v := range scale {
+		p := v.(musictheory.Pitch)
 		ud := state.NewUserData()
-		ud.Value = v
+		ud.Value = module.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: module.Frequency(p.Freq())}
 		t.RawSetInt(i, ud)
 	}
-	state.Push(&lua.LUserData{Value: t})
+	state.Push(t)
 	return 1
 }
 
