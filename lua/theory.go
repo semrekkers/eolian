@@ -32,10 +32,10 @@ func newScale(state *lua.LState) int {
 		state.RaiseError(err.Error())
 	}
 	var (
-		scale     = state.CheckString(2)
+		name      = state.CheckString(2)
 		intervals []musictheory.Interval
 	)
-	switch scale {
+	switch name {
 	case "chromatic":
 		intervals = musictheory.ChromaticIntervals
 	case "major":
@@ -57,13 +57,20 @@ func newScale(state *lua.LState) int {
 	case "locrian":
 		intervals = musictheory.LocrianIntervals
 	default:
-		state.RaiseError("unknown scale intervals %s", scale)
+		state.RaiseError("unknown scale intervals %s", name)
 	}
-
 	octaves := state.CheckInt(3)
-	state.Push(&lua.LUserData{
-		Value: musictheory.NewScale(root, intervals, octaves),
-	})
+
+	var (
+		scale = musictheory.NewScale(root, intervals, octaves)
+		t     = state.NewTable()
+	)
+	for i, v := range scale {
+		ud := state.NewUserData()
+		ud.Value = v
+		t.RawSetInt(i, ud)
+	}
+	state.Push(&lua.LUserData{Value: t})
 	return 1
 }
 
