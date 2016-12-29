@@ -13,10 +13,10 @@ func init() {
 			return nil, err
 		}
 		if len(config.Feedback) == 0 {
-			config.Feedback = []int{10277, 10356, 10188, 10116}
+			config.Feedback = []int{4003, 3001, 2004, 1002, 3027}
 		}
 		if len(config.Allpass) == 0 {
-			config.Allpass = []int{2025, 4041, 3041}
+			config.Allpass = []int{573, 331, 178}
 		}
 		return NewReverb(config)
 	})
