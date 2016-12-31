@@ -61,8 +61,9 @@ func (reader *Quantize) Read(out Frame) {
 		reader.frames[i] = p.ReadFrame()
 	}
 	for i := range out {
-		idx := math.Floor(10*float64(out[i]) + 0.5)
-		idx = math.Min(idx, float64(len(reader.pitches)-1))
+		n := float64(len(reader.pitches))
+		idx := math.Floor(n*float64(out[i]) + 0.5)
+		idx = math.Min(idx, n-1)
 		idx = math.Max(idx, 0)
 		out[i] = reader.frames[int(idx)][i]
 	}
