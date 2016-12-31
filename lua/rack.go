@@ -40,18 +40,19 @@ end
 
 function Rack.rebuild()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
-	Rack.clear()
-	close(Rack.modules)
 
 	local build, patch = dofile(Rack.env.filepath)(Rack.env)
 	Rack.modules = build()
+
+	Rack.clear()
+	close(Rack.modules)
 	synth.Engine:set { input = patch(Rack.modules) }
 end
 
 function Rack.repatch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
-	reset(Rack.modules)
 	local _, patch = dofile(Rack.env.filepath)(Rack.env)
+	reset(Rack.modules)
 	synth.Engine:set { input = patch(Rack.modules) }
 end
 
