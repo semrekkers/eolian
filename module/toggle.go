@@ -26,7 +26,7 @@ func (reader *Toggle) Read(out Frame) {
 	for i := range out {
 		if reader.lastTrigger < 0 && trigger[i] > 0 {
 			if reader.value == 1 {
-				reader.value = 0
+				reader.value = -1
 			} else {
 				reader.value = 1
 			}
