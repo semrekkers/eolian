@@ -3,7 +3,7 @@ package module
 import "math"
 
 func init() {
-	f := func(Config) (Patcher, error) { return NewOsc() }
+	f := func(Config) (Patcher, error) { return NewOscillator() }
 	Register("Osc", f)
 	Register("Oscillator", f)
 }
@@ -15,7 +15,7 @@ const (
 	Triangle
 )
 
-type Osc struct {
+type Oscillator struct {
 	IO
 	pitch, pitchMod, pitchModAmount *In
 	detune, amp, offset, sync       *In
@@ -31,8 +31,8 @@ type oscStateFrames struct {
 	detune, amp, offset, sync       Frame
 }
 
-func NewOsc() (*Osc, error) {
-	m := &Osc{
+func NewOscillator() (*Oscillator, error) {
+	m := &Oscillator{
 		pitch:          &In{Name: "pitch", Source: NewBuffer(zero)},
 		pitchMod:       &In{Name: "pitchMod", Source: NewBuffer(zero)},
 		pitchModAmount: &In{Name: "pitchModAmount", Source: NewBuffer(Value(1))},
@@ -72,16 +72,16 @@ func NewOsc() (*Osc, error) {
 	return m, err
 }
 
-func (o *Osc) out(name string, shape WaveShape, multiplier float64) ReaderProvider {
+func (o *Oscillator) out(name string, shape WaveShape, multiplier float64) ReaderProvider {
 	return Provide(&oscOut{
-		Osc:        o,
+		Oscillator: o,
 		shape:      shape,
 		name:       name,
 		multiplier: multiplier,
 	})
 }
 
-func (o *Osc) read(out Frame) {
+func (o *Oscillator) read(out Frame) {
 	if o.reads == 0 {
 		o.state.pitch = o.pitch.ReadFrame()
 		o.state.pitchMod = o.pitchMod.ReadFrame()
@@ -97,7 +97,7 @@ func (o *Osc) read(out Frame) {
 }
 
 type oscOut struct {
-	*Osc
+	*Oscillator
 	name       string
 	shape      WaveShape
 	multiplier float64
