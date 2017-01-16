@@ -96,6 +96,23 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 				state.Push(&lua.LUserData{Value: module.Port{p, name}})
 				return 1
 			},
+			"outputFn": func(state *lua.LState) int {
+				self := state.CheckTable(1)
+				name := "output"
+				if state.GetTop() > 1 {
+					name = state.ToString(2)
+				}
+
+				namespace := getNamespace(self)
+				name = strings.Join(append(namespace, name), ".")
+
+				fn := state.NewFunction(lua.LGFunction(func(state *lua.LState) int {
+					state.Push(&lua.LUserData{Value: module.Port{p, name}})
+					return 1
+				}))
+				state.Push(fn)
+				return 1
+			},
 			"set": func(state *lua.LState) int {
 				var (
 					self   *lua.LTable
