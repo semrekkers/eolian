@@ -59,12 +59,12 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 }
 
 // Patch assigns an input's reader to some source (Reader, Value, etc)
-func (inout *IO) Patch(name string, t interface{}) error {
-	inout.Lock()
-	defer inout.Unlock()
-	inout.lazyInit()
+func (io *IO) Patch(name string, t interface{}) error {
+	io.Lock()
+	defer io.Unlock()
+	io.lazyInit()
 	name = canonicalPort(name)
-	input, ok := inout.ins[name]
+	input, ok := io.ins[name]
 	if !ok {
 		return fmt.Errorf(`unknown input "%s"`, name)
 	}
