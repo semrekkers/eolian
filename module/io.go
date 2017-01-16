@@ -147,7 +147,6 @@ func (io *IO) Output(name string) (*Out, error) {
 // OutputsActive returns the total count of actively patched outputs
 func (io *IO) OutputsActive() int {
 	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
@@ -155,6 +154,7 @@ func (io *IO) OutputsActive() int {
 			i++
 		}
 	}
+	io.Unlock()
 	return i
 }
 
@@ -243,15 +243,17 @@ func (i *In) String() string {
 // ReadFrame reads an entire frame into the buffered input
 func (i *In) ReadFrame() Frame {
 	i.Lock()
-	defer i.Unlock()
-	return i.Source.(*Buffer).ReadFrame()
+	frame := i.Source.(*Buffer).ReadFrame()
+	i.Unlock()
+	return frame
 }
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
 	i.Lock()
-	defer i.Unlock()
-	return i.Source.(*Buffer).Frame
+	frame := i.Source.(*Buffer).Frame
+	i.Unlock()
+	return frame
 }
 
 // Close closes the input

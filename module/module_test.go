@@ -186,3 +186,15 @@ func TestRegisteredModules(t *testing.T) {
 		t.Errorf("no patch tests for %v", strings.Join(keys, ", "))
 	}
 }
+
+func BenchmarkDirectInput(b *testing.B) {
+	m, err := NewMix(4)
+	if err != nil {
+		b.Error(err)
+	}
+	out, _ := m.Output("output")
+	frame := make(Frame, FrameSize)
+	for i := 0; i < b.N; i++ {
+		out.Read(frame)
+	}
+}

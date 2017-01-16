@@ -15,11 +15,6 @@ type ReadValuer interface {
 	Valuer
 }
 
-type Buffer struct {
-	Reader
-	Frame
-}
-
 type Closer interface {
 	Close() error
 }
@@ -28,8 +23,16 @@ type Inspecter interface {
 	Inspect() string
 }
 
+type Buffer struct {
+	Reader
+	Frame
+}
+
 func NewBuffer(r Reader) *Buffer {
-	return &Buffer{r, make(Frame, FrameSize)}
+	return &Buffer{
+		Reader: r,
+		Frame:  make(Frame, FrameSize),
+	}
 }
 
 func (setter *Buffer) SetSource(r Reader) {
