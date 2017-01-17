@@ -250,10 +250,7 @@ func (i *In) ReadFrame() Frame {
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
-	i.Lock()
-	frame := i.Source.(*Buffer).Frame
-	i.Unlock()
-	return frame
+	return i.Source.(*Buffer).Frame
 }
 
 // Close closes the input
