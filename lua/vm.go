@@ -42,10 +42,11 @@ func NewVM(p module.Patcher) (*VM, error) {
 	lua.OpenDebug(state)
 	lua.OpenString(state)
 	openFilePath(state)
-	openSynth(state, p)
-	state.PreloadModule("synth.proxy", preloadSynthProxy)
-	state.PreloadModule("theory", preloadTheory)
+	state.PreloadModule("eolian.synth", preloadSynth(p))
+	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
+	state.PreloadModule("eolian.theory", preloadTheory)
 
+	state.SetGlobal("Engine", decoratePatcher(state, p))
 	for k, fn := range globalFuncs {
 		state.Register(k, fn)
 	}

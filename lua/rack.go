@@ -35,7 +35,7 @@ Rack = {
 }
 
 function Rack.clear()
-	synth.Engine:set { input = 0 }
+	Engine:set { input = 0 }
 end
 
 function Rack.rebuild()
@@ -47,14 +47,14 @@ function Rack.rebuild()
 	Rack.clear()
 	close(Rack.modules)
 	Rack.modules = modules
-	synth.Engine:set { input = patch(Rack.modules) }
+	Engine:set { input = patch(Rack.modules) }
 end
 
 function Rack.repatch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 	local _, patch = dofile(Rack.env.filepath)(Rack.env)
 	reset(Rack.modules)
-	synth.Engine:set { input = patch(Rack.modules) }
+	Engine:set { input = patch(Rack.modules) }
 end
 
 function Rack.load(path)
@@ -62,6 +62,6 @@ function Rack.load(path)
 	Rack.env.path	   = filepath.dir(path)
 	local build, patch = dofile(path)(Rack.env)
 	Rack.modules       = build(Rack.env)
-	synth.Engine:set { input = patch(Rack.modules) }
+	Engine:set { input = patch(Rack.modules) }
 end
 `

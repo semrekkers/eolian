@@ -1,4 +1,5 @@
 return function(env)
+    local synth    = require('eolian.synth')
     local supersaw = env:require('voice/supersaw.lua')
 
     local function build()

@@ -1,4 +1,6 @@
 return function(env)
+    local synth = require 'eolian.synth'
+
     local function build()
         return {
             clock  = {

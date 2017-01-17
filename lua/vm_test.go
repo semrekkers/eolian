@@ -19,6 +19,8 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	err = vm.DoString(`
+		local synth = require 'eolian.synth'
+
 		-- input patching
 		local direct = synth.Direct()
 		direct:set { input = 1 }
@@ -39,7 +41,7 @@ func TestCreate(t *testing.T) {
 		interpolate:reset()
 
 		-- proxying
-		local proxy = require 'synth.proxy'
+		local proxy = require 'eolian.synth.proxy'
 		local directInputs = proxy.inputs(direct)
 		local directOutputs = proxy.outputs(direct)
 		directInputs(_, { inputs = 2 })
@@ -51,7 +53,7 @@ func TestCreate(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	err = vm.DoString(`
-		local theory = require 'theory'
+		local theory = require 'eolian.theory'
 
 		local tonic = theory.pitch('C4')
 		assert(tonic:transpose(theory.octave(1)):name() == 'C5', 'octave transposition failed')

@@ -1,4 +1,5 @@
 return function(env)
+    local synth = require 'eolian.synth'
     local polyphony = 4
 
     local function voice(midi, idx)

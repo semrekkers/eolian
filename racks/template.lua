@@ -1,6 +1,8 @@
 -- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
 
 return function(env)
+    local synth = require 'eolian.synth'
+
     local function build()
         return {}
     end

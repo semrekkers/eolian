@@ -1,4 +1,5 @@
 return function(count)
+    local synth  = require('eolian.synth')
     local pitch  = synth.Multiple { size = count }
     local spread = synth.Multiple { size = count }
 

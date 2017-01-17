@@ -9,15 +9,15 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func openSynth(state *lua.LState, p module.Patcher) int {
-	fns := map[string]lua.LGFunction{}
-	for name, t := range module.Registry {
-		fns[name] = buildConstructor(t)
+func preloadSynth(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		fns := map[string]lua.LGFunction{}
+		for name, t := range module.Registry {
+			fns[name] = buildConstructor(t)
+		}
+		state.Push(state.SetFuncs(state.NewTable(), fns))
+		return 1
 	}
-	module := state.RegisterModule("synth", fns)
-	state.SetField(module, "Engine", decoratePatcher(state, p))
-	state.Push(module)
-	return 1
 }
 
 func buildConstructor(init module.InitFunc) func(state *lua.LState) int {
