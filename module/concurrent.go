@@ -7,14 +7,14 @@ func init() {
 type Concurrent struct {
 	IO
 	in   *In
-	ch   chan Value
+	ch   chan Frame
 	stop chan struct{}
 }
 
 func NewConcurrent() (*Concurrent, error) {
 	m := &Concurrent{
 		in:   &In{Name: "input", Source: NewBuffer(zero)},
-		ch:   make(chan Value),
+		ch:   make(chan Frame),
 		stop: make(chan struct{}),
 	}
 	go m.readInput()
@@ -27,20 +27,19 @@ func NewConcurrent() (*Concurrent, error) {
 
 func (c *Concurrent) readInput() {
 	for {
-		frame := c.in.ReadFrame()
-		for _, v := range frame {
-			select {
-			case c.ch <- v:
-			case <-c.stop:
-				return
-			}
+		select {
+		case <-c.stop:
+			return
+		default:
+			c.ch <- c.in.ReadFrame()
 		}
 	}
 }
 
 func (reader *Concurrent) Read(out Frame) {
+	frame := <-reader.ch
 	for i := range out {
-		out[i] = <-reader.ch
+		out[i] = frame[i]
 	}
 }
 
