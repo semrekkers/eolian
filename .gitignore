@@ -2,5 +2,6 @@ pkg/*
 vendor/pkg/*
 bin/*
 coverage.out
+trace.out
 
 lua/static.go

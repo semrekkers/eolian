@@ -5,6 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"math/rand"
+	"os"
+	"runtime/trace"
 	"time"
 
 	"github.com/brettbuddin/eolian/engine"
@@ -15,15 +17,27 @@ import (
 
 func Run(args []string) error {
 	var (
-		device int
-		seed   int64
+		device     int
+		seed       int64
+		writeTrace bool
 	)
 
 	set := flag.NewFlagSet("eolian", flag.ContinueOnError)
 	set.IntVar(&device, "output", 1, "output device")
 	set.Int64Var(&seed, "seed", 0, "random seed")
+	set.BoolVar(&writeTrace, "trace", false, "dump go trace tool information to trace.out")
 	if err := set.Parse(args); err != nil {
 		return err
+	}
+
+	if writeTrace {
+		f, err := os.OpenFile("trace.out", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		trace.Start(f)
+		defer trace.Stop()
 	}
 
 	if seed == 0 {
