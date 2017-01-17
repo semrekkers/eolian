@@ -40,6 +40,8 @@ func Run(args []string) error {
 		defer trace.Stop()
 	}
 
+	fmt.Println("PID:", os.Getpid())
+
 	if seed == 0 {
 		seed = time.Now().UnixNano()
 	}
