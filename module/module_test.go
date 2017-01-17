@@ -30,6 +30,7 @@ func TestRegisteredModules(t *testing.T) {
 		{"ClockDivide", nil, []string{"input", "divisor"}, defaultOutput},
 		{"Compress", nil, []string{"input", "attack", "release"}, defaultOutput},
 		{"Crossfade", nil, []string{"a", "b", "bias"}, defaultOutput},
+		{"Concurrent", nil, []string{"input"}, defaultOutput},
 		{"Difference", nil, []string{"a", "b"}, defaultOutput},
 		{"Direct", nil, []string{"input"}, defaultOutput},
 		{"Distort", nil, []string{"input", "gain", "offsetA", "offsetB"}, defaultOutput},
