@@ -30,8 +30,7 @@ func (c *Concurrent) readInput() {
 		select {
 		case <-c.stop:
 			return
-		default:
-			c.ch <- c.in.ReadFrame()
+		case c.ch <- c.in.ReadFrame():
 		}
 	}
 }
