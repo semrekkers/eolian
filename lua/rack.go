@@ -42,10 +42,11 @@ function Rack.rebuild()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 
 	local build, patch = dofile(Rack.env.filepath)(Rack.env)
-	Rack.modules = build()
+	local modules = build()
 
 	Rack.clear()
 	close(Rack.modules)
+	Rack.modules = modules
 	synth.Engine:set { input = patch(Rack.modules) }
 end
 
