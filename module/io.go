@@ -251,7 +251,12 @@ func (o *Out) Read(out Frame) {
 }
 
 func (o *Out) Close() error {
-	o.reader = nil
+	defer func() {
+		o.reader = nil
+	}()
+	if c, ok := o.reader.(Closer); ok {
+		return c.Close()
+	}
 	return nil
 }
 
