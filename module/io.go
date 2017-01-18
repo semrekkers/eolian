@@ -25,15 +25,12 @@ type Lister interface {
 // disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
 // inside other structs that represent a module.
 type IO struct {
-	sync.Mutex
 	ins  map[string]*In
 	outs map[string]*Out
 }
 
 // Expose registers inputs and outputs of the module so that they can be used in patching
 func (io *IO) Expose(ins []*In, outs []*Out) error {
-	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	for _, in := range ins {
 		if _, ok := io.ins[in.Name]; ok {
@@ -60,8 +57,6 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 
 // Patch assigns an input's reader to some source (Reader, Value, etc)
 func (io *IO) Patch(name string, t interface{}) error {
-	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	name = canonicalPort(name)
 	input, ok := io.ins[name]
@@ -114,24 +109,18 @@ func patchReader(t interface{}) (Reader, error) {
 
 // Inputs lists all registered inputs
 func (io *IO) Inputs() map[string]*In {
-	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	return io.ins
 }
 
 // Outputs lists all registered outputs
 func (io *IO) Outputs() map[string]*Out {
-	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	return io.outs
 }
 
 // Output realizes a registered output and returns it for patching
 func (io *IO) Output(name string) (*Out, error) {
-	io.Lock()
-	defer io.Unlock()
 	io.lazyInit()
 	name = canonicalPort(name)
 	if o, ok := io.outs[name]; ok {
@@ -146,7 +135,6 @@ func (io *IO) Output(name string) (*Out, error) {
 
 // OutputsActive returns the total count of actively patched outputs
 func (io *IO) OutputsActive() int {
-	io.Lock()
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
@@ -154,14 +142,11 @@ func (io *IO) OutputsActive() int {
 			i++
 		}
 	}
-	io.Unlock()
 	return i
 }
 
 // Inspect returns a formatted string detailing the internal state of the module
 func (io *IO) Inspect() string {
-	io.Lock()
-	defer io.Unlock()
 	out := "inputs:\n"
 	for name, in := range io.ins {
 		out += fmt.Sprintf("- %s: %v\n", name, in)
@@ -189,8 +174,6 @@ func (io *IO) lazyInit() {
 // Reset disconnects all inputs from their sources (closing them in the process) and re-assigns the input to its
 // original default value
 func (io *IO) Reset() error {
-	io.Lock()
-	defer io.Unlock()
 	for _, in := range io.ins {
 		if nested, ok := in.Source.(*In); ok {
 			if err := nested.Close(); err != nil {
@@ -216,22 +199,22 @@ type In struct {
 }
 
 // Read reads the output of the source into a Frame
-func (reader *In) Read(f Frame) {
-	reader.Lock()
-	reader.Source.Read(f)
-	reader.Unlock()
+func (i *In) Read(f Frame) {
+	i.Lock()
+	i.Source.Read(f)
+	i.Unlock()
 }
 
 // SetSource sets the internal source to some Reader
-func (setter *In) SetSource(r Reader) {
-	setter.Lock()
-	defer setter.Unlock()
-	switch v := setter.Source.(type) {
+func (i *In) SetSource(r Reader) {
+	i.Lock()
+	switch v := i.Source.(type) {
 	case SourceSetter:
 		v.SetSource(r)
 	case Reader:
-		setter.Source = r
+		i.Source = r
 	}
+	i.Unlock()
 }
 
 func (i *In) String() string {
@@ -250,7 +233,10 @@ func (i *In) ReadFrame() Frame {
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
-	return i.Source.(*Buffer).Frame
+	i.Lock()
+	frame := i.Source.(*Buffer).Frame
+	i.Unlock()
+	return frame
 }
 
 // Close closes the input
@@ -265,6 +251,7 @@ func (i *In) Close() error {
 
 // Out is a module output
 type Out struct {
+	sync.Mutex
 	Name     string
 	Provider ReaderProvider
 	reader   Reader
@@ -272,7 +259,10 @@ type Out struct {
 
 // IsActive returns whether or not there is a realized Reader assigned
 func (o *Out) IsActive() bool {
-	return o.reader != nil
+	o.Lock()
+	r := o.reader != nil
+	o.Unlock()
+	return r
 }
 
 func (o *Out) Read(out Frame) {
@@ -282,7 +272,9 @@ func (o *Out) Read(out Frame) {
 }
 
 func (o *Out) Close() error {
+	o.Lock()
 	o.reader = nil
+	o.Unlock()
 	return nil
 }
 
