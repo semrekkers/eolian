@@ -130,8 +130,16 @@ func moduleSet(state *lua.LState, p module.Patcher) int {
 	namespace := append(getNamespace(self), prefix...)
 
 	mapped := gluamapper.ToGoValue(raw, mapperOpts)
-	inputs, ok := mapped.(map[interface{}]interface{})
-	if !ok {
+
+	inputs := map[interface{}]interface{}{}
+	switch v := mapped.(type) {
+	case map[interface{}]interface{}:
+		inputs = v
+	case []interface{}:
+		for i, rv := range v {
+			inputs[fmt.Sprintf("%d", i)] = rv
+		}
+	default:
 		state.RaiseError("expected table, but got %T instead", mapped)
 	}
 	setInputs(state, p, namespace, inputs)
