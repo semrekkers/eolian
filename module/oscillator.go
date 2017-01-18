@@ -107,11 +107,13 @@ type oscOut struct {
 func (reader *oscOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
-		phase := reader.phases[reader.name]
-		bPhase := phase / (2 * math.Pi)
-		pitch := reader.state.pitch[i] * Value(reader.multiplier)
-		delta := float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
-		next := blepSample(reader.shape, phase)*reader.state.amp[i] + reader.state.offset[i]
+		var (
+			phase  = reader.phases[reader.name]
+			bPhase = phase / (2 * math.Pi)
+			pitch  = reader.state.pitch[i] * Value(reader.multiplier)
+			delta  = float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
+			next   = blepSample(reader.shape, phase)*reader.state.amp[i] + reader.state.offset[i]
+		)
 
 		switch reader.shape {
 		case Sine:
