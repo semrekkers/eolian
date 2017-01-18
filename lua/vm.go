@@ -20,18 +20,11 @@ const (
 	defaultHistoryFile = "/tmp/eolian.tmp"
 )
 
-var (
-	globalFuncs = map[string]lua.LGFunction{
-		"hz":    hz,
-		"ms":    ms,
-		"pitch": pitch,
-	}
-	mapperOpts = gluamapper.Option{
-		NameFunc: func(v string) string {
-			return v
-		},
-	}
-)
+var mapperOpts = gluamapper.Option{
+	NameFunc: func(v string) string {
+		return v
+	},
+}
 
 type VM struct {
 	*lua.LState
@@ -48,7 +41,7 @@ func NewVM(p module.Patcher) (*VM, error) {
 	state.PreloadModule("eolian.theory", preloadTheory)
 
 	state.SetGlobal("Engine", decoratePatcher(state, p))
-	for k, fn := range globalFuncs {
+	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
 	if err := state.DoString(luaRack); err != nil {
@@ -145,28 +138,4 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 		candidates = append(candidates, []rune(c))
 	})
 	return candidates
-}
-
-func hz(state *lua.LState) int {
-	value := state.ToNumber(1)
-	hz := module.Frequency(float64(value))
-	state.Push(&lua.LUserData{Value: hz})
-	return 1
-}
-
-func pitch(state *lua.LState) int {
-	value := state.ToString(1)
-	pitch, err := module.ParsePitch(value)
-	if err != nil {
-		state.RaiseError("%s", err.Error())
-	}
-	state.Push(&lua.LUserData{Value: pitch})
-	return 1
-}
-
-func ms(state *lua.LState) int {
-	value := state.ToNumber(1)
-	ms := module.Duration(float64(value))
-	state.Push(&lua.LUserData{Value: ms})
-	return 1
 }

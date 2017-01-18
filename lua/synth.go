@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/brettbuddin/eolian/module"
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
+
+	"github.com/brettbuddin/eolian/module"
 )
 
 func preloadSynth(p module.Patcher) lua.LGFunction {
@@ -69,93 +70,15 @@ func getNamespace(table *lua.LTable) []string {
 func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
-			"info": func(state *lua.LState) int {
-				str := "(no info)"
-				if v, ok := p.(module.Inspecter); ok {
-					str = v.Inspect()
-				}
-				state.Push(lua.LString(str))
-				return 1
-			},
-			"inspect": func(state *lua.LState) int {
-				if v, ok := p.(module.Inspecter); ok {
-					fmt.Println(v.Inspect())
-				}
-				return 0
-			},
-			"output": func(state *lua.LState) int {
-				self := state.CheckTable(1)
-				name := "output"
-				if state.GetTop() > 1 {
-					name = state.ToString(2)
-				}
-
-				namespace := getNamespace(self)
-				name = strings.Join(append(namespace, name), ".")
-
-				state.Push(&lua.LUserData{Value: module.Port{p, name}})
-				return 1
-			},
-			"outputFn": func(state *lua.LState) int {
-				self := state.CheckTable(1)
-				name := "output"
-				if state.GetTop() > 1 {
-					name = state.ToString(2)
-				}
-
-				namespace := getNamespace(self)
-				name = strings.Join(append(namespace, name), ".")
-
-				fn := state.NewFunction(lua.LGFunction(func(state *lua.LState) int {
-					state.Push(&lua.LUserData{Value: module.Port{p, name}})
-					return 1
-				}))
-				state.Push(fn)
-				return 1
-			},
-			"set": func(state *lua.LState) int {
-				var (
-					self   *lua.LTable
-					prefix []string
-					raw    *lua.LTable
-				)
-
-				top := state.GetTop()
-				if top == 2 {
-					self = state.CheckTable(1)
-					raw = state.CheckTable(2)
-				} else if top == 3 {
-					self = state.CheckTable(1)
-					prefix = strings.Split(state.CheckAny(2).String(), ".")
-					raw = state.CheckTable(3)
-				}
-
-				namespace := append(getNamespace(self), prefix...)
-
-				mapped := gluamapper.ToGoValue(raw, mapperOpts)
-				inputs, ok := mapped.(map[interface{}]interface{})
-				if !ok {
-					state.RaiseError("expected table, but got %T instead", mapped)
-				}
-				setInputs(state, p, namespace, inputs)
-				return 0
-			},
-			"scope": scopedOutput(p),
-			"ns":    scopedOutput(p),
-			"reset": func(state *lua.LState) int {
-				if err := p.Reset(); err != nil {
-					state.RaiseError("%s", err.Error())
-				}
-				return 0
-			},
-			"close": func(state *lua.LState) int {
-				if closer, ok := p.(module.Closer); ok {
-					if err := closer.Close(); err != nil {
-						state.RaiseError("%s", err.Error())
-					}
-				}
-				return 0
-			},
+			"info":     moduleInfo(p),
+			"inspect":  moduleInspect(p),
+			"output":   moduleOutput(p),
+			"outputFn": moduleOutputFunc(p),
+			"set":      moduleSet(p),
+			"scope":    moduleScopedOutput(p),
+			"ns":       moduleScopedOutput(p),
+			"reset":    moduleReset(p),
+			"close":    moduleClose(p),
 		}
 	}(p)
 
@@ -165,6 +88,36 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	state.SetFuncs(table, funcs)
 
 	return table
+}
+
+func moduleSet(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		var (
+			self   *lua.LTable
+			prefix []string
+			raw    *lua.LTable
+		)
+
+		top := state.GetTop()
+		if top == 2 {
+			self = state.CheckTable(1)
+			raw = state.CheckTable(2)
+		} else if top == 3 {
+			self = state.CheckTable(1)
+			prefix = strings.Split(state.CheckAny(2).String(), ".")
+			raw = state.CheckTable(3)
+		}
+
+		namespace := append(getNamespace(self), prefix...)
+
+		mapped := gluamapper.ToGoValue(raw, mapperOpts)
+		inputs, ok := mapped.(map[interface{}]interface{})
+		if !ok {
+			state.RaiseError("expected table, but got %T instead", mapped)
+		}
+		setInputs(state, p, namespace, inputs)
+		return 0
+	}
 }
 
 func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) {
@@ -204,7 +157,27 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 	}
 }
 
-func scopedOutput(p module.Patcher) lua.LGFunction {
+func moduleInfo(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		str := "(no info)"
+		if v, ok := p.(module.Inspecter); ok {
+			str = v.Inspect()
+		}
+		state.Push(lua.LString(str))
+		return 1
+	}
+}
+
+func moduleInspect(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		if v, ok := p.(module.Inspecter); ok {
+			fmt.Println(v.Inspect())
+		}
+		return 0
+	}
+}
+
+func moduleScopedOutput(p module.Patcher) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
 
@@ -222,5 +195,61 @@ func scopedOutput(p module.Patcher) lua.LGFunction {
 		state.SetMetatable(proxy, mt)
 		state.Push(proxy)
 		return 1
+	}
+}
+
+func moduleOutput(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+		name := "output"
+		if state.GetTop() > 1 {
+			name = state.ToString(2)
+		}
+
+		namespace := getNamespace(self)
+		name = strings.Join(append(namespace, name), ".")
+
+		state.Push(&lua.LUserData{Value: module.Port{p, name}})
+		return 1
+	}
+}
+
+func moduleOutputFunc(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+		name := "output"
+		if state.GetTop() > 1 {
+			name = state.ToString(2)
+		}
+
+		namespace := getNamespace(self)
+		name = strings.Join(append(namespace, name), ".")
+
+		fn := state.NewFunction(lua.LGFunction(func(state *lua.LState) int {
+			state.Push(&lua.LUserData{Value: module.Port{p, name}})
+			return 1
+		}))
+		state.Push(fn)
+		return 1
+	}
+}
+
+func moduleReset(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		if err := p.Reset(); err != nil {
+			state.RaiseError("%s", err.Error())
+		}
+		return 0
+	}
+}
+
+func moduleClose(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		if closer, ok := p.(module.Closer); ok {
+			if err := closer.Close(); err != nil {
+				state.RaiseError("%s", err.Error())
+			}
+		}
+		return 0
 	}
 }
