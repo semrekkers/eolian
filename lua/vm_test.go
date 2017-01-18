@@ -1,6 +1,7 @@
 package lua
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/brettbuddin/eolian/module"
@@ -12,7 +13,7 @@ func TestCreate(t *testing.T) {
 	direct, err := module.NewDirect()
 	assert.Equal(t, err, nil)
 
-	vm, err := NewVM(direct)
+	vm, err := NewVM(direct, &sync.Mutex{})
 	assert.Equal(t, err, nil)
 
 	err = vm.REPL()

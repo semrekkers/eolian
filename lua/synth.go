@@ -3,6 +3,7 @@ package lua
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
@@ -16,18 +17,18 @@ var mapperOpts = gluamapper.Option{
 	},
 }
 
-func preloadSynth(p module.Patcher) lua.LGFunction {
+func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}
 		for name, t := range module.Registry {
-			fns[name] = buildConstructor(t)
+			fns[name] = buildConstructor(t, mtx)
 		}
 		state.Push(state.SetFuncs(state.NewTable(), fns))
 		return 1
 	}
 }
 
-func buildConstructor(init module.InitFunc) func(state *lua.LState) int {
+func buildConstructor(init module.InitFunc, mtx *sync.Mutex) func(state *lua.LState) int {
 	return func(state *lua.LState) int {
 		config := module.Config{}
 
@@ -54,7 +55,7 @@ func buildConstructor(init module.InitFunc) func(state *lua.LState) int {
 			state.RaiseError("%s", err.Error())
 		}
 
-		table := decoratePatcher(state, p)
+		table := decoratePatcher(state, p, mtx)
 		state.Push(table)
 		return 1
 	}
@@ -73,18 +74,31 @@ func getNamespace(table *lua.LTable) []string {
 	return segs
 }
 
-func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
+type lockingModuleMethod func(state *lua.LState, p module.Patcher) int
+
+func lock(m lockingModuleMethod, mtx *sync.Mutex, p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		mtx.Lock()
+		defer mtx.Unlock()
+		return m(state, p)
+	}
+}
+
+func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
-			"info":     moduleInfo(p),
-			"inspect":  moduleInspect(p),
-			"output":   moduleOutput(p),
-			"outputFn": moduleOutputFunc(p),
-			"set":      moduleSet(p),
+			// Methods lock and interact with the graph
+			"close":   lock(moduleClose, mtx, p),
+			"info":    lock(moduleInfo, mtx, p),
+			"inspect": lock(moduleInspect, mtx, p),
+			"reset":   lock(moduleReset, mtx, p),
+			"set":     lock(moduleSet, mtx, p),
+
+			// Methods that don't need to lock the graph
 			"scope":    moduleScopedOutput(p),
 			"ns":       moduleScopedOutput(p),
-			"reset":    moduleReset(p),
-			"close":    moduleClose(p),
+			"output":   moduleOutput(p),
+			"outputFn": moduleOutputFunc(p),
 		}
 	}(p)
 
@@ -96,34 +110,32 @@ func decoratePatcher(state *lua.LState, p module.Patcher) *lua.LTable {
 	return table
 }
 
-func moduleSet(p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		var (
-			self   *lua.LTable
-			prefix []string
-			raw    *lua.LTable
-		)
+func moduleSet(state *lua.LState, p module.Patcher) int {
+	var (
+		self   *lua.LTable
+		prefix []string
+		raw    *lua.LTable
+	)
 
-		top := state.GetTop()
-		if top == 2 {
-			self = state.CheckTable(1)
-			raw = state.CheckTable(2)
-		} else if top == 3 {
-			self = state.CheckTable(1)
-			prefix = strings.Split(state.CheckAny(2).String(), ".")
-			raw = state.CheckTable(3)
-		}
-
-		namespace := append(getNamespace(self), prefix...)
-
-		mapped := gluamapper.ToGoValue(raw, mapperOpts)
-		inputs, ok := mapped.(map[interface{}]interface{})
-		if !ok {
-			state.RaiseError("expected table, but got %T instead", mapped)
-		}
-		setInputs(state, p, namespace, inputs)
-		return 0
+	top := state.GetTop()
+	if top == 2 {
+		self = state.CheckTable(1)
+		raw = state.CheckTable(2)
+	} else if top == 3 {
+		self = state.CheckTable(1)
+		prefix = strings.Split(state.CheckAny(2).String(), ".")
+		raw = state.CheckTable(3)
 	}
+
+	namespace := append(getNamespace(self), prefix...)
+
+	mapped := gluamapper.ToGoValue(raw, mapperOpts)
+	inputs, ok := mapped.(map[interface{}]interface{})
+	if !ok {
+		state.RaiseError("expected table, but got %T instead", mapped)
+	}
+	setInputs(state, p, namespace, inputs)
+	return 0
 }
 
 func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) {
@@ -163,24 +175,36 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 	}
 }
 
-func moduleInfo(p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		str := "(no info)"
-		if v, ok := p.(module.Inspecter); ok {
-			str = v.Inspect()
-		}
-		state.Push(lua.LString(str))
-		return 1
+func moduleInfo(state *lua.LState, p module.Patcher) int {
+	str := "(no info)"
+	if v, ok := p.(module.Inspecter); ok {
+		str = v.Inspect()
 	}
+	state.Push(lua.LString(str))
+	return 1
 }
 
-func moduleInspect(p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		if v, ok := p.(module.Inspecter); ok {
-			fmt.Println(v.Inspect())
-		}
-		return 0
+func moduleInspect(state *lua.LState, p module.Patcher) int {
+	if v, ok := p.(module.Inspecter); ok {
+		fmt.Println(v.Inspect())
 	}
+	return 0
+}
+
+func moduleReset(state *lua.LState, p module.Patcher) int {
+	if err := p.Reset(); err != nil {
+		state.RaiseError("%s", err.Error())
+	}
+	return 0
+}
+
+func moduleClose(state *lua.LState, p module.Patcher) int {
+	if closer, ok := p.(module.Closer); ok {
+		if err := closer.Close(); err != nil {
+			state.RaiseError("%s", err.Error())
+		}
+	}
+	return 0
 }
 
 func moduleScopedOutput(p module.Patcher) lua.LGFunction {
@@ -237,25 +261,5 @@ func moduleOutputFunc(p module.Patcher) lua.LGFunction {
 		}))
 		state.Push(fn)
 		return 1
-	}
-}
-
-func moduleReset(p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		if err := p.Reset(); err != nil {
-			state.RaiseError("%s", err.Error())
-		}
-		return 0
-	}
-}
-
-func moduleClose(p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		if closer, ok := p.(module.Closer); ok {
-			if err := closer.Close(); err != nil {
-				state.RaiseError("%s", err.Error())
-			}
-		}
-		return 0
 	}
 }

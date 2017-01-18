@@ -59,7 +59,7 @@ func Run(args []string) error {
 		}
 	}()
 
-	vm, err := lua.NewVM(e)
+	vm, err := lua.NewVM(e, &e.Mutex)
 	if err != nil {
 		return err
 	}

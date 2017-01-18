@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/chzyer/readline"
 	lua "github.com/yuin/gopher-lua"
@@ -23,17 +24,17 @@ type VM struct {
 	*lua.LState
 }
 
-func NewVM(p module.Patcher) (*VM, error) {
+func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state := lua.NewState()
 	lua.OpenBase(state)
 	lua.OpenDebug(state)
 	lua.OpenString(state)
 	openFilePath(state)
-	state.PreloadModule("eolian.synth", preloadSynth(p))
+	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.theory", preloadTheory)
 
-	state.SetGlobal("Engine", decoratePatcher(state, p))
+	state.SetGlobal("Engine", decoratePatcher(state, p, mtx))
 	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
