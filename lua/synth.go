@@ -10,6 +10,12 @@ import (
 	"github.com/brettbuddin/eolian/module"
 )
 
+var mapperOpts = gluamapper.Option{
+	NameFunc: func(v string) string {
+		return v
+	},
+}
+
 func preloadSynth(p module.Patcher) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}

@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
-	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
 	"github.com/brettbuddin/eolian/module"
@@ -19,12 +18,6 @@ const (
 	historyFileVar     = "EOLIAN_HISTORY_FILE"
 	defaultHistoryFile = "/tmp/eolian.tmp"
 )
-
-var mapperOpts = gluamapper.Option{
-	NameFunc: func(v string) string {
-		return v
-	},
-}
 
 type VM struct {
 	*lua.LState
