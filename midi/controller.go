@@ -43,8 +43,9 @@ func init() {
 }
 
 type ControllerConfig struct {
-	Device, Polyphony, FrameRate int
-	CCChannels                   []int `mapstructure:"ccChannels"`
+	Device               string
+	Polyphony, FrameRate int
+	CCChannels           []int `mapstructure:"ccChannels"`
 }
 
 type CC struct {
@@ -66,12 +67,27 @@ type Controller struct {
 func NewController(config ControllerConfig) (*Controller, error) {
 	initMIDI()
 
-	id := portmidi.DeviceID(config.Device)
-	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
+	if config.Device == "" {
+		return nil, fmt.Errorf("no device name specified")
+	}
+
+	var deviceID portmidi.DeviceID = -1
+	for i := 0; i < portmidi.CountDevices(); i++ {
+		id := portmidi.DeviceID(i)
+		if portmidi.Info(id).Name == config.Device {
+			deviceID = id
+		}
+	}
+
+	if deviceID == -1 {
+		return nil, fmt.Errorf(`unknown device "%s"`, config.Device)
+	}
+
+	stream, err := portmidi.NewInputStream(deviceID, int64(module.FrameSize))
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("MIDI: %s (device %d)\n", portmidi.Info(id).Name, id)
+	fmt.Printf("MIDI: %s\n", portmidi.Info(deviceID).Name)
 
 	m := &Controller{
 		Stream:    stream,

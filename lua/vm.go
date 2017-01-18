@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/brettbuddin/eolian/module"
 	"github.com/chzyer/readline"
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
+
+	"github.com/brettbuddin/eolian/module"
 )
 
 const (

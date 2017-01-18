@@ -42,7 +42,7 @@ return function(env)
 
     local function build()
         local midi = synth.MIDIController { 
-            device    = 2,
+            device    = "DEVICE_NAME",
             polyphony = polyphony,
         }
 
@@ -71,7 +71,7 @@ return function(env)
             m.filter:set   { input = m.mix:output(), cutoff = hz(5000) }
             m.delay:set    { input = m.filter:output(), gain = 0.4 }
             m.compress:set { input = m.delay:output() }
-            m.clip:set     { input = m.compress:output(), max = 3 }
+            m.clip:set     { input = m.compress:output(), level = 3 }
         end)
 
         return modules.clip:output()
