@@ -3,12 +3,14 @@ package engine
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/brettbuddin/eolian/module"
 	"github.com/gordonklaus/portaudio"
 )
 
 type Engine struct {
+	sync.Mutex
 	module.IO
 	in *module.In
 
@@ -84,8 +86,10 @@ func (e *Engine) Stop() error {
 }
 
 func (e *Engine) portAudioCallback(_, out []float32) {
+	e.Lock()
 	frame := e.in.ReadFrame()
 	for i := range out {
 		out[i] = float32(frame[i])
 	}
+	e.Unlock()
 }

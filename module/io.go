@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 // Patcher is the patching behavior of a module
@@ -191,58 +190,42 @@ func (io *IO) Reset() error {
 
 // In is a module input
 type In struct {
-	sync.Mutex
-	Source Reader
-	Name   string
-
+	Source  Reader
+	Name    string
 	initial Reader
 }
 
 // Read reads the output of the source into a Frame
 func (i *In) Read(f Frame) {
-	i.Lock()
 	i.Source.Read(f)
-	i.Unlock()
 }
 
 // SetSource sets the internal source to some Reader
 func (i *In) SetSource(r Reader) {
-	i.Lock()
 	switch v := i.Source.(type) {
 	case SourceSetter:
 		v.SetSource(r)
 	case Reader:
 		i.Source = r
 	}
-	i.Unlock()
 }
 
 func (i *In) String() string {
-	i.Lock()
-	defer i.Unlock()
 	return fmt.Sprintf("%v", i.Source)
 }
 
 // ReadFrame reads an entire frame into the buffered input
 func (i *In) ReadFrame() Frame {
-	i.Lock()
-	frame := i.Source.(*Buffer).ReadFrame()
-	i.Unlock()
-	return frame
+	return i.Source.(*Buffer).ReadFrame()
 }
 
 // LastFrame returns the last frame read with ReadFrame
 func (i *In) LastFrame() Frame {
-	i.Lock()
-	frame := i.Source.(*Buffer).Frame
-	i.Unlock()
-	return frame
+	return i.Source.(*Buffer).Frame
 }
 
 // Close closes the input
 func (i *In) Close() error {
-	i.Lock()
-	defer i.Unlock()
 	if c, ok := i.Source.(Closer); ok {
 		return c.Close()
 	}
@@ -251,7 +234,6 @@ func (i *In) Close() error {
 
 // Out is a module output
 type Out struct {
-	sync.Mutex
 	Name     string
 	Provider ReaderProvider
 	reader   Reader
@@ -259,10 +241,7 @@ type Out struct {
 
 // IsActive returns whether or not there is a realized Reader assigned
 func (o *Out) IsActive() bool {
-	o.Lock()
-	r := o.reader != nil
-	o.Unlock()
-	return r
+	return o.reader != nil
 }
 
 func (o *Out) Read(out Frame) {
@@ -272,9 +251,7 @@ func (o *Out) Read(out Frame) {
 }
 
 func (o *Out) Close() error {
-	o.Lock()
 	o.reader = nil
-	o.Unlock()
 	return nil
 }
 
