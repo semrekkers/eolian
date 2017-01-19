@@ -48,16 +48,18 @@ return function(env)
             r.quant:set { input = r.series:output('values') }
 
             -- Cmin Penatonic
-            r.quant:scope(0):set { pitch = pitch('C3') }
-            r.quant:scope(1):set { pitch = pitch('Eb3') }
-            r.quant:scope(2):set { pitch = pitch('F3') }
-            r.quant:scope(3):set { pitch = pitch('G3') }
-            r.quant:scope(4):set { pitch = pitch('Bb3') }
-            r.quant:scope(5):set { pitch = pitch('C4') }
-            r.quant:scope(6):set { pitch = pitch('Eb4') }
-            r.quant:scope(7):set { pitch = pitch('F4') }
-            r.quant:scope(8):set { pitch = pitch('G4') }
-            r.quant:scope(9):set { pitch = pitch('Bb4') }
+            r.quant:set {
+                { pitch = pitch('C3') },
+                { pitch = pitch('Eb3') },
+                { pitch = pitch('F3') },
+                { pitch = pitch('G3') },
+                { pitch = pitch('Bb3') },
+                { pitch = pitch('C4') },
+                { pitch = pitch('Eb4') },
+                { pitch = pitch('F4') },
+                { pitch = pitch('G4') },
+                { pitch = pitch('Bb4') },
+            }
         end)
 
         with(modules.voice, function(v)
@@ -72,8 +74,10 @@ return function(env)
             v.osc:set {
                 pitch = modules.random.quant:output(),
             }
-            v.mix:scope(0):set { input = v.osc:output('pulse') }
-            v.mix:scope(1):set { input = v.osc:output('saw'), level = 0.5 }
+            v.mix:set {
+                { input = v.osc:output('pulse') },
+                { input = v.osc:output('saw'), level = 0.5 },
+            }
 
             v.amp:set {
                 a = v.mix:output(),

@@ -57,7 +57,9 @@ return function(env)
         --
         -- Mix
         -- 
-        modules.mix:scope(0):set { input = modules.ks.filter:output() }
+        modules.mix:set {
+            { input = modules.ks.filter:output() },
+        }
         modules.compress:set { input = modules.mix:output() }
 
         return modules.compress:output()

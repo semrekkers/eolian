@@ -64,14 +64,16 @@ return function(env)
                 mode = 1,
                 glide = ms(30)
             }
-            t.sequence:scope(0):set { pitch = pitch('C2'), pulses = 2, mode = 2, glide  = 0 }
-            t.sequence:scope(1):set { pitch = pitch('C3'), pulses = 2, mode = 2, glide  = 0 }
-            t.sequence:scope(2):set { pitch = pitch('C2'), pulses = 1, mode = 2, glide  = 0 }
-            t.sequence:scope(3):set { pitch = pitch('C3'), pulses = 2, mode = 2, glide  = 1 }
-            t.sequence:scope(4):set { pitch = pitch('C4'), pulses = 2, mode = 2, glide  = 1 }
-            t.sequence:scope(5):set { pitch = pitch('C3'), pulses = 1, mode = 2, glide  = 0 }
-            t.sequence:scope(6):set { pitch = pitch('C2'), pulses = 2, mode = 2, glide  = 0 }
-            t.sequence:scope(7):set { pitch = pitch('C3'), pulses = 1, mode = 2, glide  = 1 }
+            t.sequence:set {
+                { pitch = pitch('C2'), pulses = 2, mode = 2, glide  = 0 },
+                { pitch = pitch('C3'), pulses = 2, mode = 2, glide  = 0 },
+                { pitch = pitch('C2'), pulses = 1, mode = 2, glide  = 0 },
+                { pitch = pitch('C3'), pulses = 2, mode = 2, glide  = 1 },
+                { pitch = pitch('C4'), pulses = 2, mode = 2, glide  = 1 },
+                { pitch = pitch('C3'), pulses = 1, mode = 2, glide  = 0 },
+                { pitch = pitch('C2'), pulses = 2, mode = 2, glide  = 0 },
+                { pitch = pitch('C3'), pulses = 1, mode = 2, glide  = 1 },
+            }
 
             t.adsr:set {
                 gate    = t.sequence:output('gate'),
@@ -113,14 +115,16 @@ return function(env)
             }
 
             t.sequence:set { clock = t.divider:output() }
-            t.sequence:scope(0):set { pitch = pitch('C2') }
-            t.sequence:scope(1):set { pitch = pitch('C2') }
-            t.sequence:scope(2):set { pitch = pitch('F2') }
-            t.sequence:scope(3):set { pitch = pitch('C2') }
-            t.sequence:scope(4):set { pitch = pitch('C2') }
-            t.sequence:scope(5):set { pitch = pitch('C2') }
-            t.sequence:scope(6):set { pitch = pitch('F2') }
-            t.sequence:scope(7):set { pitch = pitch('G2') }
+            t.sequence:set {
+                { pitch = pitch('C2') },
+                { pitch = pitch('C2') },
+                { pitch = pitch('F2') },
+                { pitch = pitch('C2') },
+                { pitch = pitch('C2') },
+                { pitch = pitch('C2') },
+                { pitch = pitch('F2') },
+                { pitch = pitch('G2') },
+            }
 
             t.pitch:set { input = t.sequence:output('pitch') }
 
@@ -136,10 +140,9 @@ return function(env)
             }
             t.subOsc:set { pitch = t.subPitch:output() }
 
-            t.mix:scope(0):set { input = t.fold:output() }
-            t.mix:scope(1):set { 
-                input = t.subOsc:output('saw'), 
-                level = 0.7 
+            t.mix:set {
+                { input = t.fold:output() },
+                { input = t.subOsc:output('saw'), level = 0.7 },
             }
 
             t.lpf:set { input = t.mix:output(), cutoff = hz(3000) }
@@ -150,14 +153,16 @@ return function(env)
         --
         with(modules.glitch, function(t)
             t.sequence:set { clock = modules.clock.multiple:output(2), mode = 2 }
-            t.sequence:scope(0):set { pitch = pitch('C5'), pulses = 1, mode = 2 }
-            t.sequence:scope(1):set { pitch = pitch('C6'), pulses = 1, mode = 2 }
-            t.sequence:scope(2):set { pitch = pitch('C5'), pulses = 1, mode = 2 }
-            t.sequence:scope(3):set { pitch = pitch('C8'), pulses = 1, mode = 2 }
-            t.sequence:scope(4):set { pitch = pitch('C6'), pulses = 1, mode = 2 }
-            t.sequence:scope(5):set { pitch = pitch('C5'), pulses = 1, mode = 2 }
-            t.sequence:scope(6):set { pitch = pitch('C3'), pulses = 1, mode = 2 }
-            t.sequence:scope(7):set { pitch = pitch('C7'), pulses = 1, mode = 2 }
+            t.sequence:set {
+                { pitch = pitch('C5'), pulses = 1, mode = 2 },
+                { pitch = pitch('C6'), pulses = 1, mode = 2 },
+                { pitch = pitch('C5'), pulses = 1, mode = 2 },
+                { pitch = pitch('C8'), pulses = 1, mode = 2 },
+                { pitch = pitch('C6'), pulses = 1, mode = 2 },
+                { pitch = pitch('C5'), pulses = 1, mode = 2 },
+                { pitch = pitch('C3'), pulses = 1, mode = 2 },
+                { pitch = pitch('C7'), pulses = 1, mode = 2 },
+            }
 
             t.multiplier:set { input = t.sequence:output('gate'), multiplier = 1 }
 
@@ -181,11 +186,11 @@ return function(env)
         --
         -- Mix
         --
-        with(modules.mix, function(t)
-            t:scope(0):set { input = modules.high.amp:output(), level = 0.5 }
-            t:scope(1):set { input = modules.low.lpf:output(), level = 0.5 }
-            t:scope(2):set { input = modules.glitch.amp:output(), level = 0.05 }
-        end)
+        modules.mix:set {
+            { input = modules.high.amp:output(), level = 0.5 },
+            { input = modules.low.lpf:output(), level = 0.5 },
+            { input = modules.glitch.amp:output(), level = 0.05 },
+        }
 
         --
         -- Effects

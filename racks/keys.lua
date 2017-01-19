@@ -21,8 +21,10 @@ return function(env)
         low.pitch:set { a = pitch:output(1), b = 0.5 }
         low.osc:set   { pitch = low.pitch:output() }
 
-        mix:scope(0):set { input = high.osc:output('saw') }
-        mix:scope(1):set { input = low.osc:output('saw') }
+        mix:set {
+            { input = high.osc:output('saw') },
+            { input = low.osc:output('saw') },
+        }
 
         adsr:set  {
             gate    = midi:scope(idx):output('gate'),
