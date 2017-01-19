@@ -29,7 +29,9 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	lua.OpenBase(state)
 	lua.OpenDebug(state)
 	lua.OpenString(state)
+
 	openFilePath(state)
+
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.theory", preloadTheory)
@@ -54,6 +56,8 @@ func (vm *VM) LoadFile(path string) error {
 
 func (vm *VM) REPL() error {
 	fmt.Println("Press Ctrl-D to exit")
+
+	session := newSession(vm.LState)
 
 	history := defaultHistoryFile
 	if env := os.Getenv(historyFileVar); env != "" {
@@ -86,9 +90,10 @@ func (vm *VM) REPL() error {
 		}
 
 		line = strings.TrimSpace(line)
-		if line == "exit" {
+		if line == "exit" || line == "quit" {
 			break
 		}
+		session.addLine(line)
 		if err := vm.DoString(line); err != nil {
 			log.Println("error:", err)
 		}

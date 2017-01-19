@@ -6,13 +6,11 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func openFilePath(state *lua.LState) int {
+func openFilePath(state *lua.LState) {
 	fns := map[string]lua.LGFunction{
 		"dir": dir,
 	}
-	module := state.RegisterModule("filepath", fns)
-	state.Push(module)
-	return 1
+	state.RegisterModule("filepath", fns)
 }
 
 func dir(state *lua.LState) int {
