@@ -16,10 +16,13 @@ build: govendor
 test: govendor
 	go test -test.timeout=1000s -cover $(PKG)
 
+benchmark: govendor
+	go test -test.timeout=1000s -bench=. $(PKG)
+
 install: govendor
 	go install $(INSTALL_FLAGS) -v $(PKG)
 
 clean:
 	go clean $(PROJECT)/...
 
-.PHONY: build test install clean coverage
+.PHONY: build test install clean coverage benchmark
