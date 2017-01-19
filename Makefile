@@ -25,4 +25,4 @@ install: govendor
 clean:
 	go clean $(PROJECT)/...
 
-.PHONY: build test install clean coverage benchmark
+.PHONY: build test install clean benchmark
