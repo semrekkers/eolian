@@ -1,18 +1,36 @@
 package module
 
-import "math"
+import (
+	"math"
+
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
-	f := func(Config) (Patcher, error) { return NewOscillator() }
+	f := func(c Config) (Patcher, error) {
+		var config struct {
+			Algorithm string
+		}
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+		if config.Algorithm == "" {
+			config.Algorithm = BLEP
+		}
+		return NewOscillator(config.Algorithm)
+	}
 	Register("Osc", f)
 	Register("Oscillator", f)
 }
 
 const (
-	Pulse WaveShape = iota
+	Pulse = iota
 	Saw
 	Sine
 	Triangle
+
+	Simple = "simple"
+	BLEP   = "blep"
 )
 
 type Oscillator struct {
@@ -20,10 +38,10 @@ type Oscillator struct {
 	pitch, pitchMod, pitchModAmount *In
 	detune, amp, offset, sync       *In
 
-	state *oscStateFrames
-	reads int
-
-	phases map[string]float64
+	algorithm string
+	state     *oscStateFrames
+	reads     int
+	phases    []float64
 }
 
 type oscStateFrames struct {
@@ -31,7 +49,7 @@ type oscStateFrames struct {
 	detune, amp, offset, sync       Frame
 }
 
-func NewOscillator() (*Oscillator, error) {
+func NewOscillator(algorithm string) (*Oscillator, error) {
 	m := &Oscillator{
 		pitch:          &In{Name: "pitch", Source: NewBuffer(zero)},
 		pitchMod:       &In{Name: "pitchMod", Source: NewBuffer(zero)},
@@ -41,13 +59,8 @@ func NewOscillator() (*Oscillator, error) {
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
 		sync:           &In{Name: "sync", Source: NewBuffer(zero)},
 		state:          &oscStateFrames{},
-		phases: map[string]float64{
-			"sine":     0,
-			"saw":      0,
-			"pulse":    0,
-			"triangle": 0,
-			"sub":      0,
-		},
+		phases:         make([]float64, 5),
+		algorithm:      algorithm,
 	}
 
 	err := m.Expose(
@@ -61,22 +74,22 @@ func NewOscillator() (*Oscillator, error) {
 			m.sync,
 		},
 		[]*Out{
-			{Name: "pulse", Provider: m.out("pulse", Pulse, 1)},
-			{Name: "saw", Provider: m.out("saw", Saw, 1)},
-			{Name: "sine", Provider: m.out("sine", Sine, 1)},
-			{Name: "triangle", Provider: m.out("triangle", Triangle, 1)},
-			{Name: "sub", Provider: m.out("sub", Pulse, 0.5)},
+			{Name: "pulse", Provider: m.out(0, Pulse, 1)},
+			{Name: "saw", Provider: m.out(1, Saw, 1)},
+			{Name: "sine", Provider: m.out(2, Sine, 1)},
+			{Name: "triangle", Provider: m.out(3, Triangle, 1)},
+			{Name: "sub", Provider: m.out(4, Pulse, 0.5)},
 		},
 	)
 
 	return m, err
 }
 
-func (o *Oscillator) out(name string, shape WaveShape, multiplier float64) ReaderProvider {
+func (o *Oscillator) out(idx int, shape int, multiplier float64) ReaderProvider {
 	return Provide(&oscOut{
 		Oscillator: o,
+		phaseIndex: idx,
 		shape:      shape,
-		name:       name,
 		multiplier: multiplier,
 	})
 }
@@ -98,8 +111,8 @@ func (o *Oscillator) read(out Frame) {
 
 type oscOut struct {
 	*Oscillator
-	name       string
-	shape      WaveShape
+	phaseIndex int
+	shape      int
 	multiplier float64
 	last       Value
 }
@@ -107,44 +120,53 @@ type oscOut struct {
 func (reader *oscOut) Read(out Frame) {
 	reader.read(out)
 	for i := range out {
-		var (
-			phase  = reader.phases[reader.name]
-			bPhase = phase / (2 * math.Pi)
-			pitch  = reader.state.pitch[i] * Value(reader.multiplier)
-			delta  = float64(pitch + reader.state.detune[i] + reader.state.pitchMod[i]*(reader.state.pitchModAmount[i]/10))
-			next   = blepSample(reader.shape, phase)*reader.state.amp[i] + reader.state.offset[i]
-		)
-
-		switch reader.shape {
-		case Sine:
-		case Saw:
-			next -= blep(bPhase, delta)
-		case Pulse:
-			next += blep(bPhase, delta)
-			next -= blep(math.Mod(bPhase+0.5, 1), delta)
-		case Triangle:
-			next += blep(bPhase, delta)
-			next -= blep(math.Mod(bPhase+0.5, 1), delta)
-			next = pitch*next + (1-pitch)*reader.last
-		default:
+		switch reader.algorithm {
+		case BLEP:
+			reader.blep(out, i)
+		case Simple:
+			reader.simple(out, i)
 		}
-
-		phase += float64(delta) * 2 * math.Pi
-		if phase >= 2*math.Pi {
-			phase -= 2 * math.Pi
-		}
-		if reader.state.sync[i] > 0 {
-			phase = 0
-		}
-		reader.phases[reader.name] = phase
-		out[i] = next
-		reader.last = next
 	}
 }
 
-type WaveShape int
+func (o *oscOut) blep(out Frame, i int) {
+	var (
+		phase  = o.phases[o.phaseIndex]
+		bPhase = phase / (2 * math.Pi)
+		pitch  = o.state.pitch[i] * Value(o.multiplier)
+		delta  = float64(pitch +
+			o.state.detune[i] +
+			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10))
+		next = blepSample(o.shape, phase)*o.state.amp[i] + o.state.offset[i]
+	)
 
-func blepSample(shape WaveShape, phase float64) Value {
+	switch o.shape {
+	case Sine:
+	case Saw:
+		next -= blep(bPhase, delta)
+	case Pulse:
+		next += blep(bPhase, delta)
+		next -= blep(math.Mod(bPhase+0.5, 1), delta)
+	case Triangle:
+		next += blep(bPhase, delta)
+		next -= blep(math.Mod(bPhase+0.5, 1), delta)
+		next = pitch*next + (1-pitch)*o.last
+	default:
+	}
+
+	phase += float64(delta) * 2 * math.Pi
+	if phase >= 2*math.Pi {
+		phase -= 2 * math.Pi
+	}
+	if o.state.sync[i] > 0 {
+		phase = 0
+	}
+	o.phases[o.phaseIndex] = phase
+	out[i] = next
+	o.last = next
+}
+
+func blepSample(shape int, phase float64) Value {
 	switch shape {
 	case Sine:
 		return Value(math.Sin(phase))
@@ -171,4 +193,48 @@ func blep(p float64, delta float64) Value {
 		return Value(p + p + p*p + 1.0)
 	}
 	return 0.0
+}
+
+func (o *oscOut) simple(out Frame, i int) {
+	var (
+		phase = o.phases[o.phaseIndex]
+		amp   = o.state.amp[i]
+		pitch = o.state.pitch[i] +
+			o.state.detune[i] +
+			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10)
+		offset = o.state.offset[i]
+		next   Value
+	)
+
+	switch o.shape {
+	case Sine:
+		next = Value(math.Sin(float64(phase))) * amp
+	case Saw:
+		next = Value(1-float32(1/math.Pi*phase)) * amp
+	case Pulse:
+		if phase < math.Pi {
+			next = 1 * amp
+		} else {
+			next = -1 * amp
+		}
+	case Triangle:
+		if phase < math.Pi {
+			next = Value(-1+(2/math.Pi)*phase) * amp
+		} else {
+			next = Value(3+(2/math.Pi)*phase) * amp
+		}
+	default:
+	}
+
+	phase += float64(pitch) * 2 * math.Pi
+	if phase >= 2*math.Pi {
+		phase -= 2 * math.Pi
+	}
+	if o.state.sync[i] > 0 {
+		phase = 0
+	}
+	o.phases[o.phaseIndex] = phase
+	next += offset
+	out[i] = next
+	o.last = next
 }
