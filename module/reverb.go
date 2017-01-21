@@ -66,7 +66,7 @@ func NewReverb(c ReverbConfig) (*Reverb, error) {
 	}
 	for i, s := range c.Feedback {
 		name := fmt.Sprintf("%d", i)
-		m.fbs[i], err = NewFBComb(s)
+		m.fbs[i], err = NewFBComb(DurationInt(s))
 		if err != nil {
 			return m, err
 		}
@@ -86,7 +86,7 @@ func NewReverb(c ReverbConfig) (*Reverb, error) {
 	feedbackGainMultiple.Patch("input", Value(0.8))
 
 	for i, s := range c.Allpass {
-		m.allpasses[i], err = NewAllPass(s)
+		m.allpasses[i], err = NewAllPass(DurationInt(s))
 		if err != nil {
 			return m, err
 		}

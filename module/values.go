@@ -75,6 +75,10 @@ type MS struct {
 	Raw float64
 }
 
+func DurationInt(v int) MS {
+	return Duration(float64(v))
+}
+
 func Duration(v float64) MS {
 	return MS{Raw: v, Valuer: Value(v * SampleRate * 0.001)}
 }

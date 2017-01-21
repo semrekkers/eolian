@@ -67,7 +67,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 	}
 	for i, s := range c.Feedback {
 		name := fmt.Sprintf("%d", i)
-		m.fbs[i], err = NewFilteredFBComb(s)
+		m.fbs[i], err = NewFilteredFBComb(DurationInt(s))
 		if err != nil {
 			return m, err
 		}
@@ -90,7 +90,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 	feedbackGainMultiple.Patch("input", Value(0.8))
 
 	for i, s := range c.Allpass {
-		m.allpasses[i], err = NewAllPass(s)
+		m.allpasses[i], err = NewAllPass(DurationInt(s))
 		if err != nil {
 			return m, err
 		}

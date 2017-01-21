@@ -1,10 +1,8 @@
 package module
 
 func init() {
-	Register("FilteredFBComb", func(Config) (Patcher, error) { return NewFilteredFBComb(defaultDelay) })
+	Register("FilteredFBComb", func(Config) (Patcher, error) { return NewFilteredFBComb(Duration(10000)) })
 }
-
-const defaultDelay = 10000
 
 type FilteredFBComb struct {
 	IO
@@ -15,10 +13,10 @@ type FilteredFBComb struct {
 	last   Value
 }
 
-func NewFilteredFBComb(size int) (*FilteredFBComb, error) {
+func NewFilteredFBComb(size MS) (*FilteredFBComb, error) {
 	m := &FilteredFBComb{
 		in:        &In{Name: "input", Source: zero},
-		duration:  &In{Name: "duration", Source: NewBuffer(Value(0.01))},
+		duration:  &In{Name: "duration", Source: NewBuffer(Duration(1000))},
 		gain:      &In{Name: "gain", Source: NewBuffer(Value(0.98))},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
@@ -52,15 +50,16 @@ type DelayLine struct {
 	size, offset int
 }
 
-func NewDelayLine(size int) *DelayLine {
+func NewDelayLine(size MS) *DelayLine {
+	v := int(size.Value())
 	return &DelayLine{
-		size:   size,
-		buffer: make(Frame, size),
+		size:   v,
+		buffer: make(Frame, v),
 	}
 }
 
 func (d *DelayLine) TickDuration(v, duration Value) Value {
-	if d.offset >= int(float64(duration)*float64(d.size)) || d.offset >= d.size {
+	if d.offset >= int(duration) || d.offset >= d.size {
 		d.offset = 0
 	}
 	v, d.buffer[d.offset] = d.buffer[d.offset], v

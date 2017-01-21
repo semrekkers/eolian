@@ -3,7 +3,7 @@ package module
 import "github.com/mitchellh/mapstructure"
 
 func init() {
-	setup := func(f func(i int, c Config) (Patcher, error)) func(Config) (Patcher, error) {
+	setup := func(f func(s MS, c Config) (Patcher, error)) func(Config) (Patcher, error) {
 		return func(c Config) (Patcher, error) {
 			var config struct {
 				Size int
@@ -14,13 +14,13 @@ func init() {
 			if config.Size == 0 {
 				config.Size = 10000
 			}
-			return f(int(SampleRate/1000*float64(config.Size)), c)
+			return f(DurationInt(config.Size), c)
 		}
 	}
 
-	Register("FFComb", setup(func(i int, c Config) (Patcher, error) { return NewFFComb(i) }))
-	Register("FBComb", setup(func(i int, c Config) (Patcher, error) { return NewFBComb(i) }))
-	Register("Allpass", setup(func(i int, c Config) (Patcher, error) { return NewAllPass(i) }))
+	Register("FFComb", setup(func(s MS, c Config) (Patcher, error) { return NewFFComb(s) }))
+	Register("FBComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBComb(s) }))
+	Register("Allpass", setup(func(s MS, c Config) (Patcher, error) { return NewAllPass(s) }))
 }
 
 type FFComb struct {
@@ -31,10 +31,10 @@ type FFComb struct {
 	line *DelayLine
 }
 
-func NewFFComb(size int) (*FFComb, error) {
+func NewFFComb(size MS) (*FFComb, error) {
 	m := &FFComb{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
+		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}
@@ -62,10 +62,10 @@ type FBComb struct {
 	last Value
 }
 
-func NewFBComb(size int) (*FBComb, error) {
+func NewFBComb(size MS) (*FBComb, error) {
 	m := &FBComb{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
+		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}
@@ -94,10 +94,10 @@ type AllPass struct {
 	last Value
 }
 
-func NewAllPass(size int) (*AllPass, error) {
+func NewAllPass(size MS) (*AllPass, error) {
 	m := &AllPass{
 		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Value(0.01))},
+		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
 		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.9))},
 		line:     NewDelayLine(size),
 	}
