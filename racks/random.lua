@@ -61,7 +61,7 @@ return function(env)
 
         with(modules.voice, function(v)
             v.adsr:set {
-                gate    = modules.clock.multiple:output(2),
+                gate    = modules.random.series:output('gate'),
                 attack  = ms(30),
                 decay   = ms(50),
                 sustain = 0.3,
