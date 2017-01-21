@@ -9,8 +9,6 @@ patches in real-time.
 This project is named after the music hall, **The Eolian**, in the book [*The Name of the
 Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Patrick Rothfuss](http://patrickrothfuss.com).
 
-*Warning:* This project is still in its infancy. Please don't get angry if/when I break things 😊🍺
-
 ## Dependencies
 
 - [Go 1.7](http://golang.org)+
