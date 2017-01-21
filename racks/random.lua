@@ -71,9 +71,9 @@ return function(env)
                 pitch = modules.random.quant:output(),
             }
             v.mix:set {
-                { input = v.osc:output('pulse') },
-                { input = v.osc:output('saw'), level = 0.1 },
-                { input = v.osc:output('sub'), level = 0.8 },
+                { input = v.osc:output('sine') },
+                { input = v.osc:output('saw'), level = 0.4 },
+                { input = v.osc:output('sub') },
             }
             v.amp:set {
                 a = v.mix:output(),
