@@ -1,10 +1,10 @@
 return function(env)
-    local synth = require 'eolian.synth'
+    local synth = require('eolian.synth')
 
     local function build()
         return {
             clock  = {
-                osc      = synth.Osc(),
+                osc      = synth.Oscillator(),
                 multiple = synth.Multiple(),
             },
             random = {
@@ -12,18 +12,15 @@ return function(env)
                 series  = synth.RandomSeries(),
                 quant   = synth.Quantize(),
             },
-
-
             voice = {
                 adsr = synth.ADSR(),
-                osc  = synth.Osc(),
+                osc  = synth.Oscillator(),
                 mix  = synth.Mix(),
                 amp  = synth.Multiply(),
             },
-
             delay = {
-                cutoff = synth.Osc(),
-                gain   = synth.Osc(),
+                cutoff = synth.Oscillator { algorithm = 'simple' },
+                gain   = synth.Oscillator { algorithm = 'simple' },
                 delay  = synth.FilteredFBComb(),
             },
         }
@@ -67,18 +64,17 @@ return function(env)
                 gate    = modules.clock.multiple:output(2),
                 attack  = ms(30),
                 decay   = ms(50),
-                sustain = 0.2,
+                sustain = 0.3,
                 release = ms(1000),
             }
-
             v.osc:set {
                 pitch = modules.random.quant:output(),
             }
             v.mix:set {
                 { input = v.osc:output('pulse') },
-                { input = v.osc:output('saw'), level = 0.5 },
+                { input = v.osc:output('saw'), level = 0.1 },
+                { input = v.osc:output('sub'), level = 0.8 },
             }
-
             v.amp:set {
                 a = v.mix:output(),
                 b = v.adsr:output(),
@@ -88,7 +84,7 @@ return function(env)
         with(modules.delay, function(d)
             d.cutoff:set {
                 pitch = hz(0.1),
-                amp   = hz(5000),
+                amp   = 0.1,
             }
             d.gain:set {
                 pitch  = hz(0.2),
