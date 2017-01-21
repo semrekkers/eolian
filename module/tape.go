@@ -191,10 +191,7 @@ func (s *tapeState) playheadToEnd() {
 }
 
 func (s *tapeState) playback() {
-	s.average -= s.average / tapeOversample
-	s.average += s.memory[s.offset] / tapeOversample
-	s.out = s.average
-
+	s.out = s.memory[s.offset]
 	s.offset += int(Value(tapeOversample) * s.speed)
 	if s.offset >= s.markers.At(s.spliceEnd) {
 		s.playheadToStart()
