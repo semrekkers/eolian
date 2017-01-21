@@ -17,7 +17,7 @@ import (
 
 const (
 	historyFileVar     = "EOLIAN_HISTORY_FILE"
-	defaultHistoryFile = "/tmp/eolian.tmp"
+	defaultHistoryFile = "/tmp/eolian"
 )
 
 type VM struct {
