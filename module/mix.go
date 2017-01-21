@@ -34,11 +34,11 @@ func NewMix(size int) (*Mix, error) {
 	inputs := []*In{m.master}
 	for i := 0; i < size; i++ {
 		in := &In{
-			Name:   fmt.Sprintf("%d.input", i),
+			Name:   fmt.Sprintf("%d/input", i),
 			Source: NewBuffer(zero),
 		}
 		level := &In{
-			Name:   fmt.Sprintf("%d.level", i),
+			Name:   fmt.Sprintf("%d/level", i),
 			Source: NewBuffer(Value(1)),
 		}
 		m.sources = append(m.sources, in)

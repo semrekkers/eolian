@@ -130,7 +130,7 @@ func moduleSet(state *lua.LState, p module.Patcher) int {
 		raw = state.CheckTable(2)
 	} else if top == 3 {
 		self = state.CheckTable(1)
-		prefix = strings.Split(state.CheckAny(2).String(), ".")
+		prefix = strings.Split(state.CheckAny(2).String(), "/")
 		raw = state.CheckTable(3)
 	}
 
@@ -162,7 +162,7 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 			continue
 		}
 
-		name := strings.Join(full, ".")
+		name := strings.Join(full, "/")
 
 		switch v := raw.(type) {
 		case *lua.LUserData:
@@ -257,7 +257,7 @@ func moduleOutput(p module.Patcher) lua.LGFunction {
 		}
 
 		namespace := getNamespace(self)
-		name = strings.Join(append(namespace, name), ".")
+		name = strings.Join(append(namespace, name), "/")
 
 		state.Push(&lua.LUserData{Value: module.Port{p, name}})
 		return 1
@@ -273,7 +273,7 @@ func moduleOutputFunc(p module.Patcher) lua.LGFunction {
 		}
 
 		namespace := getNamespace(self)
-		name = strings.Join(append(namespace, name), ".")
+		name = strings.Join(append(namespace, name), "/")
 
 		fn := state.NewFunction(lua.LGFunction(func(state *lua.LState) int {
 			state.Push(&lua.LUserData{Value: module.Port{p, name}})

@@ -42,7 +42,7 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < steps; i++ {
-		m.steps[i] = &In{Name: fmt.Sprintf("%d.mode", i), Source: NewBuffer(zero)}
+		m.steps[i] = &In{Name: fmt.Sprintf("%d/mode", i), Source: NewBuffer(zero)}
 		inputs = append(inputs, m.steps[i])
 	}
 

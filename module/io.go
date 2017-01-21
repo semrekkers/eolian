@@ -2,9 +2,11 @@
 package module
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 )
 
 // Identifier allows a rack to uniquely identify a module instance
@@ -89,7 +91,11 @@ func (io *IO) Patch(name string, t interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	input.SetSource(reader)
+	if o, ok := reader.(*Out); ok {
+		o.SetDestination(input)
+	}
 	return nil
 }
 
@@ -170,20 +176,21 @@ func (io *IO) String() string {
 
 // Inspect returns a formatted string detailing the internal state of the module
 func (io *IO) Inspect() string {
-	out := fmt.Sprintf("ID: %s\n", io.ID())
-	out += "Inputs:\n"
+	buf := bytes.NewBuffer(nil)
+	w := tabwriter.NewWriter(buf, 8, 8, 1, '\t', tabwriter.AlignRight)
+	fmt.Fprintf(w, "%s\n-------------------------------------\n", io.ID())
 	for name, in := range io.ins {
-		out += fmt.Sprintf("- %s: %v\n", name, in)
+		fmt.Fprintf(w, "%s\t  <--\t%v\n", name, in.Source)
 	}
-	out += "Outputs:\n"
 	for name, e := range io.outs {
 		if e.IsActive() {
-			out += fmt.Sprintf("- %s (active)\n", name)
+			fmt.Fprintf(w, "%s\t  -->\t%v\n", name, e.destination)
 		} else {
-			out += fmt.Sprintf("- %s\n", name)
+			fmt.Fprintf(w, "%s\n", name)
 		}
 	}
-	return strings.TrimRight(out, "\n")
+	w.Flush()
+	return strings.TrimRight(buf.String(), "\n")
 }
 
 func (io *IO) lazyInit() {
@@ -221,10 +228,6 @@ type In struct {
 	owner   *IO
 }
 
-// func (i *In) String() string {
-// 	return fmt.Sprintf("%s/%s", i.owner, i.Name)
-// }
-
 // Read reads the output of the source into a Frame
 func (i *In) Read(f Frame) {
 	i.Source.Read(f)
@@ -241,7 +244,7 @@ func (i *In) SetSource(r Reader) {
 }
 
 func (i *In) String() string {
-	return fmt.Sprintf("%v", i.Source)
+	return fmt.Sprintf("%s/%s", i.owner.ID(), i.Name)
 }
 
 // ReadFrame reads an entire frame into the buffered input
@@ -264,10 +267,10 @@ func (i *In) Close() error {
 
 // Out is a module output
 type Out struct {
-	Name     string
-	Provider ReaderProvider
-	reader   Reader
-	owner    *IO
+	Name                string
+	Provider            ReaderProvider
+	reader, destination Reader
+	owner               *IO
 }
 
 func (o *Out) String() string {
@@ -285,9 +288,14 @@ func (o *Out) Read(out Frame) {
 	}
 }
 
+func (o *Out) SetDestination(r Reader) {
+	o.destination = r
+}
+
 func (o *Out) Close() error {
 	defer func() {
 		o.reader = nil
+		o.destination = nil
 	}()
 	if c, ok := o.reader.(Closer); ok {
 		return c.Close()
@@ -302,5 +310,5 @@ type Port struct {
 }
 
 func canonicalPort(v string) string {
-	return strings.Replace(v, "/", ".", -1)
+	return strings.Replace(v, ".", "/", -1)
 }

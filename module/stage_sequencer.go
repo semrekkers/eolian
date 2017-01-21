@@ -68,23 +68,23 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 	for i := 0; i < stages; i++ {
 		m.stages[i] = stage{
 			pitch: &In{
-				Name:   fmt.Sprintf("%d.pitch", i),
+				Name:   fmt.Sprintf("%d/pitch", i),
 				Source: NewBuffer(zero),
 			},
 			pulses: &In{
-				Name:   fmt.Sprintf("%d.pulses", i),
+				Name:   fmt.Sprintf("%d/pulses", i),
 				Source: NewBuffer(Value(1)),
 			},
 			gateMode: &In{
-				Name:   fmt.Sprintf("%d.mode", i),
+				Name:   fmt.Sprintf("%d/mode", i),
 				Source: NewBuffer(Value(1)),
 			},
 			glide: &In{
-				Name:   fmt.Sprintf("%d.glide", i),
+				Name:   fmt.Sprintf("%d/glide", i),
 				Source: NewBuffer(zero),
 			},
 			velocity: &In{
-				Name:   fmt.Sprintf("%d.velocity", i),
+				Name:   fmt.Sprintf("%d/velocity", i),
 				Source: NewBuffer(Value(1)),
 			},
 		}

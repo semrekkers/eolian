@@ -39,7 +39,7 @@ func NewSwitch(size int) (*Switch, error) {
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < size; i++ {
 		in := &In{
-			Name:   fmt.Sprintf("%d.input", i),
+			Name:   fmt.Sprintf("%d/input", i),
 			Source: NewBuffer(zero),
 		}
 		m.sources = append(m.sources, in)

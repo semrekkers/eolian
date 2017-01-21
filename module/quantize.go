@@ -40,7 +40,7 @@ func NewQuantize(size int) (*Quantize, error) {
 	inputs := []*In{m.in}
 	for i := 0; i < size; i++ {
 		in := &In{
-			Name:   fmt.Sprintf("%d.pitch", i),
+			Name:   fmt.Sprintf("%d/pitch", i),
 			Source: NewBuffer(zero),
 		}
 		m.pitches[i] = in
