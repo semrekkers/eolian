@@ -28,14 +28,14 @@ return function(env)
 
     local function patch(modules)
         with(modules.clock, function(c)
-            c.osc:set      { pitch = hz(9) }
+            c.osc:set      { pitch = hz(5) }
             c.multiple:set { input = c.osc:output('pulse') }
         end)
 
         with(modules.random, function(r)
             r.trigger:set {
                 input   = modules.clock.multiple:output(0),
-                divisor = 32,
+                divisor = 16,
             }
             r.series:set {
                 clock   = modules.clock.multiple:output(1),
