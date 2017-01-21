@@ -58,6 +58,7 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 		} else {
 			in.initial = in.Source
 		}
+		in.owner = io
 		io.ins[in.Name] = in
 	}
 	for _, out := range outs {
@@ -67,6 +68,7 @@ func (io *IO) Expose(ins []*In, outs []*Out) error {
 		if out.Provider == nil {
 			return fmt.Errorf(`provider must be set for output "%s"`, out.Name)
 		}
+		out.owner = io
 		io.outs[out.Name] = out
 	}
 	return nil
@@ -162,13 +164,18 @@ func (io *IO) OutputsActive() int {
 	return i
 }
 
+func (io *IO) String() string {
+	return io.ID()
+}
+
 // Inspect returns a formatted string detailing the internal state of the module
 func (io *IO) Inspect() string {
-	out := "inputs:\n"
+	out := fmt.Sprintf("ID: %s\n", io.ID())
+	out += "Inputs:\n"
 	for name, in := range io.ins {
 		out += fmt.Sprintf("- %s: %v\n", name, in)
 	}
-	out += "outputs:\n"
+	out += "Outputs:\n"
 	for name, e := range io.outs {
 		if e.IsActive() {
 			out += fmt.Sprintf("- %s (active)\n", name)
@@ -211,7 +218,12 @@ type In struct {
 	Source  Reader
 	Name    string
 	initial Reader
+	owner   *IO
 }
+
+// func (i *In) String() string {
+// 	return fmt.Sprintf("%s/%s", i.owner, i.Name)
+// }
 
 // Read reads the output of the source into a Frame
 func (i *In) Read(f Frame) {
@@ -255,6 +267,11 @@ type Out struct {
 	Name     string
 	Provider ReaderProvider
 	reader   Reader
+	owner    *IO
+}
+
+func (o *Out) String() string {
+	return fmt.Sprintf("%s/%s", o.owner, o.Name)
 }
 
 // IsActive returns whether or not there is a realized Reader assigned

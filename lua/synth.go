@@ -58,7 +58,7 @@ func buildConstructor(name string, init module.InitFunc, mtx *sync.Mutex) func(s
 			state.RaiseError("%s", err.Error())
 		}
 
-		p.SetID(fmt.Sprintf("%s:%d", name, moduleSequence))
+		p.SetID(fmt.Sprintf("%s%d", name, moduleSequence))
 		atomic.AddUint64(&moduleSequence, 1)
 
 		table := decoratePatcher(state, p, mtx)
@@ -99,6 +99,7 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 			"inspect": lock(moduleInspect, mtx, p),
 			"reset":   lock(moduleReset, mtx, p),
 			"set":     lock(moduleSet, mtx, p),
+			"id":      lock(moduleID, mtx, p),
 
 			// Methods that don't need to lock the graph
 			"scope":    moduleScopedOutput(p),
@@ -187,6 +188,11 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 			}
 		}
 	}
+}
+
+func moduleID(state *lua.LState, p module.Patcher) int {
+	state.Push(lua.LString(p.ID()))
+	return 1
 }
 
 func moduleInfo(state *lua.LState, p module.Patcher) int {

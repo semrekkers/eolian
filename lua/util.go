@@ -18,7 +18,11 @@ function inspect(o, prefix)
 				prefix = ''
 			end
 			if type(v) == 'table' then
-				print(prefix .. k)
+				if v['__type'] == 'module' then
+					print(prefix .. k .. " (" .. v:id() .. ")")
+				else
+					print(prefix .. k)
+				end
 				inspect(v, ' - ')
 			end
 		end
