@@ -74,7 +74,8 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	var deviceID portmidi.DeviceID = -1
 	for i := 0; i < portmidi.CountDevices(); i++ {
 		id := portmidi.DeviceID(i)
-		if portmidi.Info(id).Name == config.Device {
+		info := portmidi.Info(id)
+		if info.Name == config.Device && info.IsInputAvailable {
 			deviceID = id
 		}
 	}
@@ -107,7 +108,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		for n := 0; n < 128; n++ {
 			func(c, n int) {
 				outs = append(outs, &module.Out{
-					Name: fmt.Sprintf("cc.%d.%d", c, n),
+					Name: fmt.Sprintf("cc/%d/%d", c, n),
 					Provider: module.Provide(&ctrlCC{
 						Controller: m,
 						status:     176 + (c - 1),

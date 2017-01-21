@@ -57,7 +57,10 @@ func (filter *FourPole) Tick(in Value) Value {
 
 	var out Value
 
-	res := filter.after[3]
+	var res Value
+	if filter.resonance > 0 {
+		res = filter.after[3]
+	}
 	out = in - (res * clampValue(filter.resonance, 0, 4.5))
 
 	clip := out

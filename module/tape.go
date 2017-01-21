@@ -6,6 +6,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+const tapeOversample = 10
+
 func init() {
 	Register("Tape", func(c Config) (Patcher, error) {
 		var config struct {
@@ -23,8 +25,8 @@ func init() {
 
 type Tape struct {
 	IO
-	in, play, record, reset, bias *In
-	organize, splice, unsplice    *In
+	in, speed, play, record, reset, bias *In
+	organize, splice, unsplice           *In
 
 	state     *tapeState
 	stateFunc tapeStateFunc
@@ -36,6 +38,7 @@ type Tape struct {
 func NewTape(max int) (*Tape, error) {
 	m := &Tape{
 		in:          &In{Name: "input", Source: zero},
+		speed:       &In{Name: "speed", Source: NewBuffer(Value(1))},
 		play:        &In{Name: "play", Source: NewBuffer(Value(1))},
 		record:      &In{Name: "record", Source: NewBuffer(zero)},
 		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
@@ -48,7 +51,7 @@ func NewTape(max int) (*Tape, error) {
 		endOfSplice: make(Frame, FrameSize),
 	}
 	err := m.Expose(
-		[]*In{m.in, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
+		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
 		[]*Out{
 			{Name: "output", Provider: Provide(&tapeOut{Tape: m})},
 			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
@@ -60,6 +63,7 @@ func NewTape(max int) (*Tape, error) {
 func (t *Tape) read(out Frame) {
 	if t.reads == 0 {
 		t.in.Read(out)
+		t.speed.ReadFrame()
 		t.play.ReadFrame()
 		t.record.ReadFrame()
 		t.reset.ReadFrame()
@@ -83,6 +87,7 @@ func (o *tapeOut) Read(out Frame) {
 	for i := range out {
 		o.state.in = out[i]
 		o.state.organize = o.organize.LastFrame()[i]
+		o.state.speed = o.speed.LastFrame()[i]
 		o.state.play = o.play.LastFrame()[i]
 		o.state.record = o.record.LastFrame()[i]
 		o.state.reset = o.reset.LastFrame()[i]
@@ -125,8 +130,8 @@ func (o *tapeEndOfSplice) Read(out Frame) {
 }
 
 type tapeState struct {
-	in, out, play, organize, reset, record, splice, unsplice  Value
-	lastPlay, lastRecord, lastReset, lastSplice, lastUnsplice Value
+	in, out, speed, play, organize, reset, record, splice, unsplice Value
+	lastPlay, lastRecord, lastReset, lastSplice, lastUnsplice       Value
 
 	markers *markers
 	memory  []Value
@@ -135,13 +140,14 @@ type tapeState struct {
 	unspliceHold           int
 	spliceStart, spliceEnd int
 	atSpliceEnd            bool
+	average                Value
 }
 
 func newTapeState(max int) *tapeState {
 	return &tapeState{
 		markers:      newMarkers(),
 		spliceStart:  0,
-		memory:       make([]Value, max),
+		memory:       make([]Value, max*tapeOversample),
 		lastPlay:     -1,
 		lastRecord:   -1,
 		lastReset:    -1,
@@ -174,16 +180,27 @@ func (s *tapeState) erase() {
 	s.offset, s.spliceStart, s.spliceEnd, s.recordingEnd = 0, 0, 0, 0
 }
 
-func (s *tapeState) resetPlayhead() {
+func (s *tapeState) playheadToStart() {
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
 	s.offset = s.markers.At(s.spliceStart)
 }
 
+func (s *tapeState) playheadToEnd() {
+	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
+	s.offset = s.markers.At(s.spliceEnd)
+}
+
 func (s *tapeState) playback() {
-	s.out = s.memory[s.offset]
-	s.offset++
+	s.average -= s.average / tapeOversample
+	s.average += s.memory[s.offset] / tapeOversample
+	s.out = s.average
+
+	s.offset += int(Value(tapeOversample) * s.speed)
 	if s.offset >= s.markers.At(s.spliceEnd) {
-		s.resetPlayhead()
+		s.playheadToStart()
+		s.atSpliceEnd = true
+	} else if s.offset <= s.markers.At(s.spliceStart) {
+		s.playheadToEnd()
 		s.atSpliceEnd = true
 	}
 }
@@ -197,7 +214,7 @@ func tapeIdle(s *tapeState) tapeStateFunc {
 		return next
 	}
 	if s.recordingEnd != 0 && s.play > 0 {
-		s.resetPlayhead()
+		s.playheadToStart()
 		return tapePlay
 	}
 	return tapeIdle
@@ -221,7 +238,10 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 		return leaveRecord(s)
 	}
 	s.memory[s.offset] = s.in
-	s.offset++
+	for i := 0; i < tapeOversample; i++ {
+		s.memory[s.offset+i] = s.in
+	}
+	s.offset += tapeOversample
 
 	if s.markers.Count() == 1 {
 		if s.offset >= len(s.memory) {
