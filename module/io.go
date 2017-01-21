@@ -180,11 +180,11 @@ func (io *IO) Inspect() string {
 	w := tabwriter.NewWriter(buf, 8, 8, 1, '\t', tabwriter.AlignRight)
 	fmt.Fprintf(w, "%s\n-------------------------------------\n", io.ID())
 	for name, in := range io.ins {
-		fmt.Fprintf(w, "%s\t  <--\t%v\n", name, in.Source)
+		fmt.Fprintf(w, "%s\t<--\t%v\n", name, in.Source)
 	}
 	for name, e := range io.outs {
 		if e.IsActive() {
-			fmt.Fprintf(w, "%s\t  -->\t%v\n", name, e.destination)
+			fmt.Fprintf(w, "%s\t-->\t%v\n", name, e.destination)
 		} else {
 			fmt.Fprintf(w, "%s\n", name)
 		}

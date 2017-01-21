@@ -36,15 +36,14 @@ $ eolian racks/circles.lua
 >
 > -- Reload the file and only repatch it
 > Rack.repatch()
-> 
 > -- Set inputs or repatch modules
 > Rack.modules.low.lpf:inspect()
-inputs:
-- input: &{0xc420282510 output 0xc420282510}
-- cutoff: 3000.00Hz
-- resonance: 0
-outputs:
-- output (active)
+LPFilter30
+-------------------------------------
+input           <--     Mix29/output
+cutoff          <--     3000.00Hz
+resonance       <--     0
+output          -->     Mix0/1/input
 > Rack.modules.low.lpf:set { cutoff = hz(2000) }
 ...
 ```
