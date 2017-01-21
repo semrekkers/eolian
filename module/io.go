@@ -4,6 +4,7 @@ package module
 import (
 	"bytes"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -179,14 +180,29 @@ func (io *IO) Inspect() string {
 	buf := bytes.NewBuffer(nil)
 	w := tabwriter.NewWriter(buf, 8, 8, 1, '\t', tabwriter.AlignRight)
 	fmt.Fprintf(w, "%s\n-------------------------------------\n", io.ID())
-	for name, in := range io.ins {
-		fmt.Fprintf(w, "%s\t<--\t%v\n", name, in.Source)
+
+	inputs := []string{}
+	for name := range io.ins {
+		inputs = append(inputs, name)
 	}
-	for name, e := range io.outs {
+	sort.Strings(inputs)
+
+	for _, name := range inputs {
+		fmt.Fprintf(w, "%s\t<--\t%v\n", name, io.ins[name].Source)
+	}
+
+	outputs := []string{}
+	for name := range io.outs {
+		outputs = append(outputs, name)
+	}
+	sort.Strings(outputs)
+
+	for _, name := range outputs {
+		e := io.outs[name]
 		if e.IsActive() {
 			fmt.Fprintf(w, "%s\t-->\t%v\n", name, e.destination)
 		} else {
-			fmt.Fprintf(w, "%s\n", name)
+			fmt.Fprintf(w, "%s\t-->\t(none)\n", name)
 		}
 	}
 	w.Flush()
