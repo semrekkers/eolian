@@ -68,7 +68,7 @@ func (vm *VM) REPL() error {
 		Prompt:          "> ",
 		HistoryFile:     history,
 		InterruptPrompt: "^C",
-		EOFPrompt:       "exit",
+		EOFPrompt:       "See You Space Cowboy...",
 		AutoComplete:    readline.SegmentFunc(vm.completion),
 	})
 	if err != nil {
