@@ -40,8 +40,8 @@ $ eolian racks/circles.lua
 > Rack.modules.low.lpf:inspect()
 LPFilter30
 -------------------------------------
-input           <--     Mix29/output
 cutoff          <--     3000.00Hz
+input           <--     Mix29/output
 resonance       <--     0
 output          -->     Mix0/1/input
 > Rack.modules.low.lpf:set { cutoff = hz(2000) }
