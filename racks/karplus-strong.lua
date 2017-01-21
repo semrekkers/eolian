@@ -45,7 +45,7 @@ return function(env)
             }
             t.delay:set {
                 input = t.amp:output(),
-                duration = 0.07,
+                duration = ms(20),
                 cutoff = hz(3000)
             }
             t.filter:set {
