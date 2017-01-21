@@ -26,21 +26,21 @@ func NewCompress() (*Compress, error) {
 	return m, err
 }
 
-func (reader *Compress) Read(out Frame) {
-	reader.in.Read(out)
-	attack, release := reader.attack.ReadFrame(), reader.release.ReadFrame()
+func (c *Compress) Read(out Frame) {
+	c.in.Read(out)
+	attack, release := c.attack.ReadFrame(), c.release.ReadFrame()
 	for i := range out {
 		in := absValue(out[i])
 		side := release[i]
-		if in > reader.envelope {
+		if in > c.envelope {
 			side = attack[i]
 		}
 
 		factor := math.Pow(0.01, float64(1.0/side))
-		reader.envelope = Value(factor)*(reader.envelope-in) + in
+		c.envelope = Value(factor)*(c.envelope-in) + in
 
-		if reader.envelope > 1 {
-			out[i] /= reader.envelope
+		if c.envelope > 1 {
+			out[i] /= c.envelope
 		}
 	}
 }

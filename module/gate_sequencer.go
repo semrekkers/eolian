@@ -95,21 +95,21 @@ type gateSequencerOut struct {
 	lastStep int
 }
 
-func (reader *gateSequencerOut) Read(out Frame) {
-	reader.read(out)
+func (o *gateSequencerOut) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		mode := reader.steps[reader.step].LastFrame()[i]
-		if reader.step != reader.lastStep {
+		mode := o.steps[o.step].LastFrame()[i]
+		if o.step != o.lastStep {
 			out[i] = -1
 		} else {
-			if reader.onBeat && mode > 0 {
+			if o.onBeat && mode > 0 {
 				out[i] = 1
-			} else if !reader.onBeat && mode <= 0 {
+			} else if !o.onBeat && mode <= 0 {
 				out[i] = 1
 			} else {
 				out[i] = -1
 			}
 		}
-		reader.lastStep = reader.step
+		o.lastStep = o.step
 	}
 }

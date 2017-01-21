@@ -35,22 +35,22 @@ func NewBuffer(r Reader) *Buffer {
 	}
 }
 
-func (setter *Buffer) SetSource(r Reader) {
-	switch v := setter.Reader.(type) {
+func (b *Buffer) SetSource(r Reader) {
+	switch v := b.Reader.(type) {
 	case SourceSetter:
 		v.SetSource(r)
 	case Reader:
-		setter.Reader = r
+		b.Reader = r
 	}
 }
 
-func (reader *Buffer) ReadFrame() Frame {
-	reader.Reader.Read(reader.Frame)
-	return reader.Frame
+func (b *Buffer) ReadFrame() Frame {
+	b.Reader.Read(b.Frame)
+	return b.Frame
 }
 
-func (closer *Buffer) Close() error {
-	if c, ok := closer.Reader.(Closer); ok {
+func (b *Buffer) Close() error {
+	if c, ok := b.Reader.(Closer); ok {
 		return c.Close()
 	}
 	return nil

@@ -55,16 +55,16 @@ func NewQuantize(size int) (*Quantize, error) {
 	return m, err
 }
 
-func (reader *Quantize) Read(out Frame) {
-	reader.in.Read(out)
-	for i, p := range reader.pitches {
-		reader.frames[i] = p.ReadFrame()
+func (q *Quantize) Read(out Frame) {
+	q.in.Read(out)
+	for i, p := range q.pitches {
+		q.frames[i] = p.ReadFrame()
 	}
 	for i := range out {
-		n := float64(len(reader.pitches))
+		n := float64(len(q.pitches))
 		idx := math.Floor(n*float64(out[i]) + 0.5)
 		idx = math.Min(idx, n-1)
 		idx = math.Max(idx, 0)
-		out[i] = reader.frames[int(idx)][i]
+		out[i] = q.frames[int(idx)][i]
 	}
 }

@@ -34,14 +34,14 @@ func NewFilter(kind FilterType) (*Filter, error) {
 	return m, err
 }
 
-func (reader *Filter) Read(out Frame) {
-	reader.in.Read(out)
-	cutoff := reader.cutoff.ReadFrame()
-	resonance := reader.resonance.ReadFrame()
+func (f *Filter) Read(out Frame) {
+	f.in.Read(out)
+	cutoff := f.cutoff.ReadFrame()
+	resonance := f.resonance.ReadFrame()
 	for i := range out {
-		reader.fourPole.cutoff = cutoff[i]
-		reader.fourPole.resonance = resonance[i]
-		out[i] = reader.fourPole.Tick(out[i])
+		f.fourPole.cutoff = cutoff[i]
+		f.fourPole.resonance = resonance[i]
+		out[i] = f.fourPole.Tick(out[i])
 	}
 }
 

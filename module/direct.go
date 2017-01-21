@@ -20,6 +20,6 @@ func NewDirect() (*Direct, error) {
 	return m, err
 }
 
-func (reader *Direct) Read(out Frame) {
-	reader.in.Read(out)
+func (d *Direct) Read(out Frame) {
+	d.in.Read(out)
 }

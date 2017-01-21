@@ -23,9 +23,9 @@ func NewFold() (*Fold, error) {
 	return m, err
 }
 
-func (reader *Fold) Read(out Frame) {
-	reader.in.Read(out)
-	level := reader.level.ReadFrame()
+func (f *Fold) Read(out Frame) {
+	f.in.Read(out)
+	level := f.level.ReadFrame()
 	for i := range out {
 		in := float64(out[i])
 		level := math.Abs(float64(level[i]))

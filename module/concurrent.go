@@ -35,14 +35,14 @@ func (c *Concurrent) readInput() {
 	}
 }
 
-func (reader *Concurrent) Read(out Frame) {
-	frame := <-reader.ch
+func (c *Concurrent) Read(out Frame) {
+	frame := <-c.ch
 	for i := range out {
 		out[i] = frame[i]
 	}
 }
 
-func (reader *Concurrent) Close() error {
-	close(reader.stop)
+func (c *Concurrent) Close() error {
+	close(c.stop)
 	return nil
 }

@@ -34,11 +34,11 @@ func NewBinary(op BinaryOp, a, b Value) (*Binary, error) {
 
 type BinaryOp func(Value, Value) Value
 
-func (reader *Binary) Read(out Frame) {
-	reader.a.Read(out)
-	b := reader.b.ReadFrame()
+func (bin *Binary) Read(out Frame) {
+	bin.a.Read(out)
+	b := bin.b.ReadFrame()
 	for i := range out {
-		out[i] = reader.op(out[i], b[i])
+		out[i] = bin.op(out[i], b[i])
 	}
 }
 

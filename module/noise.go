@@ -23,11 +23,11 @@ func NewNoise() (*Noise, error) {
 	return m, err
 }
 
-func (reader *Noise) Read(out Frame) {
-	reader.in.Read(out)
-	min := reader.min.ReadFrame()
-	max := reader.max.ReadFrame()
-	gain := reader.gain.ReadFrame()
+func (n *Noise) Read(out Frame) {
+	n.in.Read(out)
+	min := n.min.ReadFrame()
+	max := n.max.ReadFrame()
+	gain := n.gain.ReadFrame()
 	for i := range out {
 		diff := max[i] - min[i]
 		out[i] += (randValue()*diff + min[i]) * gain[i]

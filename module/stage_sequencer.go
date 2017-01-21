@@ -183,17 +183,17 @@ type stageSeqPitch struct {
 	*StageSequencer
 }
 
-func (reader *stageSeqPitch) Read(out Frame) {
-	reader.read(out)
-	glide := reader.glide.ReadFrame()
+func (o *stageSeqPitch) Read(out Frame) {
+	o.read(out)
+	glide := o.glide.ReadFrame()
 	for i := range out {
-		stage := reader.stages[reader.stage]
-		in := stage.pitch.LastFrame()[i] * reader.transpose.LastFrame()[i]
+		stage := o.stages[o.stage]
+		in := stage.pitch.LastFrame()[i] * o.transpose.LastFrame()[i]
 		var amt Value
 		if stage.glide.LastFrame()[i] > 0 {
 			amt = glide[i]
 		}
-		out[i] = reader.slew.Tick(in, amt, amt)
+		out[i] = o.slew.Tick(in, amt, amt)
 	}
 }
 
@@ -201,17 +201,17 @@ type stageSeqGate struct {
 	*StageSequencer
 }
 
-func (reader *stageSeqGate) Read(out Frame) {
-	reader.read(out)
+func (o *stageSeqGate) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		clock := reader.clock.LastFrame()[i]
+		clock := o.clock.LastFrame()[i]
 
-		switch reader.gateMode {
+		switch o.gateMode {
 		case gateModeHold:
 			if clock > 0 {
 				out[i] = 1
 			} else {
-				if reader.stage == reader.lastStage {
+				if o.stage == o.lastStage {
 					out[i] = 1
 				} else {
 					out[i] = -1
@@ -224,7 +224,7 @@ func (reader *stageSeqGate) Read(out Frame) {
 				out[i] = -1
 			}
 		case gateModeSingle:
-			if reader.pulse == 0 && clock > 0 {
+			if o.pulse == 0 && clock > 0 {
 				out[i] = 1
 			} else {
 				out[i] = -1
@@ -232,7 +232,7 @@ func (reader *stageSeqGate) Read(out Frame) {
 		case gateModeRest:
 			out[i] = -1
 		}
-		reader.lastStage = reader.stage
+		o.lastStage = o.stage
 	}
 }
 
@@ -240,10 +240,10 @@ type stageSeqSync struct {
 	*StageSequencer
 }
 
-func (reader *stageSeqSync) Read(out Frame) {
-	reader.read(out)
+func (o *stageSeqSync) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		if reader.stage == 0 && reader.pulse == 0 {
+		if o.stage == 0 && o.pulse == 0 {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -255,10 +255,10 @@ type stageSeqEndStage struct {
 	*StageSequencer
 }
 
-func (reader *stageSeqEndStage) Read(out Frame) {
-	reader.read(out)
+func (o *stageSeqEndStage) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		if reader.lastStage != reader.stage {
+		if o.lastStage != o.stage {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -273,12 +273,12 @@ type stageSeqVelocity struct {
 
 const averageVelocitySamples = 100
 
-func (reader *stageSeqVelocity) Read(out Frame) {
-	reader.read(out)
+func (o *stageSeqVelocity) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		reader.rolling -= reader.rolling / averageVelocitySamples
-		reader.rolling += reader.stages[reader.stage].velocity.LastFrame()[i] / averageVelocitySamples
-		out[i] = reader.rolling
+		o.rolling -= o.rolling / averageVelocitySamples
+		o.rolling += o.stages[o.stage].velocity.LastFrame()[i] / averageVelocitySamples
+		out[i] = o.rolling
 	}
 }
 

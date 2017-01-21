@@ -31,10 +31,10 @@ func NewDistort() (*Distort, error) {
 	return m, err
 }
 
-func (reader *Distort) Read(out Frame) {
-	reader.in.Read(out)
-	offsetA, offsetB := reader.offsetA.ReadFrame(), reader.offsetB.ReadFrame()
-	gain := reader.gain.ReadFrame()
+func (d *Distort) Read(out Frame) {
+	d.in.Read(out)
+	offsetA, offsetB := d.offsetA.ReadFrame(), d.offsetB.ReadFrame()
+	gain := d.gain.ReadFrame()
 
 	var num, denom float64
 	for i := range out {
@@ -43,6 +43,6 @@ func (reader *Distort) Read(out Frame) {
 		denom = math.Exp(float64(out[i]*gain[i])) +
 			math.Exp(float64(out[i]*-gain[i]))
 
-		out[i] = reader.dcBlock.Tick(Value(num / denom))
+		out[i] = d.dcBlock.Tick(Value(num / denom))
 	}
 }

@@ -117,14 +117,14 @@ type oscOut struct {
 	last       Value
 }
 
-func (reader *oscOut) Read(out Frame) {
-	reader.read(out)
+func (o *oscOut) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		switch reader.algorithm {
+		switch o.algorithm {
 		case BLEP:
-			reader.blep(out, i)
+			o.blep(out, i)
 		case Simple:
-			reader.simple(out, i)
+			o.simple(out, i)
 		}
 	}
 }

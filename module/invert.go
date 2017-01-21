@@ -20,8 +20,8 @@ func NewInvert() (*Invert, error) {
 	return m, err
 }
 
-func (reader *Invert) Read(out Frame) {
-	reader.in.Read(out)
+func (inv *Invert) Read(out Frame) {
+	inv.in.Read(out)
 	for i := range out {
 		out[i] = -out[i]
 	}

@@ -21,9 +21,9 @@ func NewClip() (*Clip, error) {
 	return m, err
 }
 
-func (reader *Clip) Read(out Frame) {
-	reader.in.Read(out)
-	level := reader.level.ReadFrame()
+func (c *Clip) Read(out Frame) {
+	c.in.Read(out)
+	level := c.level.ReadFrame()
 	for i := range out {
 		level := level[i]
 		if out[i] > level {

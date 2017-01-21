@@ -49,19 +49,19 @@ func NewSwitch(size int) (*Switch, error) {
 	return m, err
 }
 
-func (reader *Switch) Read(out Frame) {
-	clock := reader.clock.ReadFrame()
-	reset := reader.reset.ReadFrame()
-	for i := 0; i < len(reader.sources); i++ {
-		reader.sources[i].ReadFrame()
+func (s *Switch) Read(out Frame) {
+	clock := s.clock.ReadFrame()
+	reset := s.reset.ReadFrame()
+	for i := 0; i < len(s.sources); i++ {
+		s.sources[i].ReadFrame()
 	}
 	for i := range out {
-		if reader.lastReset < 0 && reset[i] > 0 {
-			reader.step = 0
-		} else if reader.lastClock < 0 && clock[i] > 0 {
-			reader.step = (reader.step + 1) % len(reader.sources)
+		if s.lastReset < 0 && reset[i] > 0 {
+			s.step = 0
+		} else if s.lastClock < 0 && clock[i] > 0 {
+			s.step = (s.step + 1) % len(s.sources)
 		}
-		out[i] = reader.sources[reader.step].LastFrame()[i]
-		reader.lastClock = clock[i]
+		out[i] = s.sources[s.step].LastFrame()[i]
+		s.lastClock = clock[i]
 	}
 }

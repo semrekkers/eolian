@@ -21,17 +21,17 @@ func NewToggle() (*Toggle, error) {
 	return m, err
 }
 
-func (reader *Toggle) Read(out Frame) {
-	trigger := reader.trigger.ReadFrame()
+func (t *Toggle) Read(out Frame) {
+	trigger := t.trigger.ReadFrame()
 	for i := range out {
-		if reader.lastTrigger < 0 && trigger[i] > 0 {
-			if reader.value == 1 {
-				reader.value = -1
+		if t.lastTrigger < 0 && trigger[i] > 0 {
+			if t.value == 1 {
+				t.value = -1
 			} else {
-				reader.value = 1
+				t.value = 1
 			}
 		}
-		reader.lastTrigger = trigger[i]
-		out[i] = reader.value
+		t.lastTrigger = trigger[i]
+		out[i] = t.value
 	}
 }

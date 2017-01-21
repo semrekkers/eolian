@@ -78,38 +78,38 @@ type tapeOut struct {
 	*Tape
 }
 
-func (reader *tapeOut) Read(out Frame) {
-	reader.read(out)
+func (o *tapeOut) Read(out Frame) {
+	o.read(out)
 	for i := range out {
-		reader.state.in = out[i]
-		reader.state.organize = reader.organize.LastFrame()[i]
-		reader.state.play = reader.play.LastFrame()[i]
-		reader.state.record = reader.record.LastFrame()[i]
-		reader.state.reset = reader.reset.LastFrame()[i]
-		reader.state.splice = reader.splice.LastFrame()[i]
-		reader.state.unsplice = reader.unsplice.LastFrame()[i]
-		reader.state.atSpliceEnd = false
+		o.state.in = out[i]
+		o.state.organize = o.organize.LastFrame()[i]
+		o.state.play = o.play.LastFrame()[i]
+		o.state.record = o.record.LastFrame()[i]
+		o.state.reset = o.reset.LastFrame()[i]
+		o.state.splice = o.splice.LastFrame()[i]
+		o.state.unsplice = o.unsplice.LastFrame()[i]
+		o.state.atSpliceEnd = false
 
-		reader.stateFunc = reader.stateFunc(reader.state)
-		bias := reader.bias.LastFrame()
+		o.stateFunc = o.stateFunc(o.state)
+		bias := o.bias.LastFrame()
 
 		if bias[i] > 0 {
-			out[i] = (1-bias[i])*out[i] + reader.state.out
+			out[i] = (1-bias[i])*out[i] + o.state.out
 		} else if bias[i] < 0 {
-			out[i] = out[i] + (1+bias[i])*reader.state.out
+			out[i] = out[i] + (1+bias[i])*o.state.out
 		} else {
-			out[i] = out[i] + reader.state.out
+			out[i] = out[i] + o.state.out
 		}
 
-		reader.state.lastPlay = reader.state.play
-		reader.state.lastRecord = reader.state.record
-		reader.state.lastReset = reader.state.reset
-		reader.state.lastSplice = reader.state.splice
-		reader.state.lastUnsplice = reader.state.unsplice
-		if reader.state.atSpliceEnd {
-			reader.endOfSplice[i] = 1
+		o.state.lastPlay = o.state.play
+		o.state.lastRecord = o.state.record
+		o.state.lastReset = o.state.reset
+		o.state.lastSplice = o.state.splice
+		o.state.lastUnsplice = o.state.unsplice
+		if o.state.atSpliceEnd {
+			o.endOfSplice[i] = 1
 		} else {
-			reader.endOfSplice[i] = -1
+			o.endOfSplice[i] = -1
 		}
 	}
 }
@@ -118,9 +118,9 @@ type tapeEndOfSplice struct {
 	*Tape
 }
 
-func (reader *tapeEndOfSplice) Read(out Frame) {
+func (o *tapeEndOfSplice) Read(out Frame) {
 	for i := range out {
-		out[i] = reader.endOfSplice[i]
+		out[i] = o.endOfSplice[i]
 	}
 }
 

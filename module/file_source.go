@@ -39,10 +39,10 @@ func NewFileSource(path string) (*FileSource, error) {
 	return m, err
 }
 
-func (reader *FileSource) Read(out Frame) {
+func (f *FileSource) Read(out Frame) {
 	for i := range out {
-		out[i] = reader.values[reader.idx]
-		reader.idx = (reader.idx + 1) % len(reader.values)
+		out[i] = f.values[f.idx]
+		f.idx = (f.idx + 1) % len(f.values)
 	}
 }
 

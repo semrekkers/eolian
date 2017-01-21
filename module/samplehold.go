@@ -23,14 +23,14 @@ func NewSampleHold() (*SampleHold, error) {
 	return m, err
 }
 
-func (reader *SampleHold) Read(out Frame) {
-	reader.in.Read(out)
-	trigger := reader.trigger.ReadFrame()
+func (sh *SampleHold) Read(out Frame) {
+	sh.in.Read(out)
+	trigger := sh.trigger.ReadFrame()
 	for i := range out {
-		if reader.lastTrigger < 0 && trigger[i] > 0 {
-			reader.sample = out[i]
+		if sh.lastTrigger < 0 && trigger[i] > 0 {
+			sh.sample = out[i]
 		}
-		out[i] = reader.sample
-		reader.lastTrigger = trigger[i]
+		out[i] = sh.sample
+		sh.lastTrigger = trigger[i]
 	}
 }

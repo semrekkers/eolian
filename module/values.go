@@ -16,9 +16,9 @@ const (
 
 type Value float64
 
-func (reader Value) Read(out Frame) {
+func (v Value) Read(out Frame) {
 	for i := range out {
-		out[i] = reader
+		out[i] = v
 	}
 }
 
@@ -45,8 +45,8 @@ func (raw Hz) String() string {
 	return fmt.Sprintf("%.2fHz", raw.Raw)
 }
 
-func (reader Hz) Read(out Frame) {
-	reader.Value().Read(out)
+func (hz Hz) Read(out Frame) {
+	hz.Value().Read(out)
 }
 
 func ParsePitch(v string) (Pitch, error) {
@@ -66,8 +66,8 @@ func (raw Pitch) String() string {
 	return raw.Raw
 }
 
-func (reader Pitch) Read(out Frame) {
-	reader.Value().Read(out)
+func (p Pitch) Read(out Frame) {
+	p.Value().Read(out)
 }
 
 type MS struct {
@@ -87,8 +87,8 @@ func (raw MS) String() string {
 	return fmt.Sprintf("%dms", int(raw.Raw))
 }
 
-func (reader MS) Read(out Frame) {
-	reader.Value().Read(out)
+func (ms MS) Read(out Frame) {
+	ms.Value().Read(out)
 }
 
 func ParseValueString(value string) (Valuer, error) {

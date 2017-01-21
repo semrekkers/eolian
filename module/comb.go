@@ -46,12 +46,12 @@ func NewFFComb(size MS) (*FFComb, error) {
 	return m, err
 }
 
-func (reader *FFComb) Read(out Frame) {
-	reader.in.Read(out)
-	gain := reader.gain.ReadFrame()
-	duration := reader.duration.ReadFrame()
+func (c *FFComb) Read(out Frame) {
+	c.in.Read(out)
+	gain := c.gain.ReadFrame()
+	duration := c.duration.ReadFrame()
 	for i := range out {
-		out[i] += gain[i] * reader.line.TickDuration(out[i], duration[i])
+		out[i] += gain[i] * c.line.TickDuration(out[i], duration[i])
 	}
 }
 
@@ -77,13 +77,13 @@ func NewFBComb(size MS) (*FBComb, error) {
 	return m, err
 }
 
-func (reader *FBComb) Read(out Frame) {
-	reader.in.Read(out)
-	gain := reader.gain.ReadFrame()
-	duration := reader.duration.ReadFrame()
+func (c *FBComb) Read(out Frame) {
+	c.in.Read(out)
+	gain := c.gain.ReadFrame()
+	duration := c.duration.ReadFrame()
 	for i := range out {
-		out[i] += reader.last
-		reader.last = gain[i] * reader.line.TickDuration(out[i], duration[i])
+		out[i] += c.last
+		c.last = gain[i] * c.line.TickDuration(out[i], duration[i])
 	}
 }
 
@@ -109,16 +109,16 @@ func NewAllPass(size MS) (*AllPass, error) {
 	return m, err
 }
 
-func (reader *AllPass) Read(out Frame) {
-	reader.in.Read(out)
-	gain := reader.gain.ReadFrame()
-	duration := reader.duration.ReadFrame()
+func (p *AllPass) Read(out Frame) {
+	p.in.Read(out)
+	gain := p.gain.ReadFrame()
+	duration := p.duration.ReadFrame()
 	for i := range out {
 		gain := gain[i]
 		in := out[i]
-		before := in + -gain*reader.last
-		reader.last = reader.line.TickDuration(before, duration[i])
-		out[i] = reader.last + gain*before
+		before := in + -gain*p.last
+		p.last = p.line.TickDuration(before, duration[i])
+		out[i] = p.last + gain*before
 	}
 }
 
@@ -149,17 +149,17 @@ func NewFilteredFBComb(size MS) (*FilteredFBComb, error) {
 	return m, err
 }
 
-func (reader *FilteredFBComb) Read(out Frame) {
-	reader.in.Read(out)
-	gain := reader.gain.ReadFrame()
-	duration := reader.duration.ReadFrame()
-	cutoff := reader.cutoff.ReadFrame()
-	resonance := reader.resonance.ReadFrame()
+func (c *FilteredFBComb) Read(out Frame) {
+	c.in.Read(out)
+	gain := c.gain.ReadFrame()
+	duration := c.duration.ReadFrame()
+	cutoff := c.cutoff.ReadFrame()
+	resonance := c.resonance.ReadFrame()
 	for i := range out {
-		out[i] += reader.last
-		reader.filter.cutoff = cutoff[i]
-		reader.filter.resonance = resonance[i]
-		reader.last = gain[i] * reader.filter.Tick(reader.line.TickDuration(out[i], duration[i]))
+		out[i] += c.last
+		c.filter.cutoff = cutoff[i]
+		c.filter.resonance = resonance[i]
+		c.last = gain[i] * c.filter.Tick(c.line.TickDuration(out[i], duration[i]))
 	}
 }
 
@@ -189,8 +189,8 @@ func (d *DelayLine) Tick(v Value) Value {
 	return d.TickDuration(v, 1)
 }
 
-func (reader *DelayLine) Read(out Frame) {
+func (l *DelayLine) Read(out Frame) {
 	for i := range out {
-		out[i] = reader.Tick(out[i])
+		out[i] = l.Tick(out[i])
 	}
 }

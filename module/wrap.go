@@ -23,9 +23,9 @@ func NewWrap() (*Wrap, error) {
 	return m, err
 }
 
-func (reader *Wrap) Read(out Frame) {
-	reader.in.Read(out)
-	level := reader.level.ReadFrame()
+func (w *Wrap) Read(out Frame) {
+	w.in.Read(out)
+	level := w.level.ReadFrame()
 	for i := range out {
 		in := float64(out[i])
 		level := math.Abs(float64(level[i]))

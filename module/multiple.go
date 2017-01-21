@@ -63,6 +63,6 @@ type multOut struct {
 	*Multiple
 }
 
-func (reader *multOut) Read(out Frame) {
-	reader.Multiple.read(out)
+func (o *multOut) Read(out Frame) {
+	o.Multiple.read(out)
 }

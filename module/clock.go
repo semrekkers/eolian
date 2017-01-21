@@ -49,21 +49,21 @@ func NewDivider(factor int) (*Divider, error) {
 	return m, err
 }
 
-func (reader *Divider) Read(out Frame) {
-	reader.in.Read(out)
-	divisor := reader.divisor.ReadFrame()
+func (d *Divider) Read(out Frame) {
+	d.in.Read(out)
+	divisor := d.divisor.ReadFrame()
 	for i := range out {
 		in := out[i]
-		if reader.tick == 0 || Value(reader.tick) >= divisor[i] {
+		if d.tick == 0 || Value(d.tick) >= divisor[i] {
 			out[i] = 1
-			reader.tick = 0
+			d.tick = 0
 		} else {
 			out[i] = -1
 		}
-		if reader.last < 0 && in > 0 {
-			reader.tick++
+		if d.last < 0 && in > 0 {
+			d.tick++
 		}
-		reader.last = in
+		d.last = in
 	}
 }
 
@@ -92,25 +92,25 @@ func NewMultiplier(factor int) (*Multiplier, error) {
 	return m, err
 }
 
-func (reader *Multiplier) Read(out Frame) {
-	reader.in.Read(out)
-	multiplier := reader.multiplier.ReadFrame()
+func (m *Multiplier) Read(out Frame) {
+	m.in.Read(out)
+	multiplier := m.multiplier.ReadFrame()
 	for i := range out {
 		in := out[i]
-		if reader.learn.last < 0 && in > 0 {
-			reader.rate = reader.learn.rate
-			reader.learn.rate = 0
+		if m.learn.last < 0 && in > 0 {
+			m.rate = m.learn.rate
+			m.learn.rate = 0
 		}
-		reader.learn.rate++
-		reader.learn.last = in
+		m.learn.rate++
+		m.learn.last = in
 
-		if Value(reader.tick) < Value(reader.rate)/multiplier[i] {
+		if Value(m.tick) < Value(m.rate)/multiplier[i] {
 			out[i] = -1
 		} else {
 			out[i] = 1
-			reader.tick = 0
+			m.tick = 0
 		}
 
-		reader.tick++
+		m.tick++
 	}
 }

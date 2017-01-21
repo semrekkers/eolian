@@ -42,17 +42,17 @@ func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
 	return m, err
 }
 
-func (reader *Interpolate) Read(out Frame) {
-	reader.in.Read(out)
-	max := reader.max.ReadFrame()
-	min := reader.min.ReadFrame()
+func (interp *Interpolate) Read(out Frame) {
+	interp.in.Read(out)
+	max := interp.max.ReadFrame()
+	min := interp.min.ReadFrame()
 
 	for i := range out {
 		out[i] = out[i]*(max[i]-min[i]) + min[i]
-		if reader.smooth {
-			reader.rolling -= reader.rolling / averageVelocitySamples
-			reader.rolling += out[i] / averageVelocitySamples
-			out[i] = reader.rolling
+		if interp.smooth {
+			interp.rolling -= interp.rolling / averageVelocitySamples
+			interp.rolling += out[i] / averageVelocitySamples
+			out[i] = interp.rolling
 		}
 	}
 }

@@ -77,21 +77,21 @@ type randomSeriesOut struct {
 	*RandomSeries
 }
 
-func (reader *randomSeriesOut) Read(out Frame) {
-	reader.read(out)
-	size := reader.size.LastFrame()
-	trigger := reader.trigger.LastFrame()
-	min := reader.min.LastFrame()
-	max := reader.max.LastFrame()
+func (o *randomSeriesOut) Read(out Frame) {
+	o.read(out)
+	size := o.size.LastFrame()
+	trigger := o.trigger.LastFrame()
+	min := o.min.LastFrame()
+	max := o.max.LastFrame()
 
 	for i := range out {
-		if (reader.lastTrigger < 0 && trigger[i] > 0) || (reader.lastSize != size[i]) {
+		if (o.lastTrigger < 0 && trigger[i] > 0) || (o.lastSize != size[i]) {
 			size := clampValue(size[i], 1, randomSeriesMax)
 			for i := 0; i < int(size); i++ {
-				reader.memory[i] = randValue()*(max[i]-min[i]) + min[i]
+				o.memory[i] = randValue()*(max[i]-min[i]) + min[i]
 			}
 		}
-		out[i] = reader.memory[reader.idx]
+		out[i] = o.memory[o.idx]
 	}
 }
 
@@ -99,24 +99,24 @@ type randomSeriesGate struct {
 	*RandomSeries
 }
 
-func (reader *randomSeriesGate) Read(out Frame) {
-	reader.read(out)
-	size := reader.size.LastFrame()
-	trigger := reader.trigger.LastFrame()
-	clock := reader.clock.LastFrame()
+func (o *randomSeriesGate) Read(out Frame) {
+	o.read(out)
+	size := o.size.LastFrame()
+	trigger := o.trigger.LastFrame()
+	clock := o.clock.LastFrame()
 
 	for i := range out {
 		size := clampValue(size[i], 1, randomSeriesMax)
-		if reader.lastTrigger < 0 && trigger[i] > 0 {
+		if o.lastTrigger < 0 && trigger[i] > 0 {
 			for i := 0; i < int(size); i++ {
 				if rand.Float32() > 0.25 {
-					reader.gateMemory[i] = 1
+					o.gateMemory[i] = 1
 				} else {
-					reader.gateMemory[i] = -1
+					o.gateMemory[i] = -1
 				}
 			}
 		}
-		if reader.gateMemory[reader.idx] > 0 {
+		if o.gateMemory[o.idx] > 0 {
 			out[i] = clock[i]
 		} else {
 			out[i] = -1

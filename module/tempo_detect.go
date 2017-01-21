@@ -23,15 +23,15 @@ func NewTempoDetect() (*TempoDetect, error) {
 	return m, err
 }
 
-func (reader *TempoDetect) Read(out Frame) {
-	tap := reader.tap.ReadFrame()
+func (t *TempoDetect) Read(out Frame) {
+	tap := t.tap.ReadFrame()
 	for i := range out {
-		if reader.lastTap < 0 && tap[i] > 0 {
-			reader.capture = Value((SampleRate / float64(reader.tick)) / SampleRate)
-			reader.tick = 0
+		if t.lastTap < 0 && tap[i] > 0 {
+			t.capture = Value((SampleRate / float64(t.tick)) / SampleRate)
+			t.tick = 0
 		}
-		out[i] = reader.capture
-		reader.tick++
-		reader.lastTap = tap[i]
+		out[i] = t.capture
+		t.tick++
+		t.lastTap = tap[i]
 	}
 }

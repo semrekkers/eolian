@@ -33,26 +33,26 @@ func NewADSR() (*ADSR, error) {
 	return m, err
 }
 
-func (reader *ADSR) Read(out Frame) {
-	gate := reader.gate.ReadFrame()
-	attack := reader.attack.ReadFrame()
-	decay := reader.decay.ReadFrame()
-	release := reader.release.ReadFrame()
-	sustain := reader.sustain.ReadFrame()
-	disableSustain := reader.disableSustain.ReadFrame()
-	ratio := reader.ratio.ReadFrame()
+func (e *ADSR) Read(out Frame) {
+	gate := e.gate.ReadFrame()
+	attack := e.attack.ReadFrame()
+	decay := e.decay.ReadFrame()
+	release := e.release.ReadFrame()
+	sustain := e.sustain.ReadFrame()
+	disableSustain := e.disableSustain.ReadFrame()
+	ratio := e.ratio.ReadFrame()
 
 	for i := range out {
-		reader.state.lastGate = reader.state.gate
-		reader.state.gate = gate[i]
-		reader.state.attack = attack[i]
-		reader.state.decay = decay[i]
-		reader.state.sustain = sustain[i]
-		reader.state.disableSustain = disableSustain[i]
-		reader.state.release = release[i]
-		reader.state.ratio = ratio[i]
-		reader.stateFunc = reader.stateFunc(reader.state)
-		out[i] = reader.state.value
+		e.state.lastGate = e.state.gate
+		e.state.gate = gate[i]
+		e.state.attack = attack[i]
+		e.state.decay = decay[i]
+		e.state.sustain = sustain[i]
+		e.state.disableSustain = disableSustain[i]
+		e.state.release = release[i]
+		e.state.ratio = ratio[i]
+		e.stateFunc = e.stateFunc(e.state)
+		out[i] = e.state.value
 	}
 }
 

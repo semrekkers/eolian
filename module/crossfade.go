@@ -22,9 +22,9 @@ func NewCrossfade() (*Crossfade, error) {
 	return m, err
 }
 
-func (reader *Crossfade) Read(out Frame) {
-	a, b := reader.a.ReadFrame(), reader.b.ReadFrame()
-	bias := reader.bias.ReadFrame()
+func (c *Crossfade) Read(out Frame) {
+	a, b := c.a.ReadFrame(), c.b.ReadFrame()
+	bias := c.bias.ReadFrame()
 	for i := range out {
 		if bias[i] > 0 {
 			out[i] = (1-bias[i])*a[i] + b[i]

@@ -49,17 +49,17 @@ func NewMix(size int) (*Mix, error) {
 	return m, err
 }
 
-func (reader *Mix) Read(out Frame) {
-	master := reader.master.ReadFrame()
-	for i := 0; i < len(reader.sources); i++ {
-		reader.sources[i].ReadFrame()
-		reader.levels[i].ReadFrame()
+func (m *Mix) Read(out Frame) {
+	master := m.master.ReadFrame()
+	for i := 0; i < len(m.sources); i++ {
+		m.sources[i].ReadFrame()
+		m.levels[i].ReadFrame()
 	}
 
 	for i := range out {
 		var sum Value
-		for j := 0; j < len(reader.sources); j++ {
-			sum += reader.sources[j].LastFrame()[i] * reader.levels[j].LastFrame()[i]
+		for j := 0; j < len(m.sources); j++ {
+			sum += m.sources[j].LastFrame()[i] * m.levels[j].LastFrame()[i]
 		}
 		out[i] = sum * master[i]
 	}
