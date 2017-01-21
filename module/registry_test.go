@@ -19,17 +19,17 @@ func TestRegister(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	p, err := init(Config{"key": "hello"})
+	p.SetID("WizzBang")
+
 	assert.Equal(t, err, nil)
 	assert.Equal(t, expected, p)
+	assert.Equal(t, p.ID(), "WizzBang")
 
 	_, err = Lookup("unknown")
 	assert.NotEqual(t, err, nil)
 }
 
 type mockPatcher struct {
+	IO
 	value string
 }
-
-func (p mockPatcher) Patch(string, interface{}) error { return nil }
-func (p mockPatcher) Output(string) (*Out, error)     { return nil, nil }
-func (p mockPatcher) Reset() error                    { return nil }

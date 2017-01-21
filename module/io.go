@@ -7,8 +7,15 @@ import (
 	"strings"
 )
 
+// Identifier allows a rack to uniquely identify a module instance
+type Identifier interface {
+	ID() string
+	SetID(string)
+}
+
 // Patcher is the patching behavior of a module
 type Patcher interface {
+	Identifier
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
 	Reset() error
@@ -24,8 +31,19 @@ type Lister interface {
 // disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
 // inside other structs that represent a module.
 type IO struct {
+	id   string
 	ins  map[string]*In
 	outs map[string]*Out
+}
+
+// SetID sets the unique identifier for the module
+func (io *IO) SetID(v string) {
+	io.id = v
+}
+
+// ID returns the module's unique identifier
+func (io *IO) ID() string {
+	return io.id
 }
 
 // Expose registers inputs and outputs of the module so that they can be used in patching

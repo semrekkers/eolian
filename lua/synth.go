@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
 	"github.com/brettbuddin/eolian/module"
 )
+
+var moduleSequence uint64
 
 var mapperOpts = gluamapper.Option{
 	NameFunc: func(v string) string {
@@ -21,14 +24,14 @@ func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}
 		for name, t := range module.Registry {
-			fns[name] = buildConstructor(t, mtx)
+			fns[name] = buildConstructor(name, t, mtx)
 		}
 		state.Push(state.SetFuncs(state.NewTable(), fns))
 		return 1
 	}
 }
 
-func buildConstructor(init module.InitFunc, mtx *sync.Mutex) func(state *lua.LState) int {
+func buildConstructor(name string, init module.InitFunc, mtx *sync.Mutex) func(state *lua.LState) int {
 	return func(state *lua.LState) int {
 		config := module.Config{}
 
@@ -54,6 +57,9 @@ func buildConstructor(init module.InitFunc, mtx *sync.Mutex) func(state *lua.LSt
 		if err != nil {
 			state.RaiseError("%s", err.Error())
 		}
+
+		p.SetID(fmt.Sprintf("%s:%d", name, moduleSequence))
+		atomic.AddUint64(&moduleSequence, 1)
 
 		table := decoratePatcher(state, p, mtx)
 		state.Push(table)
