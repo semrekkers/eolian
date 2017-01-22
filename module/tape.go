@@ -1,12 +1,6 @@
 package module
 
-import (
-	"sort"
-
-	"github.com/mitchellh/mapstructure"
-)
-
-const tapeOversample = 10
+import "github.com/mitchellh/mapstructure"
 
 func init() {
 	Register("Tape", func(c Config) (Patcher, error) {
@@ -22,6 +16,10 @@ func init() {
 		return NewTape(config.Max)
 	})
 }
+
+const tapeOversample = 10
+
+var minSpliceSize = int(Duration(10).Value())
 
 type Tape struct {
 	IO
@@ -140,7 +138,6 @@ type tapeState struct {
 	unspliceHold           int
 	spliceStart, spliceEnd int
 	atSpliceEnd            bool
-	average                Value
 }
 
 func newTapeState(max int) *tapeState {
@@ -157,12 +154,17 @@ func newTapeState(max int) *tapeState {
 }
 
 func (s *tapeState) mark() {
+	// Prohibit creating splices less than 10ms in length
+	start, end := s.markers.At(s.spliceStart), s.markers.At(s.spliceEnd)
+	if s.offset-start < minSpliceSize || end-s.offset < minSpliceSize {
+		return
+	}
 	s.markers.Create(s.offset)
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
 	s.offset = s.markers.At(s.spliceStart)
 }
 
-func (s *tapeState) removeMark() {
+func (s *tapeState) unmark() {
 	s.unspliceHold = 0
 	s.markers.Erase(s.spliceEnd)
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
@@ -174,7 +176,7 @@ func (s *tapeState) clearMarkers() {
 	s.offset, s.spliceStart, s.spliceEnd = 0, 0, 1
 }
 
-func (s *tapeState) erase() {
+func (s *tapeState) clearAll() {
 	s.markers = newMarkers()
 	s.memory = make([]Value, len(s.memory))
 	s.offset, s.spliceStart, s.spliceEnd, s.recordingEnd = 0, 0, 0, 0
@@ -193,6 +195,8 @@ func (s *tapeState) playheadToEnd() {
 func (s *tapeState) playback() {
 	s.out = s.memory[s.offset]
 	s.offset += int(Value(tapeOversample) * s.speed)
+
+	// Loop around (depending on which direction we are moving)
 	if s.offset >= s.markers.At(s.spliceEnd) {
 		s.playheadToStart()
 		s.atSpliceEnd = true
@@ -226,6 +230,7 @@ func leaveRecord(s *tapeState) tapeStateFunc {
 
 func tapeRecord(s *tapeState) tapeStateFunc {
 	if s.lastRecord < 0 && s.record > 0 {
+		// End of recording creates the first splice
 		if s.markers.Count() == 1 {
 			s.recordingEnd = s.offset
 			s.markers.Create(s.offset)
@@ -234,12 +239,15 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 		s.offset = s.spliceStart
 		return leaveRecord(s)
 	}
+
+	// Write input value to memory up to the oversample limit
 	s.memory[s.offset] = s.in
 	for i := 0; i < tapeOversample; i++ {
 		s.memory[s.offset+i] = s.in
 	}
 	s.offset += tapeOversample
 
+	// When we have no splices, use the end of the tape to wrap us; otherwise use the splice range
 	if s.markers.Count() == 1 {
 		if s.offset >= len(s.memory) {
 			s.offset = 0
@@ -271,7 +279,7 @@ func tapePlay(s *tapeState) tapeStateFunc {
 
 func handleReset(s *tapeState) tapeStateFunc {
 	if s.lastReset < 0 && s.reset > 0 {
-		s.erase()
+		s.clearAll()
 		return tapeIdle
 	}
 	return nil
@@ -287,7 +295,7 @@ func handleUnsplice(s *tapeState) {
 	}
 	if s.lastUnsplice > 0 && s.unsplice < 0 {
 		s.unspliceHold = 0
-		s.removeMark()
+		s.unmark()
 	}
 }
 
@@ -297,55 +305,4 @@ func handleRecord(s *tapeState) tapeStateFunc {
 		return tapeRecord
 	}
 	return nil
-}
-
-func newMarkers() *markers {
-	return &markers{
-		indexes: []int{0},
-	}
-}
-
-type markers struct {
-	indexes []int
-}
-
-func (b *markers) Create(i int) {
-	b.indexes = append(b.indexes, i)
-	sort.Sort(&indexSorter{b.indexes})
-}
-
-func (b *markers) Count() int {
-	return len(b.indexes)
-}
-
-func (b *markers) At(i int) int {
-	return b.indexes[i]
-}
-
-func (b *markers) Erase(end int) {
-	if end == len(b.indexes)-1 {
-		return
-	}
-	b.indexes = append(b.indexes[:end], b.indexes[end+1:]...)
-}
-
-func (b *markers) GetRange(organize Value) (int, int) {
-	size := len(b.indexes)
-	if size == 2 {
-		return 0, size - 1
-	}
-	zoneSize := 1 / float64(size-1)
-	start := minInt(size-2, int(float64(organize)/zoneSize))
-	end := minInt(size-1, start+1)
-	return start, end
-}
-
-type indexSorter struct {
-	indexes []int
-}
-
-func (s *indexSorter) Len() int           { return len(s.indexes) }
-func (s *indexSorter) Less(i, j int) bool { return s.indexes[i] < s.indexes[j] }
-func (s *indexSorter) Swap(i, j int) {
-	s.indexes[i], s.indexes[j] = s.indexes[j], s.indexes[i]
 }

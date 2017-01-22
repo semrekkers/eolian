@@ -78,13 +78,12 @@ func adsrAttack(s *adsrState) adsrStateFunc {
 	s.value = s.base + s.value*s.multiplier
 	if s.value >= 1 {
 		s.value = 1
-		return adsrDecay
+		return prepDecay(s)
 	}
 	return adsrAttack
 }
 
 func adsrDecay(s *adsrState) adsrStateFunc {
-	calcDecay(s)
 	s.value = s.base + s.value*s.multiplier
 	if s.value <= s.sustain {
 		s.value = s.sustain
@@ -93,7 +92,7 @@ func adsrDecay(s *adsrState) adsrStateFunc {
 		}
 		return adsrSustain
 	}
-	return adsrDecay
+	return prepDecay(s)
 }
 
 func adsrSustain(s *adsrState) adsrStateFunc {
@@ -127,9 +126,10 @@ func prepAttack(s *adsrState) adsrStateFunc {
 	return adsrAttack
 }
 
-func calcDecay(s *adsrState) {
+func prepDecay(s *adsrState) adsrStateFunc {
 	s.multiplier = expRatio(s.ratio, s.decay)
 	s.base = (s.sustain - s.ratio) * (1.0 - s.multiplier)
+	return adsrDecay
 }
 
 func prepRelease(s *adsrState) adsrStateFunc {
