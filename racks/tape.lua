@@ -31,7 +31,7 @@ return function(env)
                 unsplice = { min = -1, max = 1 },
                 speed    = { min = -1, max = 1 },
                 bias     = { min = -1, max = 1 },
-                organize = { min = 0, max = 1 },
+                organize = { max = 1 },
             }),
             delay = interpolate(synth.FilteredFBComb(), {
                 cutoff   = { min = hz(50), max = hz(3000) },
