@@ -21,9 +21,9 @@ return function(env)
                     release = { min = ms(10), max = ms(1000) },
                     sustain = { max = 1 },
                 }),
-                osc  = synth.Oscillator(),
-                mix  = synth.Mix(),
-                amp  = synth.Multiply(),
+                osc = synth.Oscillator(),
+                mix = synth.Mix(),
+                amp = synth.Multiply(),
             },
             tape = interpolate(synth.Tape(), {
                 record   = { min = -1, max = 1 },
