@@ -35,6 +35,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.theory", preloadTheory)
+	state.PreloadModule("eolian.synth.interpolate", preloadSynthInterpolate)
 
 	state.SetGlobal("Engine", decoratePatcher(state, p, mtx))
 	for k, fn := range valueFuncs {

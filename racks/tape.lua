@@ -1,49 +1,6 @@
-local interpolated = function(module, ranges)
-    local synth = require('eolian.synth')
-    local proxy = require('eolian.synth.proxy')
-
-    local proxied = {}
-
-    if type(module) == 'function' then
-        module = module()
-    end
-
-    for k, range in pairs(ranges) do
-        proxied[k] = synth.Interpolate(range)
-        module:set { [k] = proxied[k]:output() }
-    end
-
-    return {
-        ns = function(_, prefix)
-            return interpolated(module:ns(prefix), ranges)
-        end,
-        set = function(_, inputs)
-            for k, v in pairs(inputs) do
-                if type(v) == 'table' then
-                    local prefix = k
-                    for k,v in pairs(v) do
-                        local full = prefix .. '/' .. k
-                        if proxied[full] ~= nil then
-                            proxied[full]:set { input = v }
-                        else
-                            module:set { [full] = v }
-                        end
-                    end
-                else
-                    if proxied[k] ~= nil then
-                        proxied[k]:set { input = v }
-                    else
-                        module:set { [k] = v }
-                    end
-                end
-            end
-        end,
-        output = proxy.outputs(module),
-    }
-end
-
 return function(env)
-    local synth = require('eolian.synth')
+    local synth        = require('eolian.synth')
+    local interpolate = require('eolian.synth.interpolate')
 
     local function build()
         return {
@@ -58,7 +15,7 @@ return function(env)
                 quant   = synth.Quantize(),
             },
             voice = {
-                adsr = interpolated(synth.ADSR(), {
+                adsr = interpolate(synth.ADSR(), {
                     attack  = { min = ms(10), max = ms(1000) },
                     decay   = { min = ms(10), max = ms(1000) },
                     release = { min = ms(10), max = ms(1000) },
@@ -68,7 +25,7 @@ return function(env)
                 mix  = synth.Mix(),
                 amp  = synth.Multiply(),
             },
-            tape = interpolated(synth.Tape(), {
+            tape = interpolate(synth.Tape(), {
                 record   = { min = -1, max = 1 },
                 splice   = { min = -1, max = 1 },
                 unsplice = { min = -1, max = 1 },
@@ -76,7 +33,7 @@ return function(env)
                 bias     = { min = -1, max = 1 },
                 organize = { min = 0, max = 1 },
             }),
-            delay = interpolated(synth.FilteredFBComb(), {
+            delay = interpolate(synth.FilteredFBComb(), {
                 cutoff   = { min = hz(50), max = hz(3000) },
                 duration = { min = ms(10), max = ms(1000) },
                 gain     = { max = 1 },
