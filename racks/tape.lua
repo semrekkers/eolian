@@ -1,5 +1,6 @@
 return function(env)
     local synth       = require('eolian.synth')
+    local theory      = require('eolian.theory')
     local interpolate = require('eolian.synth.interpolate')
 
     local function build()
@@ -65,19 +66,10 @@ return function(env)
             }
             r.quant:set { input = r.series:output('values') }
 
-            -- Cmin Penatonic
-            r.quant:set {
-                { pitch = pitch('C3') },
-                { pitch = pitch('Eb3') },
-                { pitch = pitch('F3') },
-                { pitch = pitch('G3') },
-                { pitch = pitch('Bb3') },
-                { pitch = pitch('C4') },
-                { pitch = pitch('Eb4') },
-                { pitch = pitch('F4') },
-                { pitch = pitch('G4') },
-                { pitch = pitch('Bb4') },
-            }
+            local scale = theory.scale('C3', 'minorPentatonic', 2)
+            for i,p in ipairs(scale) do
+                r.quant:set { [i-1 .. '/pitch'] = p }
+            end
         end)
 
         local voice = with(modules.voice, function(v)
