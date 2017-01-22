@@ -42,6 +42,10 @@ func newScale(state *lua.LState) int {
 		intervals = musictheory.MajorIntervals
 	case "minor":
 		intervals = musictheory.MinorIntervals
+	case "majorPentatonic":
+		intervals = musictheory.MajorPentatonicIntervals
+	case "minorPentatonic":
+		intervals = musictheory.MinorPentatonicIntervals
 	case "ionion":
 		intervals = musictheory.IonianIntervals
 	case "dorian":

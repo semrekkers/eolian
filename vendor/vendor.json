@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "MjZC2ooR3PPkUR8Pm5/CrySGkU0=",
+			"checksumSHA1": "bi71f6HRAL9OzwrNUf5HjSt1THc=",
 			"path": "github.com/brettbuddin/musictheory",
-			"revision": "ba1b24773b793d38d7fca345da30ac44eb2c85b8",
-			"revisionTime": "2016-12-28T17:54:22Z"
+			"revision": "31bb916c66fbd4f6b180bca9c133a951770c0959",
+			"revisionTime": "2017-01-22T19:56:17Z"
 		},
 		{
 			"checksumSHA1": "JZzGZSKv+oXaWoAHavL0lzumB+c=",
