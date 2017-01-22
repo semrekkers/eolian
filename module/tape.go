@@ -94,8 +94,8 @@ func (o *tapeOut) Read(out Frame) {
 		o.state.atSpliceEnd = false
 
 		o.stateFunc = o.stateFunc(o.state)
-		bias := o.bias.LastFrame()
 
+		bias := o.bias.LastFrame()
 		if bias[i] > 0 {
 			out[i] = (1-bias[i])*out[i] + o.state.out
 		} else if bias[i] < 0 {
