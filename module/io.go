@@ -151,12 +151,12 @@ func (io *IO) Output(name string) (*Out, error) {
 	name = canonicalPort(name)
 	if o, ok := io.outs[name]; ok {
 		if o.IsActive() {
-			return nil, fmt.Errorf(`output "%s" is already patched`, name)
+			return nil, fmt.Errorf(`%s: output "%s" is already patched`, io.ID(), name)
 		}
 		o.reader = o.Provider.Reader()
 		return o, nil
 	}
-	return nil, fmt.Errorf(`output "%s" doesn't exist`, name)
+	return nil, fmt.Errorf(`%s: output "%s" doesn't exist`, io.ID(), name)
 }
 
 // OutputsActive returns the total count of actively patched outputs
