@@ -1,5 +1,5 @@
 return function(env)
-    local synth        = require('eolian.synth')
+    local synth       = require('eolian.synth')
     local interpolate = require('eolian.synth.interpolate')
 
     local function build()
