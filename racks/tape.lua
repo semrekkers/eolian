@@ -31,6 +31,7 @@ return function(env)
                 unsplice = { min = -1, max = 1 },
                 speed    = { min = -1, max = 1 },
                 bias     = { min = -1, max = 1 },
+                reset    = { min = -1, max = 1 },
                 organize = { max = 1 },
             }),
             delay = interpolate(synth.FilteredFBComb(), {
@@ -47,7 +48,7 @@ return function(env)
         local cc      = function(n) return channel:output(n) end
 
         local clock = with(modules.clock, function(c)
-            c.osc:set      { pitch = hz(5) }
+            c.osc:set      { pitch = hz(9) }
             c.multiple:set { input = c.osc:output('pulse') }
             return c.multiple
         end)
@@ -90,7 +91,7 @@ return function(env)
             v.osc:set  { pitch = modules.random.quant:output(), }
             v.mix:set {
                 { input = v.osc:output('sine') },
-                { input = v.osc:output('saw'), level = 0.1 },
+                { input = v.osc:output('saw'), level = 0.2 },
             }
             v.amp:set { a = v.mix:output(), b = v.adsr:output() }
             return v.amp
@@ -108,6 +109,7 @@ return function(env)
             record   = cc(9),
             splice   = cc(10),
             unsplice = cc(11),
+            reset    = cc(12),
             speed    = cc(21),
             bias     = cc(22),
             organize = cc(23),
