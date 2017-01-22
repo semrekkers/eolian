@@ -73,7 +73,7 @@ func newScale(state *lua.LState) int {
 		p := v.(musictheory.Pitch)
 		ud := state.NewUserData()
 		ud.Value = module.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: module.Frequency(p.Freq())}
-		t.RawSetInt(i, ud)
+		t.RawSetInt(i+1, ud)
 	}
 	state.Push(t)
 	return 1
