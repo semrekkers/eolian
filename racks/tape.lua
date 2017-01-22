@@ -19,7 +19,7 @@ return function(env)
                     attack  = { min = ms(10), max = ms(1000) },
                     decay   = { min = ms(10), max = ms(1000) },
                     release = { min = ms(10), max = ms(1000) },
-                    sustain = { min = 0, max = 1 },
+                    sustain = { max = 1 },
                 }),
                 osc  = synth.Oscillator(),
                 mix  = synth.Mix(),
