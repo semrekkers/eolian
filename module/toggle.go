@@ -14,11 +14,11 @@ func NewToggle() (*Toggle, error) {
 	m := &Toggle{
 		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
 	}
-	err := m.Expose(
+	return m, m.Expose(
+		"Toggle",
 		[]*In{m.trigger},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
-	return m, err
 }
 
 func (t *Toggle) Read(out Frame) {

@@ -36,6 +36,7 @@ func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
 		smooth: config.Smooth,
 	}
 	err := m.Expose(
+		"Interpolate",
 		[]*In{m.in, m.max, m.min},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

@@ -39,7 +39,7 @@ func New(deviceIndex int) (*Engine, error) {
 		stop:   make(chan error),
 		device: devices[deviceIndex],
 	}
-	err = m.Expose([]*module.In{m.in}, nil)
+	err = m.Expose("Engine", []*module.In{m.in}, nil)
 	return m, err
 }
 

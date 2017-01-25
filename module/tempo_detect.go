@@ -16,11 +16,11 @@ func NewTempoDetect() (*TempoDetect, error) {
 	m := &TempoDetect{
 		tap: &In{Name: "tap", Source: NewBuffer(zero)},
 	}
-	err := m.Expose(
+	return m, m.Expose(
+		"TempoDetect",
 		[]*In{m.tap},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
-	return m, err
 }
 
 func (t *TempoDetect) Read(out Frame) {

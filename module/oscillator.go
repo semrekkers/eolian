@@ -64,6 +64,7 @@ func NewOscillator(algorithm string) (*Oscillator, error) {
 	}
 
 	err := m.Expose(
+		"Oscillator",
 		[]*In{
 			m.pitch,
 			m.pitchMod,

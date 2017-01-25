@@ -17,6 +17,7 @@ func NewWrap() (*Wrap, error) {
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
 	err := m.Expose(
+		"Wrap",
 		[]*In{m.in, m.level},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

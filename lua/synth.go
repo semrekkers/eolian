@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
 	"github.com/brettbuddin/eolian/module"
 )
-
-var moduleSequence uint64
 
 var mapperOpts = gluamapper.Option{
 	NameFunc: func(v string) string {
@@ -57,9 +54,6 @@ func buildConstructor(name string, init module.InitFunc, mtx *sync.Mutex) func(s
 		if err != nil {
 			state.RaiseError("%s", err.Error())
 		}
-
-		p.SetID(fmt.Sprintf("%s%d", name, moduleSequence))
-		atomic.AddUint64(&moduleSequence, 1)
 
 		table := decoratePatcher(state, p, mtx)
 		state.Push(table)

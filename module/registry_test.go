@@ -19,11 +19,8 @@ func TestRegister(t *testing.T) {
 	assert.Equal(t, err, nil)
 
 	p, err := init(Config{"key": "hello"})
-	p.SetID("WizzBang")
-
 	assert.Equal(t, err, nil)
 	assert.Equal(t, expected, p)
-	assert.Equal(t, p.ID(), "WizzBang")
 
 	_, err = Lookup("unknown")
 	assert.NotEqual(t, err, nil)

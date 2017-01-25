@@ -40,6 +40,7 @@ func NewFFComb(size MS) (*FFComb, error) {
 		line:     NewDelayLine(size),
 	}
 	err := m.Expose(
+		"FFComb",
 		[]*In{m.in, m.duration, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
@@ -71,6 +72,7 @@ func NewFBComb(size MS) (*FBComb, error) {
 		line:     NewDelayLine(size),
 	}
 	err := m.Expose(
+		"FBComb",
 		[]*In{m.in, m.duration, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
@@ -103,6 +105,7 @@ func NewAllPass(size MS) (*AllPass, error) {
 		line:     NewDelayLine(size),
 	}
 	err := m.Expose(
+		"Allpass",
 		[]*In{m.in, m.duration, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
@@ -143,6 +146,7 @@ func NewFilteredFBComb(size MS) (*FilteredFBComb, error) {
 		line:   NewDelayLine(size),
 	}
 	err := m.Expose(
+		"FilteredFBComb",
 		[]*In{m.in, m.duration, m.gain, m.cutoff, m.resonance},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

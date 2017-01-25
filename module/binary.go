@@ -3,14 +3,14 @@ package module
 import "math"
 
 func init() {
-	Register("Multiply", func(Config) (Patcher, error) { return NewBinary(multiply, 0, 0) })
-	Register("Divide", func(Config) (Patcher, error) { return NewBinary(divide, 0, 1) })
-	Register("Sum", func(Config) (Patcher, error) { return NewBinary(sum, 0, 0) })
-	Register("Difference", func(Config) (Patcher, error) { return NewBinary(diff, 0, 0) })
-	Register("Mod", func(Config) (Patcher, error) { return NewBinary(mod, 0, 1) })
-	Register("OR", func(Config) (Patcher, error) { return NewBinary(or, 0, 0) })
-	Register("XOR", func(Config) (Patcher, error) { return NewBinary(xor, 0, 0) })
-	Register("AND", func(Config) (Patcher, error) { return NewBinary(and, 0, 0) })
+	Register("Multiply", func(Config) (Patcher, error) { return NewBinary("Multiply", multiply, 0, 0) })
+	Register("Divide", func(Config) (Patcher, error) { return NewBinary("Divide", divide, 0, 1) })
+	Register("Sum", func(Config) (Patcher, error) { return NewBinary("Sum", sum, 0, 0) })
+	Register("Difference", func(Config) (Patcher, error) { return NewBinary("Difference", diff, 0, 0) })
+	Register("Mod", func(Config) (Patcher, error) { return NewBinary("Mod", mod, 0, 1) })
+	Register("OR", func(Config) (Patcher, error) { return NewBinary("OR", or, 0, 0) })
+	Register("XOR", func(Config) (Patcher, error) { return NewBinary("XOR", xor, 0, 0) })
+	Register("AND", func(Config) (Patcher, error) { return NewBinary("AND", and, 0, 0) })
 }
 
 type Binary struct {
@@ -19,13 +19,14 @@ type Binary struct {
 	op   BinaryOp
 }
 
-func NewBinary(op BinaryOp, a, b Value) (*Binary, error) {
+func NewBinary(name string, op BinaryOp, a, b Value) (*Binary, error) {
 	m := &Binary{
 		a:  &In{Name: "a", Source: a},
 		b:  &In{Name: "b", Source: NewBuffer(b)},
 		op: op,
 	}
 	err := m.Expose(
+		name,
 		[]*In{m.a, m.b},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

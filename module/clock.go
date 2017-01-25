@@ -43,6 +43,7 @@ func NewDivider(factor int) (*Divider, error) {
 		divisor: &In{Name: "divisor", Source: NewBuffer(Value(factor))},
 	}
 	err := m.Expose(
+		"ClockDivide",
 		[]*In{m.in, m.divisor},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
@@ -86,6 +87,7 @@ func NewMultiplier(factor int) (*Multiplier, error) {
 		multiplier: &In{Name: "multiplier", Source: NewBuffer(Value(factor))},
 	}
 	err := m.Expose(
+		"ClockMultiply",
 		[]*In{m.in, m.multiplier},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

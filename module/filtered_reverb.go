@@ -113,6 +113,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 	allpassGainMultiple.Patch("input", Value(0.7))
 
 	err = m.Expose(
+		"FilteredReverb",
 		[]*In{m.in, m.feedback, m.cutoff, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m.allpasses[len(m.allpasses)-1])}},
 	)

@@ -45,7 +45,7 @@ func NewMix(size int) (*Mix, error) {
 		m.levels = append(m.levels, level)
 		inputs = append(inputs, in, level)
 	}
-	err := m.Expose(inputs, []*Out{{Name: "output", Provider: Provide(m)}})
+	err := m.Expose("Mix", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
 	return m, err
 }
 

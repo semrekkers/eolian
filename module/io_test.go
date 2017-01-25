@@ -94,6 +94,7 @@ func (p mockOutput) Read(Frame) {}
 func newModule() (*IO, error) {
 	io := &IO{}
 	if err := io.Expose(
+		"Module",
 		[]*In{
 			{Name: "input", Source: NewBuffer(zero)},
 			{Name: "level", Source: NewBuffer(zero)},

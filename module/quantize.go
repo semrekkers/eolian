@@ -48,11 +48,11 @@ func NewQuantize(size int) (*Quantize, error) {
 		inputs = append(inputs, in)
 	}
 
-	err := m.Expose(
+	return m, m.Expose(
+		"Quantize",
 		inputs,
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
-	return m, err
 }
 
 func (q *Quantize) Read(out Frame) {

@@ -151,6 +151,7 @@ func TestRegisteredModules(t *testing.T) {
 
 			mock := &IO{}
 			err = mock.Expose(
+				"MockModule",
 				[]*In{},
 				[]*Out{{Name: "output", Provider: Provide(mockOutput{})}},
 			)

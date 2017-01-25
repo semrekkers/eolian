@@ -16,6 +16,7 @@ func NewCrossfade() (*Crossfade, error) {
 		bias: &In{Name: "bias", Source: NewBuffer(zero)},
 	}
 	err := m.Expose(
+		"Crossfade",
 		[]*In{m.a, m.b, m.bias},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

@@ -30,7 +30,8 @@ func NewRandomSeries() (*RandomSeries, error) {
 		lastTrigger: -1,
 		lastClock:   -1,
 	}
-	err := m.Expose(
+	return m, m.Expose(
+		"RandomSeries",
 		[]*In{m.size, m.trigger, m.clock, m.min, m.max},
 		[]*Out{
 			{
@@ -43,7 +44,6 @@ func NewRandomSeries() (*RandomSeries, error) {
 			},
 		},
 	)
-	return m, err
 }
 
 func (s *RandomSeries) read(out Frame) {

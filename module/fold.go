@@ -17,6 +17,7 @@ func NewFold() (*Fold, error) {
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
 	err := m.Expose(
+		"Fold",
 		[]*In{m.in, m.level},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

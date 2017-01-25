@@ -7,18 +7,15 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"text/tabwriter"
 )
 
-// Identifier allows a rack to uniquely identify a module instance
-type Identifier interface {
-	ID() string
-	SetID(string)
-}
+var moduleSequence uint64
 
 // Patcher is the patching behavior of a module
 type Patcher interface {
-	Identifier
+	ID() string
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
 	Reset() error
@@ -39,18 +36,16 @@ type IO struct {
 	outs map[string]*Out
 }
 
-// SetID sets the unique identifier for the module
-func (io *IO) SetID(v string) {
-	io.id = v
-}
-
 // ID returns the module's unique identifier
 func (io *IO) ID() string {
 	return io.id
 }
 
 // Expose registers inputs and outputs of the module so that they can be used in patching
-func (io *IO) Expose(ins []*In, outs []*Out) error {
+func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
+	io.id = fmt.Sprintf("%s:%d", name, atomic.LoadUint64(&moduleSequence))
+	atomic.AddUint64(&moduleSequence, 1)
+
 	io.lazyInit()
 	for _, in := range ins {
 		if _, ok := io.ins[in.Name]; ok {

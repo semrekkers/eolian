@@ -44,14 +44,11 @@ func NewClock(config ClockConfig) (*Clock, error) {
 		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
 	}
-
 	outs := []*module.Out{
 		{Name: "pulse", Provider: module.Provide(&clockPulse{m})},
 		{Name: "reset", Provider: module.Provide(&clockReset{m})},
 	}
-
-	err = m.Expose(nil, outs)
-	return m, err
+	return m, m.Expose("MIDIClock", nil, outs)
 }
 
 func (c *Clock) read(out module.Frame) {

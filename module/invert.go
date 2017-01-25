@@ -14,6 +14,7 @@ func NewInvert() (*Invert, error) {
 		in: &In{Name: "input", Source: zero},
 	}
 	err := m.Expose(
+		"Invert",
 		[]*In{m.in},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

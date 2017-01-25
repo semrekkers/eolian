@@ -20,6 +20,7 @@ func NewCompress() (*Compress, error) {
 		release: &In{Name: "release", Source: NewBuffer(Duration(500))},
 	}
 	err := m.Expose(
+		"Compress",
 		[]*In{m.in, m.attack, m.release},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

@@ -35,7 +35,7 @@ func NewFileSource(path string) (*FileSource, error) {
 		return nil, err
 	}
 
-	err := m.Expose(nil, []*Out{{Name: "output", Provider: Provide(m)}})
+	err := m.Expose("FileSource", nil, []*Out{{Name: "output", Provider: Provide(m)}})
 	return m, err
 }
 

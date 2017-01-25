@@ -14,6 +14,7 @@ func NewDirect() (*Direct, error) {
 		in: &In{Name: "input", Source: zero},
 	}
 	err := m.Expose(
+		"Direct",
 		[]*In{m.in},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

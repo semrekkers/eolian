@@ -43,8 +43,7 @@ func NewMultiple(size int) (*Multiple, error) {
 		outputs = append(outputs, &Out{Name: name, Provider: Provide(&multOut{m})})
 	}
 
-	err := m.Expose([]*In{m.in}, outputs)
-	return m, err
+	return m, m.Expose("Multiple", []*In{m.in}, outputs)
 }
 
 func (m *Multiple) read(out Frame) {

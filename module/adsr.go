@@ -27,6 +27,7 @@ func NewADSR() (*ADSR, error) {
 		state:     &adsrState{lastGate: -1},
 	}
 	err := m.Expose(
+		"ADSR",
 		[]*In{m.gate, m.attack, m.decay, m.release, m.sustain, m.disableSustain, m.ratio},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

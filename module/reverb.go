@@ -108,9 +108,9 @@ func NewReverb(c ReverbConfig) (*Reverb, error) {
 	}
 	allpassGainMultiple.Patch("input", Value(0.7))
 
-	err = m.Expose(
+	return m, m.Expose(
+		"Reverb",
 		[]*In{m.in, m.feedback, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m.allpasses[len(m.allpasses)-1])}},
 	)
-	return m, err
 }

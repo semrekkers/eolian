@@ -19,6 +19,7 @@ func NewConcurrent() (*Concurrent, error) {
 	}
 	go m.readInput()
 	return m, m.Expose(
+		"Concurrent",
 		[]*In{m.in},
 		[]*Out{
 			&Out{Name: "output", Provider: Provide(m)},

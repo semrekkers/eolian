@@ -46,7 +46,7 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 		inputs = append(inputs, m.steps[i])
 	}
 
-	if err := m.Expose(inputs, []*Out{
+	outputs := []*Out{
 		&Out{Name: "on", Provider: Provide(
 			&gateSequencerOut{
 				GateSequencer: m,
@@ -59,11 +59,9 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 				onBeat:        false,
 				lastStep:      -1,
 			})},
-	}); err != nil {
-		return nil, err
 	}
 
-	return m, nil
+	return m, m.Expose("GateSequence", inputs, outputs)
 }
 
 func (s *GateSequencer) read(out Frame) {

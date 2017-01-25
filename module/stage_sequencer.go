@@ -96,7 +96,9 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 			m.stages[i].velocity)
 	}
 
-	err := m.Expose(inputs,
+	return m, m.Expose(
+		"StageSequence",
+		inputs,
 		[]*Out{
 			{Name: "pitch", Provider: Provide(&stageSeqPitch{StageSequencer: m})},
 			{Name: "gate", Provider: Provide(&stageSeqGate{m})},
@@ -105,7 +107,6 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 			{Name: "sync", Provider: Provide(&stageSeqSync{m})},
 		},
 	)
-	return m, err
 }
 
 func (s *StageSequencer) read(out Frame) {

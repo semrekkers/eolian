@@ -17,6 +17,7 @@ func NewNoise() (*Noise, error) {
 		gain: &In{Name: "gain", Source: NewBuffer(Value(1))},
 	}
 	err := m.Expose(
+		"Noise",
 		[]*In{m.in, m.min, m.max, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

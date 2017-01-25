@@ -25,6 +25,7 @@ func NewDistort() (*Distort, error) {
 		dcBlock: &DCBlock{},
 	}
 	err := m.Expose(
+		"Distort",
 		[]*In{m.in, m.offsetA, m.offsetB, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

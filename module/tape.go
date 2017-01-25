@@ -48,14 +48,14 @@ func NewTape(max int) (*Tape, error) {
 		state:       newTapeState(max * SampleRate),
 		endOfSplice: make(Frame, FrameSize),
 	}
-	err := m.Expose(
+	return m, m.Expose(
+		"Tape",
 		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
 		[]*Out{
 			{Name: "output", Provider: Provide(&tapeOut{Tape: m})},
 			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
 		},
 	)
-	return m, err
 }
 
 func (t *Tape) read(out Frame) {

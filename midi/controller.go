@@ -119,7 +119,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 		}
 	}
 
-	return m, m.Expose(nil, outs)
+	return m, m.Expose("MIDIController", nil, outs)
 }
 
 func (c *Controller) read(out module.Frame) {

@@ -45,8 +45,7 @@ func NewSwitch(size int) (*Switch, error) {
 		m.sources = append(m.sources, in)
 		inputs = append(inputs, in)
 	}
-	err := m.Expose(inputs, []*Out{{Name: "output", Provider: Provide(m)}})
-	return m, err
+	return m, m.Expose("Switch", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
 }
 
 func (s *Switch) Read(out Frame) {

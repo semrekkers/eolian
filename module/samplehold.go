@@ -16,11 +16,11 @@ func NewSampleHold() (*SampleHold, error) {
 		in:      &In{Name: "input", Source: zero},
 		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
 	}
-	err := m.Expose(
+	return m, m.Expose(
+		"SampleHold",
 		[]*In{m.in, m.trigger},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
-	return m, err
 }
 
 func (sh *SampleHold) Read(out Frame) {

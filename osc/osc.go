@@ -78,9 +78,9 @@ func NewServer(c Config) (*Server, error) {
 	}
 	io.listener = listener
 
-	err = io.Expose(nil, outs)
 	go io.Serve(listener)
-	return io, err
+	return io, io.Expose("OSCServer", nil, outs)
+
 }
 
 func (s *Server) Close() error {

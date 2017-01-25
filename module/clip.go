@@ -15,6 +15,7 @@ func NewClip() (*Clip, error) {
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
 	err := m.Expose(
+		"Clip",
 		[]*In{m.in, m.level},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

@@ -27,7 +27,19 @@ func NewFilter(kind FilterType) (*Filter, error) {
 		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
 		fourPole:  &FourPole{kind: kind},
 	}
+
+	var name string
+	switch kind {
+	case LowPass:
+		name = "LPFilter"
+	case HighPass:
+		name = "HPFilter"
+	default:
+		name = "UnknownFilter"
+	}
+
 	err := m.Expose(
+		name,
 		[]*In{m.in, m.cutoff, m.resonance},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)

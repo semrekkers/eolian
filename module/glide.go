@@ -18,6 +18,7 @@ func NewGlide() (*Glide, error) {
 		slew: newSlew(),
 	}
 	err := m.Expose(
+		"Glide",
 		[]*In{m.in, m.rise, m.fall},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
