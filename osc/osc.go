@@ -12,15 +12,15 @@ import (
 
 func init() {
 	module.Register("OSCServer", func(c module.Config) (module.Patcher, error) {
-		var config Config
+		var config oscConfig
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return NewServer(config)
+		return newServer(config)
 	})
 }
 
-type Config struct {
+type oscConfig struct {
 	Port       int
 	Addresses  []address
 	ClientHost string
@@ -34,7 +34,7 @@ type address struct {
 	Min    float64
 }
 
-type Server struct {
+type server struct {
 	module.IO
 	*osc.Server
 	client *osc.Client
@@ -43,8 +43,8 @@ type Server struct {
 	values   map[string]chan module.Value
 }
 
-func NewServer(c Config) (*Server, error) {
-	io := &Server{
+func newServer(c oscConfig) (*server, error) {
+	io := &server{
 		Server: &osc.Server{
 			Dispatcher: osc.NewOscDispatcher(),
 		},
@@ -83,7 +83,7 @@ func NewServer(c Config) (*Server, error) {
 
 }
 
-func (s *Server) Close() error {
+func (s *server) Close() error {
 	if s.listener != nil {
 		err := s.listener.Close()
 		s.listener = nil
@@ -92,7 +92,7 @@ func (s *Server) Close() error {
 	return nil
 }
 
-func (s *Server) newOut(addr address) *serverOut {
+func (s *server) newOut(addr address) *serverOut {
 	var (
 		isScaled  bool
 		scaleDiff float64
@@ -143,7 +143,7 @@ func (s *Server) newOut(addr address) *serverOut {
 	})
 
 	return &serverOut{
-		Server: s,
+		server: s,
 		values: values,
 		interp: interp,
 		last:   initial,
@@ -160,7 +160,7 @@ const (
 type interpolation int
 
 type serverOut struct {
-	*Server
+	*server
 	values chan module.Value
 	interp interpolation
 	last   module.Value
