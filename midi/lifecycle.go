@@ -21,7 +21,7 @@ func initMIDI() {
 	})
 }
 
-func Terminate() error {
+func terminate() error {
 	if initialized {
 		return portmidi.Terminate()
 	}
