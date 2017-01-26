@@ -24,45 +24,45 @@ return function(env)
         -- Clock
         --
         with(modules.clock, function(t)
-            t.osc:set { pitch = hz(1) }
-            t.multiple:set { input = t.osc:output('pulse') }
+            set(t.osc, { pitch = hz(1) })
+            set(t.multiple, { input = out(t.osc, 'pulse') })
         end)
 
         --
         -- Karplus-Strong
         --
         with(modules.ks, function(t)
-            t.adsr:set { 
-                gate           = modules.clock.multiple:output(0),
+            set(t.adsr, { 
+                gate           = out(modules.clock.multiple, 0),
                 disableSustain = 1,
                 attack         = ms(5),
                 decay          = ms(10),
                 sustain        = 0
-            }
-            t.amp:set { 
-                a = t.adsr:output(), 
-                b = t.noise:output()
-            }
-            t.delay:set {
-                input = t.amp:output(),
+            })
+            set(t.amp, { 
+                a = out(t.adsr), 
+                b = out(t.noise)
+            })
+            set(t.delay, {
+                input = out(t.amp),
                 duration = ms(20),
                 cutoff = hz(3000)
-            }
-            t.filter:set {
-                input  = t.delay:output(),
+            })
+            set(t.filter, {
+                input  = out(t.delay),
                 cutoff = hz(2500)
-            }
+            })
         end)
 
         --
         -- Mix
         -- 
-        modules.mix:set {
-            { input = modules.ks.filter:output() },
-        }
-        modules.compress:set { input = modules.mix:output() }
+        set(modules.mix, {
+            { input = out(modules.ks.filter) },
+        })
+        set(modules.compress, { input = out(modules.mix) })
 
-        return modules.compress:output()
+        return out(modules.compress)
     end
 
     return build, patch
