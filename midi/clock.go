@@ -8,22 +8,22 @@ import (
 
 func init() {
 	module.Register("MIDIClock", func(c module.Config) (module.Patcher, error) {
-		var config ClockConfig
+		var config clockConfig
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
 		if config.FrameRate == 0 {
 			config.FrameRate = 24
 		}
-		return NewClock(config)
+		return newClock(config)
 	})
 }
 
-type ClockConfig struct {
+type clockConfig struct {
 	Device, FrameRate int
 }
 
-type Clock struct {
+type clock struct {
 	*portmidi.Stream
 	module.IO
 
@@ -33,13 +33,13 @@ type Clock struct {
 	events    []portmidi.Event
 }
 
-func NewClock(config ClockConfig) (*Clock, error) {
+func newClock(config clockConfig) (*clock, error) {
 	initMIDI()
 	stream, err := portmidi.NewInputStream(portmidi.DeviceID(config.Device), int64(module.FrameSize))
 	if err != nil {
 		return nil, err
 	}
-	m := &Clock{
+	m := &clock{
 		Stream:    stream,
 		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
@@ -51,7 +51,7 @@ func NewClock(config ClockConfig) (*Clock, error) {
 	return m, m.Expose("MIDIClock", nil, outs)
 }
 
-func (c *Clock) read(out module.Frame) {
+func (c *clock) read(out module.Frame) {
 	if c.reads == 0 {
 		for i := range out {
 			events, err := c.Stream.Read(1)
@@ -69,7 +69,7 @@ func (c *Clock) read(out module.Frame) {
 	}
 }
 
-func (s *Clock) Close() error {
+func (s *clock) Close() error {
 	if s.Stream != nil {
 		if err := s.Stream.Close(); err != nil {
 			return err
@@ -80,7 +80,7 @@ func (s *Clock) Close() error {
 }
 
 type clockPulse struct {
-	*Clock
+	*clock
 }
 
 func (reader *clockPulse) Read(out module.Frame) {
@@ -96,7 +96,7 @@ func (reader *clockPulse) Read(out module.Frame) {
 }
 
 type clockReset struct {
-	*Clock
+	*clock
 }
 
 func (reader *clockReset) Read(out module.Frame) {

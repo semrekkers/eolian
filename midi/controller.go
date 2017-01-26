@@ -21,7 +21,7 @@ func init() {
 	}
 
 	module.Register("MIDIController", func(c module.Config) (module.Patcher, error) {
-		var config ControllerConfig
+		var config controllerConfig
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
@@ -38,21 +38,21 @@ func init() {
 			config.Polyphony = 1
 		}
 
-		return NewController(config)
+		return newController(config)
 	})
 }
 
-type ControllerConfig struct {
+type controllerConfig struct {
 	Device               string
 	Polyphony, FrameRate int
 	CCChannels           []int `mapstructure:"ccChannels"`
 }
 
-type CC struct {
+type cc struct {
 	Channel, Number int
 }
 
-type Controller struct {
+type controller struct {
 	module.IO
 	*portmidi.Stream
 
@@ -64,7 +64,7 @@ type Controller struct {
 	clockTick int
 }
 
-func NewController(config ControllerConfig) (*Controller, error) {
+func newController(config controllerConfig) (*controller, error) {
 	initMIDI()
 
 	if config.Device == "" {
@@ -90,7 +90,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	}
 	fmt.Printf("MIDI: %s\n", portmidi.Info(deviceID).Name)
 
-	m := &Controller{
+	m := &controller{
 		Stream:    stream,
 		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
@@ -100,9 +100,9 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	outs = append(outs, polyphonicOutputs(m, config.Polyphony)...)
 
 	outs = append(outs,
-		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{Controller: m})},
-		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{Controller: m})},
-		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{Controller: m})})
+		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{controller: m})},
+		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{controller: m})},
+		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{controller: m})})
 
 	for _, c := range config.CCChannels {
 		for n := 0; n < 128; n++ {
@@ -110,7 +110,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 				outs = append(outs, &module.Out{
 					Name: fmt.Sprintf("cc/%d/%d", c, n),
 					Provider: module.Provide(&ctrlCC{
-						Controller: m,
+						controller: m,
 						status:     176 + (c - 1),
 						number:     n,
 					}),
@@ -122,7 +122,7 @@ func NewController(config ControllerConfig) (*Controller, error) {
 	return m, m.Expose("MIDIController", nil, outs)
 }
 
-func (c *Controller) read(out module.Frame) {
+func (c *controller) read(out module.Frame) {
 	if c.reads == 0 {
 		for i := range out {
 			if c.Stream == nil {
@@ -144,7 +144,7 @@ func (c *Controller) read(out module.Frame) {
 	}
 }
 
-func (c *Controller) Close() error {
+func (c *controller) Close() error {
 	if c.Stream != nil {
 		if err := c.Stream.Close(); err != nil {
 			return err
@@ -155,7 +155,7 @@ func (c *Controller) Close() error {
 }
 
 type ctrlGate struct {
-	*Controller
+	*controller
 	channelOffset int
 	stateFunc     gateStateFunc
 	state         *gateState
@@ -223,7 +223,7 @@ func gateUp(s *gateState) gateStateFunc {
 type gateStateFunc func(*gateState) gateStateFunc
 
 type ctrlVelocity struct {
-	*Controller
+	*controller
 	channelOffset int
 	lastVelocity  module.Value
 }
@@ -246,7 +246,7 @@ func (reader *ctrlVelocity) Read(out module.Frame) {
 }
 
 type ctrlSync struct {
-	*Controller
+	*controller
 	tick int
 }
 
@@ -267,7 +267,7 @@ func (reader *ctrlSync) Read(out module.Frame) {
 }
 
 type ctrlPitch struct {
-	*Controller
+	*controller
 	channelOffset int
 	pitch         module.Value
 }
@@ -293,7 +293,7 @@ func (reader *ctrlPitch) Read(out module.Frame) {
 }
 
 type ctrlReset struct {
-	*Controller
+	*controller
 	channelOffset int
 }
 
@@ -309,7 +309,7 @@ func (reader ctrlReset) Read(out module.Frame) {
 }
 
 type ctrlPitchBend struct {
-	*Controller
+	*controller
 	channelOffset int
 }
 
@@ -333,7 +333,7 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 }
 
 type ctrlCC struct {
-	*Controller
+	*controller
 	status, number int
 	value          module.Value
 }
@@ -349,33 +349,33 @@ func (reader *ctrlCC) Read(out module.Frame) {
 	}
 }
 
-func polyphonicOutputs(m *Controller, count int) []*module.Out {
+func polyphonicOutputs(m *controller, count int) []*module.Out {
 	outs := []*module.Out{}
 
 	if count == 0 {
 		outs = append(outs, &module.Out{
 			Name: "gate",
 			Provider: module.Provide(&ctrlGate{
-				Controller: m,
+				controller: m,
 				stateFunc:  gateUp,
 				state:      &gateState{which: -1},
 			}),
 		},
-			&module.Out{Name: "pitch", Provider: module.Provide(&ctrlPitch{Controller: m})},
-			&module.Out{Name: "velocity", Provider: module.Provide(&ctrlVelocity{Controller: m})})
+			&module.Out{Name: "pitch", Provider: module.Provide(&ctrlPitch{controller: m})},
+			&module.Out{Name: "velocity", Provider: module.Provide(&ctrlVelocity{controller: m})})
 	} else {
 		for i := 0; i < count; i++ {
 			outs = append(outs, &module.Out{
 				Name: fmt.Sprintf("%d.gate", i),
 				Provider: module.Provide(&ctrlGate{
-					Controller:    m,
+					controller:    m,
 					stateFunc:     gateUp,
 					state:         &gateState{which: -1},
 					channelOffset: i,
 				}),
 			},
-				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{Controller: m, channelOffset: i})},
-				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{Controller: m, channelOffset: i})})
+				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{controller: m, channelOffset: i})},
+				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
 		}
 	}
 
