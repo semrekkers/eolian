@@ -4,23 +4,23 @@ import "github.com/mitchellh/mapstructure"
 
 func init() {
 	Register("Interpolate", func(c Config) (Patcher, error) {
-		var config InterpolateConfig
+		var config interpolateConfig
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
 		if config.Max == 0 {
 			config.Max = 1
 		}
-		return NewInterpolate(config)
+		return newInterpolate(config)
 	})
 }
 
-type InterpolateConfig struct {
+type interpolateConfig struct {
 	Min, Max Value
 	Smooth   bool
 }
 
-type Interpolate struct {
+type interpolate struct {
 	IO
 	in, max, min *In
 
@@ -28,8 +28,8 @@ type Interpolate struct {
 	rolling Value
 }
 
-func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
-	m := &Interpolate{
+func newInterpolate(config interpolateConfig) (*interpolate, error) {
+	m := &interpolate{
 		in:     &In{Name: "input", Source: zero},
 		max:    &In{Name: "max", Source: NewBuffer(config.Max)},
 		min:    &In{Name: "min", Source: NewBuffer(config.Min)},
@@ -43,7 +43,7 @@ func NewInterpolate(config InterpolateConfig) (*Interpolate, error) {
 	return m, err
 }
 
-func (interp *Interpolate) Read(out Frame) {
+func (interp *interpolate) Read(out Frame) {
 	interp.in.Read(out)
 	max := interp.max.ReadFrame()
 	min := interp.min.ReadFrame()

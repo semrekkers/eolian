@@ -3,36 +3,36 @@ package module
 import "math"
 
 func init() {
-	Register("LPFilter", func(Config) (Patcher, error) { return NewFilter(LowPass) })
-	Register("HPFilter", func(Config) (Patcher, error) { return NewFilter(HighPass) })
+	Register("LPFilter", func(Config) (Patcher, error) { return newFilter(lowPass) })
+	Register("HPFilter", func(Config) (Patcher, error) { return newFilter(highPass) })
 }
 
-type FilterType int
+type filterType int
 
 const (
-	LowPass FilterType = iota
-	HighPass
+	lowPass filterType = iota
+	highPass
 )
 
-type Filter struct {
+type filter struct {
 	IO
 	in, cutoff, resonance *In
-	fourPole              *FourPole
+	fourPole              *fourPole
 }
 
-func NewFilter(kind FilterType) (*Filter, error) {
-	m := &Filter{
+func newFilter(kind filterType) (*filter, error) {
+	m := &filter{
 		in:        &In{Name: "input", Source: zero},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
-		fourPole:  &FourPole{kind: kind},
+		fourPole:  &fourPole{kind: kind},
 	}
 
 	var name string
 	switch kind {
-	case LowPass:
+	case lowPass:
 		name = "LPFilter"
-	case HighPass:
+	case highPass:
 		name = "HPFilter"
 	default:
 		name = "UnknownFilter"
@@ -46,7 +46,7 @@ func NewFilter(kind FilterType) (*Filter, error) {
 	return m, err
 }
 
-func (f *Filter) Read(out Frame) {
+func (f *filter) Read(out Frame) {
 	f.in.Read(out)
 	cutoff := f.cutoff.ReadFrame()
 	resonance := f.resonance.ReadFrame()
@@ -57,14 +57,14 @@ func (f *Filter) Read(out Frame) {
 	}
 }
 
-type FourPole struct {
-	kind      FilterType
+type fourPole struct {
+	kind      filterType
 	cutoff    Value
 	resonance Value
 	after     [4]Value
 }
 
-func (filter *FourPole) Tick(in Value) Value {
+func (filter *fourPole) Tick(in Value) Value {
 	cutoff := Value(2 * math.Pi * math.Abs(float64(filter.cutoff)))
 
 	var out Value
@@ -89,9 +89,9 @@ func (filter *FourPole) Tick(in Value) Value {
 	filter.after[3] += (-filter.after[3] + filter.after[2]) * cutoff
 
 	switch filter.kind {
-	case HighPass:
+	case highPass:
 		return out - filter.after[3]
-	case LowPass:
+	case lowPass:
 		return filter.after[3]
 	}
 

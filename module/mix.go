@@ -17,18 +17,18 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 4
 		}
-		return NewMix(config.Size)
+		return newMix(config.Size)
 	})
 }
 
-type Mix struct {
+type mix struct {
 	IO
 	master          *In
 	sources, levels []*In
 }
 
-func NewMix(size int) (*Mix, error) {
-	m := &Mix{
+func newMix(size int) (*mix, error) {
+	m := &mix{
 		master: &In{Name: "master", Source: NewBuffer(Value(1))},
 	}
 	inputs := []*In{m.master}
@@ -49,7 +49,7 @@ func NewMix(size int) (*Mix, error) {
 	return m, err
 }
 
-func (m *Mix) Read(out Frame) {
+func (m *mix) Read(out Frame) {
 	master := m.master.ReadFrame()
 	for i := 0; i < len(m.sources); i++ {
 		m.sources[i].ReadFrame()

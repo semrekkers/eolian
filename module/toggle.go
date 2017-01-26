@@ -1,17 +1,17 @@
 package module
 
 func init() {
-	Register("Toggle", func(Config) (Patcher, error) { return NewToggle() })
+	Register("Toggle", func(Config) (Patcher, error) { return newToggle() })
 }
 
-type Toggle struct {
+type toggle struct {
 	IO
 	trigger            *In
 	value, lastTrigger Value
 }
 
-func NewToggle() (*Toggle, error) {
-	m := &Toggle{
+func newToggle() (*toggle, error) {
+	m := &toggle{
 		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
 	}
 	return m, m.Expose(
@@ -21,7 +21,7 @@ func NewToggle() (*Toggle, error) {
 	)
 }
 
-func (t *Toggle) Read(out Frame) {
+func (t *toggle) Read(out Frame) {
 	trigger := t.trigger.ReadFrame()
 	for i := range out {
 		if t.lastTrigger < 0 && trigger[i] > 0 {

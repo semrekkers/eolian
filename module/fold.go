@@ -3,16 +3,16 @@ package module
 import "math"
 
 func init() {
-	Register("Fold", func(Config) (Patcher, error) { return NewFold() })
+	Register("Fold", func(Config) (Patcher, error) { return newFold() })
 }
 
-type Fold struct {
+type fold struct {
 	IO
 	in, level *In
 }
 
-func NewFold() (*Fold, error) {
-	m := &Fold{
+func newFold() (*fold, error) {
+	m := &fold{
 		in:    &In{Name: "input", Source: zero},
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
@@ -24,7 +24,7 @@ func NewFold() (*Fold, error) {
 	return m, err
 }
 
-func (f *Fold) Read(out Frame) {
+func (f *fold) Read(out Frame) {
 	f.in.Read(out)
 	level := f.level.ReadFrame()
 	for i := range out {

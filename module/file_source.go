@@ -16,18 +16,18 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return NewFileSource(config.Path)
+		return newFileSource(config.Path)
 	})
 }
 
-type FileSource struct {
+type fileSource struct {
 	IO
 	values []Value
 	idx    int
 }
 
-func NewFileSource(path string) (*FileSource, error) {
-	m := &FileSource{
+func newFileSource(path string) (*fileSource, error) {
+	m := &fileSource{
 		values: []Value{},
 	}
 
@@ -39,14 +39,14 @@ func NewFileSource(path string) (*FileSource, error) {
 	return m, err
 }
 
-func (f *FileSource) Read(out Frame) {
+func (f *fileSource) Read(out Frame) {
 	for i := range out {
 		out[i] = f.values[f.idx]
 		f.idx = (f.idx + 1) % len(f.values)
 	}
 }
 
-func (s *FileSource) loadData(path string) error {
+func (s *fileSource) loadData(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err

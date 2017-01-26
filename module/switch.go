@@ -17,11 +17,11 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 4
 		}
-		return NewSwitch(config.Size)
+		return newSeqSwitch(config.Size)
 	})
 }
 
-type Switch struct {
+type seqSwitch struct {
 	IO
 	clock, reset *In
 	sources      []*In
@@ -30,8 +30,8 @@ type Switch struct {
 	lastClock, lastReset Value
 }
 
-func NewSwitch(size int) (*Switch, error) {
-	m := &Switch{
+func newSeqSwitch(size int) (*seqSwitch, error) {
+	m := &seqSwitch{
 		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
 		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
 		lastClock: -1,
@@ -48,7 +48,7 @@ func NewSwitch(size int) (*Switch, error) {
 	return m, m.Expose("Switch", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
 }
 
-func (s *Switch) Read(out Frame) {
+func (s *seqSwitch) Read(out Frame) {
 	clock := s.clock.ReadFrame()
 	reset := s.reset.ReadFrame()
 	for i := 0; i < len(s.sources); i++ {

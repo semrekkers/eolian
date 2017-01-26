@@ -17,11 +17,11 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 4
 		}
-		return NewMultiple(config.Size)
+		return newMultiple(config.Size)
 	})
 }
 
-type Multiple struct {
+type multiple struct {
 	IO
 	in *In
 
@@ -30,8 +30,8 @@ type Multiple struct {
 	reads int
 }
 
-func NewMultiple(size int) (*Multiple, error) {
-	m := &Multiple{
+func newMultiple(size int) (*multiple, error) {
+	m := &multiple{
 		in:    &In{Name: "input", Source: NewBuffer(zero)},
 		frame: make(Frame, FrameSize),
 		size:  size,
@@ -46,7 +46,7 @@ func NewMultiple(size int) (*Multiple, error) {
 	return m, m.Expose("Multiple", []*In{m.in}, outputs)
 }
 
-func (m *Multiple) read(out Frame) {
+func (m *multiple) read(out Frame) {
 	if m.reads == 0 {
 		copy(m.frame, m.in.ReadFrame())
 	}
@@ -59,9 +59,9 @@ func (m *Multiple) read(out Frame) {
 }
 
 type multOut struct {
-	*Multiple
+	*multiple
 }
 
 func (o *multOut) Read(out Frame) {
-	o.Multiple.read(out)
+	o.multiple.read(out)
 }

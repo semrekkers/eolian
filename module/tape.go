@@ -13,7 +13,7 @@ func init() {
 		if config.Max == 0 {
 			config.Max = 10
 		}
-		return NewTape(config.Max)
+		return newTape(config.Max)
 	})
 }
 
@@ -21,7 +21,7 @@ const tapeOversample = 10
 
 var minSpliceSize = int(Duration(10).Value())
 
-type Tape struct {
+type tape struct {
 	IO
 	in, speed, play, record, reset, bias *In
 	organize, splice, unsplice           *In
@@ -33,8 +33,8 @@ type Tape struct {
 	endOfSplice Frame
 }
 
-func NewTape(max int) (*Tape, error) {
-	m := &Tape{
+func newTape(max int) (*tape, error) {
+	m := &tape{
 		in:          &In{Name: "input", Source: zero},
 		speed:       &In{Name: "speed", Source: NewBuffer(Value(1))},
 		play:        &In{Name: "play", Source: NewBuffer(Value(1))},
@@ -52,13 +52,13 @@ func NewTape(max int) (*Tape, error) {
 		"Tape",
 		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
 		[]*Out{
-			{Name: "output", Provider: Provide(&tapeOut{Tape: m})},
-			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{Tape: m})},
+			{Name: "output", Provider: Provide(&tapeOut{tape: m})},
+			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{tape: m})},
 		},
 	)
 }
 
-func (t *Tape) read(out Frame) {
+func (t *tape) read(out Frame) {
 	if t.reads == 0 {
 		t.in.Read(out)
 		t.speed.ReadFrame()
@@ -77,7 +77,7 @@ func (t *Tape) read(out Frame) {
 }
 
 type tapeOut struct {
-	*Tape
+	*tape
 }
 
 func (o *tapeOut) Read(out Frame) {
@@ -118,7 +118,7 @@ func (o *tapeOut) Read(out Frame) {
 }
 
 type tapeEndOfSplice struct {
-	*Tape
+	*tape
 }
 
 func (o *tapeEndOfSplice) Read(out Frame) {

@@ -13,7 +13,7 @@ func init() {
 		if config.Divisor == 0 {
 			config.Divisor = 1
 		}
-		return NewDivider(config.Divisor)
+		return newClockDivider(config.Divisor)
 	})
 	Register("ClockMultiply", func(c Config) (Patcher, error) {
 		var config struct {
@@ -25,11 +25,11 @@ func init() {
 		if config.Multiplier == 0 {
 			config.Multiplier = 1
 		}
-		return NewMultiplier(config.Multiplier)
+		return newClockMultiply(config.Multiplier)
 	})
 }
 
-type Divider struct {
+type clockDivide struct {
 	IO
 	in, divisor *In
 
@@ -37,8 +37,8 @@ type Divider struct {
 	last Value
 }
 
-func NewDivider(factor int) (*Divider, error) {
-	m := &Divider{
+func newClockDivider(factor int) (*clockDivide, error) {
+	m := &clockDivide{
 		in:      &In{Name: "input", Source: zero},
 		divisor: &In{Name: "divisor", Source: NewBuffer(Value(factor))},
 	}
@@ -50,7 +50,7 @@ func NewDivider(factor int) (*Divider, error) {
 	return m, err
 }
 
-func (d *Divider) Read(out Frame) {
+func (d *clockDivide) Read(out Frame) {
 	d.in.Read(out)
 	divisor := d.divisor.ReadFrame()
 	for i := range out {
@@ -68,7 +68,7 @@ func (d *Divider) Read(out Frame) {
 	}
 }
 
-type Multiplier struct {
+type clockMultiply struct {
 	IO
 	in, multiplier *In
 
@@ -81,8 +81,8 @@ type Multiplier struct {
 	tick int
 }
 
-func NewMultiplier(factor int) (*Multiplier, error) {
-	m := &Multiplier{
+func newClockMultiply(factor int) (*clockMultiply, error) {
+	m := &clockMultiply{
 		in:         &In{Name: "input", Source: zero},
 		multiplier: &In{Name: "multiplier", Source: NewBuffer(Value(factor))},
 	}
@@ -94,7 +94,7 @@ func NewMultiplier(factor int) (*Multiplier, error) {
 	return m, err
 }
 
-func (m *Multiplier) Read(out Frame) {
+func (m *clockMultiply) Read(out Frame) {
 	m.in.Read(out)
 	multiplier := m.multiplier.ReadFrame()
 	for i := range out {

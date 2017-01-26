@@ -1,18 +1,18 @@
 package module
 
 func init() {
-	Register("Concurrent", func(Config) (Patcher, error) { return NewConcurrent() })
+	Register("Concurrent", func(Config) (Patcher, error) { return newConcurrent() })
 }
 
-type Concurrent struct {
+type concurrent struct {
 	IO
 	in   *In
 	ch   chan Frame
 	stop chan struct{}
 }
 
-func NewConcurrent() (*Concurrent, error) {
-	m := &Concurrent{
+func newConcurrent() (*concurrent, error) {
+	m := &concurrent{
 		in:   &In{Name: "input", Source: NewBuffer(zero)},
 		ch:   make(chan Frame),
 		stop: make(chan struct{}),
@@ -26,7 +26,7 @@ func NewConcurrent() (*Concurrent, error) {
 		})
 }
 
-func (c *Concurrent) readInput() {
+func (c *concurrent) readInput() {
 	for {
 		select {
 		case <-c.stop:
@@ -36,14 +36,14 @@ func (c *Concurrent) readInput() {
 	}
 }
 
-func (c *Concurrent) Read(out Frame) {
+func (c *concurrent) Read(out Frame) {
 	frame := <-c.ch
 	for i := range out {
 		out[i] = frame[i]
 	}
 }
 
-func (c *Concurrent) Close() error {
+func (c *concurrent) Close() error {
 	close(c.stop)
 	return nil
 }

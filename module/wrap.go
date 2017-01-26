@@ -3,16 +3,16 @@ package module
 import "math"
 
 func init() {
-	Register("Wrap", func(Config) (Patcher, error) { return NewWrap() })
+	Register("Wrap", func(Config) (Patcher, error) { return newWrap() })
 }
 
-type Wrap struct {
+type wrap struct {
 	IO
 	in, level *In
 }
 
-func NewWrap() (*Wrap, error) {
-	m := &Wrap{
+func newWrap() (*wrap, error) {
+	m := &wrap{
 		in:    &In{Name: "input", Source: zero},
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
@@ -24,7 +24,7 @@ func NewWrap() (*Wrap, error) {
 	return m, err
 }
 
-func (w *Wrap) Read(out Frame) {
+func (w *wrap) Read(out Frame) {
 	w.in.Read(out)
 	level := w.level.ReadFrame()
 	for i := range out {

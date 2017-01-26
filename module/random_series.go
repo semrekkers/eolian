@@ -3,12 +3,12 @@ package module
 import "math/rand"
 
 func init() {
-	Register("RandomSeries", func(Config) (Patcher, error) { return NewRandomSeries() })
+	Register("RandomSeries", func(Config) (Patcher, error) { return newRandomSeries() })
 }
 
 const randomSeriesMax = 32
 
-type RandomSeries struct {
+type randomSeries struct {
 	IO
 	clock, size, trigger *In
 	min, max             *In
@@ -18,8 +18,8 @@ type RandomSeries struct {
 	idx, reads                       int
 }
 
-func NewRandomSeries() (*RandomSeries, error) {
-	m := &RandomSeries{
+func newRandomSeries() (*randomSeries, error) {
+	m := &randomSeries{
 		clock:       &In{Name: "clock", Source: NewBuffer(zero)},
 		size:        &In{Name: "size", Source: NewBuffer(Value(8))},
 		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
@@ -36,17 +36,17 @@ func NewRandomSeries() (*RandomSeries, error) {
 		[]*Out{
 			{
 				Name:     "values",
-				Provider: Provide(&randomSeriesOut{RandomSeries: m}),
+				Provider: Provide(&randomSeriesOut{randomSeries: m}),
 			},
 			{
 				Name:     "gate",
-				Provider: Provide(&randomSeriesGate{RandomSeries: m}),
+				Provider: Provide(&randomSeriesGate{randomSeries: m}),
 			},
 		},
 	)
 }
 
-func (s *RandomSeries) read(out Frame) {
+func (s *randomSeries) read(out Frame) {
 	if s.reads == 0 {
 		s.min.ReadFrame()
 		s.max.ReadFrame()
@@ -74,7 +74,7 @@ func (s *RandomSeries) read(out Frame) {
 }
 
 type randomSeriesOut struct {
-	*RandomSeries
+	*randomSeries
 }
 
 func (o *randomSeriesOut) Read(out Frame) {
@@ -96,7 +96,7 @@ func (o *randomSeriesOut) Read(out Frame) {
 }
 
 type randomSeriesGate struct {
-	*RandomSeries
+	*randomSeries
 }
 
 func (o *randomSeriesGate) Read(out Frame) {

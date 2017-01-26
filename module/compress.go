@@ -3,18 +3,18 @@ package module
 import "math"
 
 func init() {
-	Register("Compress", func(Config) (Patcher, error) { return NewCompress() })
+	Register("Compress", func(Config) (Patcher, error) { return newCompress() })
 }
 
-type Compress struct {
+type compress struct {
 	IO
 	in, attack, release *In
 
 	envelope Value
 }
 
-func NewCompress() (*Compress, error) {
-	m := &Compress{
+func newCompress() (*compress, error) {
+	m := &compress{
 		in:      &In{Name: "input", Source: zero},
 		attack:  &In{Name: "attack", Source: NewBuffer(Duration(10))},
 		release: &In{Name: "release", Source: NewBuffer(Duration(500))},
@@ -27,7 +27,7 @@ func NewCompress() (*Compress, error) {
 	return m, err
 }
 
-func (c *Compress) Read(out Frame) {
+func (c *compress) Read(out Frame) {
 	c.in.Read(out)
 	attack, release := c.attack.ReadFrame(), c.release.ReadFrame()
 	for i := range out {

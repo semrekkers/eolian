@@ -1,17 +1,17 @@
 package module
 
 func init() {
-	Register("Glide", func(Config) (Patcher, error) { return NewGlide() })
+	Register("Glide", func(Config) (Patcher, error) { return newGlide() })
 }
 
-type Glide struct {
+type glide struct {
 	IO
 	in, rise, fall *In
 	*slew
 }
 
-func NewGlide() (*Glide, error) {
-	m := &Glide{
+func newGlide() (*glide, error) {
+	m := &glide{
 		in:   &In{Name: "input", Source: zero},
 		rise: &In{Name: "rise", Source: NewBuffer(zero)},
 		fall: &In{Name: "fall", Source: NewBuffer(zero)},
@@ -25,7 +25,7 @@ func NewGlide() (*Glide, error) {
 	return m, err
 }
 
-func (g *Glide) Read(out Frame) {
+func (g *glide) Read(out Frame) {
 	g.in.Read(out)
 	rise, fall := g.rise.ReadFrame(), g.fall.ReadFrame()
 	for i := range out {

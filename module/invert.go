@@ -1,16 +1,16 @@
 package module
 
 func init() {
-	Register("Invert", func(Config) (Patcher, error) { return NewInvert() })
+	Register("Invert", func(Config) (Patcher, error) { return newInvert() })
 }
 
-type Invert struct {
+type invert struct {
 	IO
 	in *In
 }
 
-func NewInvert() (*Invert, error) {
-	m := &Invert{
+func newInvert() (*invert, error) {
+	m := &invert{
 		in: &In{Name: "input", Source: zero},
 	}
 	err := m.Expose(
@@ -21,7 +21,7 @@ func NewInvert() (*Invert, error) {
 	return m, err
 }
 
-func (inv *Invert) Read(out Frame) {
+func (inv *invert) Read(out Frame) {
 	inv.in.Read(out)
 	for i := range out {
 		out[i] = -out[i]

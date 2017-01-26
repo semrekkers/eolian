@@ -1,16 +1,16 @@
 package module
 
 func init() {
-	Register("Noise", func(Config) (Patcher, error) { return NewNoise() })
+	Register("Noise", func(Config) (Patcher, error) { return newNoise() })
 }
 
-type Noise struct {
+type noise struct {
 	IO
 	in, min, max, gain *In
 }
 
-func NewNoise() (*Noise, error) {
-	m := &Noise{
+func newNoise() (*noise, error) {
+	m := &noise{
 		in:   &In{Name: "input", Source: zero},
 		min:  &In{Name: "min", Source: NewBuffer(zero)},
 		max:  &In{Name: "max", Source: NewBuffer(Value(1))},
@@ -24,7 +24,7 @@ func NewNoise() (*Noise, error) {
 	return m, err
 }
 
-func (n *Noise) Read(out Frame) {
+func (n *noise) Read(out Frame) {
 	n.in.Read(out)
 	min := n.min.ReadFrame()
 	max := n.max.ReadFrame()

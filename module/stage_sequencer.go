@@ -18,7 +18,7 @@ func init() {
 		if config.Stages == 0 {
 			config.Stages = 8
 		}
-		return NewStageSequencer(config.Stages)
+		return newStageSequence(config.Stages)
 	})
 }
 
@@ -33,7 +33,7 @@ const (
 	patternModeRandom
 )
 
-type StageSequencer struct {
+type stageSequence struct {
 	IO
 	clock, transpose, reset, glide, mode *In
 	stages                               []stage
@@ -50,8 +50,8 @@ type stage struct {
 	pitch, pulses, gateMode, glide, velocity *In
 }
 
-func NewStageSequencer(stages int) (*StageSequencer, error) {
-	m := &StageSequencer{
+func newStageSequence(stages int) (*stageSequence, error) {
+	m := &stageSequence{
 		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
 		transpose: &In{Name: "transpose", Source: NewBuffer(Value(1))},
 		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
@@ -100,16 +100,16 @@ func NewStageSequencer(stages int) (*StageSequencer, error) {
 		"StageSequence",
 		inputs,
 		[]*Out{
-			{Name: "pitch", Provider: Provide(&stageSeqPitch{StageSequencer: m})},
+			{Name: "pitch", Provider: Provide(&stageSeqPitch{stageSequence: m})},
 			{Name: "gate", Provider: Provide(&stageSeqGate{m})},
-			{Name: "velocity", Provider: Provide(&stageSeqVelocity{StageSequencer: m})},
+			{Name: "velocity", Provider: Provide(&stageSeqVelocity{stageSequence: m})},
 			{Name: "endstage", Provider: Provide(&stageSeqEndStage{m})},
 			{Name: "sync", Provider: Provide(&stageSeqSync{m})},
 		},
 	)
 }
 
-func (s *StageSequencer) read(out Frame) {
+func (s *stageSequence) read(out Frame) {
 	if s.reads == 0 {
 		clock := s.clock.ReadFrame()
 		reset := s.reset.ReadFrame()
@@ -155,7 +155,7 @@ func (s *StageSequencer) read(out Frame) {
 	}
 }
 
-func (s *StageSequencer) advanceStage(mode Value) {
+func (s *stageSequence) advanceStage(mode Value) {
 	switch mapPatternMode(mode) {
 	case patternModeSequential:
 		s.stage = (s.stage + 1) % len(s.stages)
@@ -181,7 +181,7 @@ func (s *StageSequencer) advanceStage(mode Value) {
 }
 
 type stageSeqPitch struct {
-	*StageSequencer
+	*stageSequence
 }
 
 func (o *stageSeqPitch) Read(out Frame) {
@@ -199,7 +199,7 @@ func (o *stageSeqPitch) Read(out Frame) {
 }
 
 type stageSeqGate struct {
-	*StageSequencer
+	*stageSequence
 }
 
 func (o *stageSeqGate) Read(out Frame) {
@@ -238,7 +238,7 @@ func (o *stageSeqGate) Read(out Frame) {
 }
 
 type stageSeqSync struct {
-	*StageSequencer
+	*stageSequence
 }
 
 func (o *stageSeqSync) Read(out Frame) {
@@ -253,7 +253,7 @@ func (o *stageSeqSync) Read(out Frame) {
 }
 
 type stageSeqEndStage struct {
-	*StageSequencer
+	*stageSequence
 }
 
 func (o *stageSeqEndStage) Read(out Frame) {
@@ -268,7 +268,7 @@ func (o *stageSeqEndStage) Read(out Frame) {
 }
 
 type stageSeqVelocity struct {
-	*StageSequencer
+	*stageSequence
 	rolling Value
 }
 

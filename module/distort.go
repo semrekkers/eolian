@@ -3,26 +3,26 @@ package module
 import "math"
 
 func init() {
-	Register("Distort", func(Config) (Patcher, error) { return NewDistort() })
+	Register("Distort", func(Config) (Patcher, error) { return newDistort() })
 }
 
-type Distort struct {
+type distort struct {
 	IO
 	in, gain         *In
 	offsetA, offsetB *In
 
-	dcBlock *DCBlock
+	dcBlock *dcBlock
 
 	lastIn, lastOut Value
 }
 
-func NewDistort() (*Distort, error) {
-	m := &Distort{
+func newDistort() (*distort, error) {
+	m := &distort{
 		in:      &In{Name: "input", Source: zero},
 		gain:    &In{Name: "gain", Source: NewBuffer(Value(1))},
 		offsetA: &In{Name: "offsetA", Source: NewBuffer(zero)},
 		offsetB: &In{Name: "offsetB", Source: NewBuffer(zero)},
-		dcBlock: &DCBlock{},
+		dcBlock: &dcBlock{},
 	}
 	err := m.Expose(
 		"Distort",
@@ -32,7 +32,7 @@ func NewDistort() (*Distort, error) {
 	return m, err
 }
 
-func (d *Distort) Read(out Frame) {
+func (d *distort) Read(out Frame) {
 	d.in.Read(out)
 	offsetA, offsetB := d.offsetA.ReadFrame(), d.offsetB.ReadFrame()
 	gain := d.gain.ReadFrame()

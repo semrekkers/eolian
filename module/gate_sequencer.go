@@ -17,11 +17,11 @@ func init() {
 		if config.Steps == 0 {
 			config.Steps = 16
 		}
-		return NewGateSequencer(config.Steps)
+		return newGateSequence(config.Steps)
 	})
 }
 
-type GateSequencer struct {
+type gateSequence struct {
 	IO
 	clock, reset *In
 	steps        []*In
@@ -30,8 +30,8 @@ type GateSequencer struct {
 	lastClock, lastReset Value
 }
 
-func NewGateSequencer(steps int) (*GateSequencer, error) {
-	m := &GateSequencer{
+func newGateSequence(steps int) (*gateSequence, error) {
+	m := &gateSequence{
 		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
 		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
 		size:      steps,
@@ -49,22 +49,22 @@ func NewGateSequencer(steps int) (*GateSequencer, error) {
 	outputs := []*Out{
 		&Out{Name: "on", Provider: Provide(
 			&gateSequencerOut{
-				GateSequencer: m,
-				onBeat:        true,
-				lastStep:      -1,
+				gateSequence: m,
+				onBeat:       true,
+				lastStep:     -1,
 			})},
 		&Out{Name: "off", Provider: Provide(
 			&gateSequencerOut{
-				GateSequencer: m,
-				onBeat:        false,
-				lastStep:      -1,
+				gateSequence: m,
+				onBeat:       false,
+				lastStep:     -1,
 			})},
 	}
 
 	return m, m.Expose("GateSequence", inputs, outputs)
 }
 
-func (s *GateSequencer) read(out Frame) {
+func (s *gateSequence) read(out Frame) {
 	if s.reads == 0 {
 		clock := s.clock.ReadFrame()
 		reset := s.reset.ReadFrame()
@@ -88,7 +88,7 @@ func (s *GateSequencer) read(out Frame) {
 }
 
 type gateSequencerOut struct {
-	*GateSequencer
+	*gateSequence
 	onBeat   bool
 	lastStep int
 }

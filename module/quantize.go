@@ -18,11 +18,11 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 10
 		}
-		return NewQuantize(config.Size)
+		return newQuantize(config.Size)
 	})
 }
 
-type Quantize struct {
+type quantize struct {
 	IO
 	in      *In
 	pitches []*In
@@ -30,8 +30,8 @@ type Quantize struct {
 	frames []Frame
 }
 
-func NewQuantize(size int) (*Quantize, error) {
-	m := &Quantize{
+func newQuantize(size int) (*quantize, error) {
+	m := &quantize{
 		in:      &In{Name: "input", Source: zero},
 		pitches: make([]*In, size),
 		frames:  make([]Frame, size),
@@ -55,7 +55,7 @@ func NewQuantize(size int) (*Quantize, error) {
 	)
 }
 
-func (q *Quantize) Read(out Frame) {
+func (q *quantize) Read(out Frame) {
 	q.in.Read(out)
 	for i, p := range q.pitches {
 		q.frames[i] = p.ReadFrame()

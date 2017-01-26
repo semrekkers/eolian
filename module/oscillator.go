@@ -15,25 +15,25 @@ func init() {
 			return nil, err
 		}
 		if config.Algorithm == "" {
-			config.Algorithm = BLEP
+			config.Algorithm = algBLEP
 		}
-		return NewOscillator(config.Algorithm)
+		return newOscillator(config.Algorithm)
 	}
 	Register("Osc", f)
 	Register("Oscillator", f)
 }
 
 const (
-	Pulse = iota
-	Saw
-	Sine
-	Triangle
+	pulse = iota
+	saw
+	sine
+	triangle
 
-	Simple = "simple"
-	BLEP   = "blep"
+	algSimple = "simple"
+	algBLEP   = "blep"
 )
 
-type Oscillator struct {
+type oscillator struct {
 	IO
 	pitch, pitchMod, pitchModAmount *In
 	detune, amp, offset, sync       *In
@@ -49,8 +49,8 @@ type oscStateFrames struct {
 	detune, amp, offset, sync       Frame
 }
 
-func NewOscillator(algorithm string) (*Oscillator, error) {
-	m := &Oscillator{
+func newOscillator(algorithm string) (*oscillator, error) {
+	m := &oscillator{
 		pitch:          &In{Name: "pitch", Source: NewBuffer(zero)},
 		pitchMod:       &In{Name: "pitchMod", Source: NewBuffer(zero)},
 		pitchModAmount: &In{Name: "pitchModAmount", Source: NewBuffer(Value(1))},
@@ -75,27 +75,27 @@ func NewOscillator(algorithm string) (*Oscillator, error) {
 			m.sync,
 		},
 		[]*Out{
-			{Name: "pulse", Provider: m.out(0, Pulse, 1)},
-			{Name: "saw", Provider: m.out(1, Saw, 1)},
-			{Name: "sine", Provider: m.out(2, Sine, 1)},
-			{Name: "triangle", Provider: m.out(3, Triangle, 1)},
-			{Name: "sub", Provider: m.out(4, Pulse, 0.5)},
+			{Name: "pulse", Provider: m.out(0, pulse, 1)},
+			{Name: "saw", Provider: m.out(1, saw, 1)},
+			{Name: "sine", Provider: m.out(2, sine, 1)},
+			{Name: "triangle", Provider: m.out(3, triangle, 1)},
+			{Name: "sub", Provider: m.out(4, pulse, 0.5)},
 		},
 	)
 
 	return m, err
 }
 
-func (o *Oscillator) out(idx int, shape int, multiplier float64) ReaderProvider {
+func (o *oscillator) out(idx int, shape int, multiplier float64) ReaderProvider {
 	return Provide(&oscOut{
-		Oscillator: o,
+		oscillator: o,
 		phaseIndex: idx,
 		shape:      shape,
 		multiplier: multiplier,
 	})
 }
 
-func (o *Oscillator) read(out Frame) {
+func (o *oscillator) read(out Frame) {
 	if o.reads == 0 {
 		o.state.pitch = o.pitch.ReadFrame()
 		o.state.pitchMod = o.pitchMod.ReadFrame()
@@ -111,7 +111,7 @@ func (o *Oscillator) read(out Frame) {
 }
 
 type oscOut struct {
-	*Oscillator
+	*oscillator
 	phaseIndex int
 	shape      int
 	multiplier float64
@@ -122,9 +122,9 @@ func (o *oscOut) Read(out Frame) {
 	o.read(out)
 	for i := range out {
 		switch o.algorithm {
-		case BLEP:
+		case algBLEP:
 			o.blep(out, i)
-		case Simple:
+		case algSimple:
 			o.simple(out, i)
 		}
 	}
@@ -142,13 +142,13 @@ func (o *oscOut) blep(out Frame, i int) {
 	)
 
 	switch o.shape {
-	case Sine:
-	case Saw:
+	case sine:
+	case saw:
 		next -= blep(bPhase, delta)
-	case Pulse:
+	case pulse:
 		next += blep(bPhase, delta)
 		next -= blep(math.Mod(bPhase+0.5, 1), delta)
-	case Triangle:
+	case triangle:
 		next += blep(bPhase, delta)
 		next -= blep(math.Mod(bPhase+0.5, 1), delta)
 		next = pitch*next + (1-pitch)*o.last
@@ -169,13 +169,13 @@ func (o *oscOut) blep(out Frame, i int) {
 
 func blepSample(shape int, phase float64) Value {
 	switch shape {
-	case Sine:
+	case sine:
 		return Value(math.Sin(phase))
-	case Saw:
+	case saw:
 		return Value(2.0*phase/(2*math.Pi) - 1.0)
-	case Triangle:
+	case triangle:
 		fallthrough
-	case Pulse:
+	case pulse:
 		if phase < math.Pi {
 			return 1
 		}
@@ -208,17 +208,17 @@ func (o *oscOut) simple(out Frame, i int) {
 	)
 
 	switch o.shape {
-	case Sine:
+	case sine:
 		next = Value(math.Sin(float64(phase))) * amp
-	case Saw:
+	case saw:
 		next = Value(1-float32(1/math.Pi*phase)) * amp
-	case Pulse:
+	case pulse:
 		if phase < math.Pi {
 			next = 1 * amp
 		} else {
 			next = -1 * amp
 		}
-	case Triangle:
+	case triangle:
 		if phase < math.Pi {
 			next = Value(-1+(2/math.Pi)*phase) * amp
 		} else {

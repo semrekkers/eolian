@@ -1,16 +1,16 @@
 package module
 
 func init() {
-	Register("Clip", func(Config) (Patcher, error) { return NewClip() })
+	Register("Clip", func(Config) (Patcher, error) { return newClip() })
 }
 
-type Clip struct {
+type clip struct {
 	IO
 	in, level *In
 }
 
-func NewClip() (*Clip, error) {
-	m := &Clip{
+func newClip() (*clip, error) {
+	m := &clip{
 		in:    &In{Name: "input", Source: zero},
 		level: &In{Name: "level", Source: NewBuffer(Value(1))},
 	}
@@ -22,7 +22,7 @@ func NewClip() (*Clip, error) {
 	return m, err
 }
 
-func (c *Clip) Read(out Frame) {
+func (c *clip) Read(out Frame) {
 	c.in.Read(out)
 	level := c.level.ReadFrame()
 	for i := range out {

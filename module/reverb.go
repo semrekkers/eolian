@@ -8,7 +8,7 @@ import (
 
 func init() {
 	Register("Reverb", func(c Config) (Patcher, error) {
-		var config ReverbConfig
+		var config reverbConfig
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
@@ -18,55 +18,55 @@ func init() {
 		if len(config.Allpass) == 0 {
 			config.Allpass = []int{573, 331, 178}
 		}
-		return NewReverb(config)
+		return newReverb(config)
 	})
 }
 
-type ReverbConfig struct {
+type reverbConfig struct {
 	Feedback, Allpass []int
 }
 
-type Reverb struct {
+type reverb struct {
 	IO
 	in, feedback, gain *In
 
-	fbs       []*FBComb
-	allpasses []*AllPass
+	fbs       []*fbComb
+	allpasses []*allpass
 }
 
-func NewReverb(c ReverbConfig) (*Reverb, error) {
+func newReverb(c reverbConfig) (*reverb, error) {
 	feedbackCount := len(c.Feedback)
 	allpassCount := len(c.Allpass)
 
-	inMultiple, err := NewMultiple(feedbackCount)
+	inMultiple, err := newMultiple(feedbackCount)
 	if err != nil {
 		return nil, err
 	}
-	feedbackGainMultiple, err := NewMultiple(feedbackCount)
+	feedbackGainMultiple, err := newMultiple(feedbackCount)
 	if err != nil {
 		return nil, err
 	}
-	allpassGainMultiple, err := NewMultiple(allpassCount)
+	allpassGainMultiple, err := newMultiple(allpassCount)
 	if err != nil {
 		return nil, err
 	}
 
-	m := &Reverb{
+	m := &reverb{
 		in:       &In{Name: "input", Source: inMultiple.in},
 		feedback: &In{Name: "feedback", Source: feedbackGainMultiple.in},
 		gain:     &In{Name: "gain", Source: allpassGainMultiple.in},
 
-		fbs:       make([]*FBComb, feedbackCount),
-		allpasses: make([]*AllPass, allpassCount),
+		fbs:       make([]*fbComb, feedbackCount),
+		allpasses: make([]*allpass, allpassCount),
 	}
 
-	mixer, err := NewMix(feedbackCount)
+	mixer, err := newMix(feedbackCount)
 	if err != nil {
 		return m, err
 	}
 	for i, s := range c.Feedback {
 		name := fmt.Sprintf("%d", i)
-		m.fbs[i], err = NewFBComb(DurationInt(s))
+		m.fbs[i], err = newFBComb(DurationInt(s))
 		if err != nil {
 			return m, err
 		}
@@ -86,7 +86,7 @@ func NewReverb(c ReverbConfig) (*Reverb, error) {
 	feedbackGainMultiple.Patch("input", Value(0.8))
 
 	for i, s := range c.Allpass {
-		m.allpasses[i], err = NewAllPass(DurationInt(s))
+		m.allpasses[i], err = newAllpass(DurationInt(s))
 		if err != nil {
 			return m, err
 		}

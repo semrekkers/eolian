@@ -1,10 +1,10 @@
 package module
 
 func init() {
-	Register("TempoDetect", func(Config) (Patcher, error) { return NewTempoDetect() })
+	Register("TempoDetect", func(Config) (Patcher, error) { return newTempoDetect() })
 }
 
-type TempoDetect struct {
+type tempoDetect struct {
 	IO
 	tap *In
 
@@ -12,8 +12,8 @@ type TempoDetect struct {
 	capture, lastTap Value
 }
 
-func NewTempoDetect() (*TempoDetect, error) {
-	m := &TempoDetect{
+func newTempoDetect() (*tempoDetect, error) {
+	m := &tempoDetect{
 		tap: &In{Name: "tap", Source: NewBuffer(zero)},
 	}
 	return m, m.Expose(
@@ -23,7 +23,7 @@ func NewTempoDetect() (*TempoDetect, error) {
 	)
 }
 
-func (t *TempoDetect) Read(out Frame) {
+func (t *tempoDetect) Read(out Frame) {
 	tap := t.tap.ReadFrame()
 	for i := range out {
 		if t.lastTap < 0 && tap[i] > 0 {

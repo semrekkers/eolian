@@ -1,10 +1,10 @@
 package module
 
 func init() {
-	Register("ADSR", func(Config) (Patcher, error) { return NewADSR() })
+	Register("ADSR", func(Config) (Patcher, error) { return newADSR() })
 }
 
-type ADSR struct {
+type adsr struct {
 	IO
 	gate, attack, decay, release, ratio *In
 	sustain, disableSustain             *In
@@ -13,8 +13,8 @@ type ADSR struct {
 	state     *adsrState
 }
 
-func NewADSR() (*ADSR, error) {
-	m := &ADSR{
+func newADSR() (*adsr, error) {
+	m := &adsr{
 		gate:           &In{Name: "gate", Source: NewBuffer(zero)},
 		attack:         &In{Name: "attack", Source: NewBuffer(Duration(10))},
 		decay:          &In{Name: "decay", Source: NewBuffer(Duration(10))},
@@ -34,7 +34,7 @@ func NewADSR() (*ADSR, error) {
 	return m, err
 }
 
-func (e *ADSR) Read(out Frame) {
+func (e *adsr) Read(out Frame) {
 	gate := e.gate.ReadFrame()
 	attack := e.attack.ReadFrame()
 	decay := e.decay.ReadFrame()

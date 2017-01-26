@@ -1,18 +1,18 @@
 package module
 
 func init() {
-	Register("SampleHold", func(Config) (Patcher, error) { return NewSampleHold() })
+	Register("SampleHold", func(Config) (Patcher, error) { return newSampleHold() })
 }
 
-type SampleHold struct {
+type sampleHold struct {
 	IO
 	in, trigger *In
 
 	sample, lastTrigger Value
 }
 
-func NewSampleHold() (*SampleHold, error) {
-	m := &SampleHold{
+func newSampleHold() (*sampleHold, error) {
+	m := &sampleHold{
 		in:      &In{Name: "input", Source: zero},
 		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
 	}
@@ -23,7 +23,7 @@ func NewSampleHold() (*SampleHold, error) {
 	)
 }
 
-func (sh *SampleHold) Read(out Frame) {
+func (sh *sampleHold) Read(out Frame) {
 	sh.in.Read(out)
 	trigger := sh.trigger.ReadFrame()
 	for i := range out {

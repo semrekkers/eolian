@@ -3,24 +3,24 @@ package module
 import "math"
 
 func init() {
-	Register("Multiply", func(Config) (Patcher, error) { return NewBinary("Multiply", multiply, 0, 0) })
-	Register("Divide", func(Config) (Patcher, error) { return NewBinary("Divide", divide, 0, 1) })
-	Register("Sum", func(Config) (Patcher, error) { return NewBinary("Sum", sum, 0, 0) })
-	Register("Difference", func(Config) (Patcher, error) { return NewBinary("Difference", diff, 0, 0) })
-	Register("Mod", func(Config) (Patcher, error) { return NewBinary("Mod", mod, 0, 1) })
-	Register("OR", func(Config) (Patcher, error) { return NewBinary("OR", or, 0, 0) })
-	Register("XOR", func(Config) (Patcher, error) { return NewBinary("XOR", xor, 0, 0) })
-	Register("AND", func(Config) (Patcher, error) { return NewBinary("AND", and, 0, 0) })
+	Register("Multiply", func(Config) (Patcher, error) { return newBinary("Multiply", multiply, 0, 0) })
+	Register("Divide", func(Config) (Patcher, error) { return newBinary("Divide", divide, 0, 1) })
+	Register("Sum", func(Config) (Patcher, error) { return newBinary("Sum", sum, 0, 0) })
+	Register("Difference", func(Config) (Patcher, error) { return newBinary("Difference", diff, 0, 0) })
+	Register("Mod", func(Config) (Patcher, error) { return newBinary("Mod", mod, 0, 1) })
+	Register("OR", func(Config) (Patcher, error) { return newBinary("OR", or, 0, 0) })
+	Register("XOR", func(Config) (Patcher, error) { return newBinary("XOR", xor, 0, 0) })
+	Register("AND", func(Config) (Patcher, error) { return newBinary("AND", and, 0, 0) })
 }
 
-type Binary struct {
+type binary struct {
 	IO
 	a, b *In
-	op   BinaryOp
+	op   binaryOp
 }
 
-func NewBinary(name string, op BinaryOp, a, b Value) (*Binary, error) {
-	m := &Binary{
+func newBinary(name string, op binaryOp, a, b Value) (*binary, error) {
+	m := &binary{
 		a:  &In{Name: "a", Source: a},
 		b:  &In{Name: "b", Source: NewBuffer(b)},
 		op: op,
@@ -33,9 +33,9 @@ func NewBinary(name string, op BinaryOp, a, b Value) (*Binary, error) {
 	return m, err
 }
 
-type BinaryOp func(Value, Value) Value
+type binaryOp func(Value, Value) Value
 
-func (bin *Binary) Read(out Frame) {
+func (bin *binary) Read(out Frame) {
 	bin.a.Read(out)
 	b := bin.b.ReadFrame()
 	for i := range out {

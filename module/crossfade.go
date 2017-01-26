@@ -1,16 +1,16 @@
 package module
 
 func init() {
-	Register("Crossfade", func(Config) (Patcher, error) { return NewCrossfade() })
+	Register("Crossfade", func(Config) (Patcher, error) { return newCrossfade() })
 }
 
-type Crossfade struct {
+type crossfade struct {
 	IO
 	a, b, bias *In
 }
 
-func NewCrossfade() (*Crossfade, error) {
-	m := &Crossfade{
+func newCrossfade() (*crossfade, error) {
+	m := &crossfade{
 		a:    &In{Name: "a", Source: NewBuffer(zero)},
 		b:    &In{Name: "b", Source: NewBuffer(zero)},
 		bias: &In{Name: "bias", Source: NewBuffer(zero)},
@@ -23,7 +23,7 @@ func NewCrossfade() (*Crossfade, error) {
 	return m, err
 }
 
-func (c *Crossfade) Read(out Frame) {
+func (c *crossfade) Read(out Frame) {
 	a, b := c.a.ReadFrame(), c.b.ReadFrame()
 	bias := c.bias.ReadFrame()
 	for i := range out {
