@@ -10,8 +10,9 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	direct, err := module.NewDirect()
+	init, err := module.Lookup("Direct")
 	assert.Equal(t, err, nil)
+	direct, err := init(nil)
 
 	vm, err := NewVM(direct, &sync.Mutex{})
 	assert.Equal(t, err, nil)

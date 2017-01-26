@@ -1,16 +1,16 @@
 package module
 
 func init() {
-	Register("Direct", func(Config) (Patcher, error) { return NewDirect() })
+	Register("Direct", func(Config) (Patcher, error) { return newDirect() })
 }
 
-type Direct struct {
+type direct struct {
 	IO
 	in *In
 }
 
-func NewDirect() (*Direct, error) {
-	m := &Direct{
+func newDirect() (*direct, error) {
+	m := &direct{
 		in: &In{Name: "input", Source: zero},
 	}
 	err := m.Expose(
@@ -21,6 +21,6 @@ func NewDirect() (*Direct, error) {
 	return m, err
 }
 
-func (d *Direct) Read(out Frame) {
+func (d *direct) Read(out Frame) {
 	d.in.Read(out)
 }
