@@ -22,6 +22,7 @@ func init() {
 	Register("FBComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBComb(s) }))
 	Register("Allpass", setup(func(s MS, c Config) (Patcher, error) { return NewAllPass(s) }))
 	Register("FilteredFBComb", setup(func(s MS, c Config) (Patcher, error) { return NewFilteredFBComb(s) }))
+	Register("LoopComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBLoopComb(s) }))
 }
 
 type FFComb struct {
@@ -196,5 +197,66 @@ func (d *DelayLine) Tick(v Value) Value {
 func (l *DelayLine) Read(out Frame) {
 	for i := range out {
 		out[i] = l.Tick(out[i])
+	}
+}
+
+type FBLoopComb struct {
+	IO
+	in, duration, gain, feedbackReturn *In
+	feedbackSend                       *Out
+
+	sent Frame
+	line *DelayLine
+	last Value
+}
+
+func NewFBLoopComb(size MS) (*FBLoopComb, error) {
+	m := &FBLoopComb{
+		in:             &In{Name: "input", Source: zero},
+		duration:       &In{Name: "duration", Source: NewBuffer(Duration(1000))},
+		gain:           &In{Name: "gain", Source: NewBuffer(Value(0.98))},
+		feedbackReturn: &In{Name: "feedbackReturn", Source: NewBuffer(zero)},
+
+		sent: make(Frame, FrameSize),
+		line: NewDelayLine(size),
+	}
+	m.feedbackSend = &Out{Name: "feedbackSend", Provider: Provide(&loopCombSend{m})}
+
+	err := m.Expose(
+		"FBLoopComb",
+		[]*In{m.in, m.duration, m.gain, m.feedbackReturn},
+		[]*Out{
+			m.feedbackSend,
+			{Name: "output", Provider: Provide(m)},
+		},
+	)
+	return m, err
+}
+
+func (c *FBLoopComb) Read(out Frame) {
+	c.in.Read(out)
+	gain := c.gain.ReadFrame()
+	duration := c.duration.ReadFrame()
+	if c.feedbackSend.IsActive() {
+		c.feedbackReturn.ReadFrame()
+	}
+	for i := range out {
+		out[i] += c.last
+		c.sent[i] = c.line.TickDuration(out[i], duration[i])
+		if c.feedbackSend.IsActive() {
+			c.last = gain[i] * c.feedbackReturn.LastFrame()[i]
+		} else {
+			c.last = gain[i] * c.sent[i]
+		}
+	}
+}
+
+type loopCombSend struct {
+	*FBLoopComb
+}
+
+func (c *loopCombSend) Read(out Frame) {
+	for i := range out {
+		out[i] = c.sent[i]
 	}
 }
