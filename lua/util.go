@@ -14,6 +14,10 @@ function set(m, arg1, arg2)
 	return m
 end
 
+function out(m, name)
+	return m:output(name)
+end
+
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if o['__type'] == 'module' then

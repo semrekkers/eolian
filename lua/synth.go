@@ -245,9 +245,12 @@ func moduleScopedOutput(p module.Patcher) lua.LGFunction {
 func moduleOutput(p module.Patcher) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
-		name := "output"
+		var name string
 		if state.GetTop() > 1 {
 			name = state.ToString(2)
+		}
+		if len(name) == 0 {
+			name = "output"
 		}
 
 		namespace := getNamespace(self)
