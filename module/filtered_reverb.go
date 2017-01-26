@@ -71,7 +71,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 		if err != nil {
 			return m, err
 		}
-		if err := m.fbs[i].Patch("duration", Value(1)); err != nil {
+		if err := m.fbs[i].Patch("duration", DurationInt(s)); err != nil {
 			return m, err
 		}
 		if err := m.fbs[i].Patch("input", Port{inMultiple, name}); err != nil {
@@ -94,7 +94,7 @@ func NewFilteredReverb(c ReverbConfig) (*FilteredReverb, error) {
 		if err != nil {
 			return m, err
 		}
-		if err := m.allpasses[i].Patch("duration", Value(1)); err != nil {
+		if err := m.allpasses[i].Patch("duration", DurationInt(s)); err != nil {
 			return m, err
 		}
 		if i == 0 {
