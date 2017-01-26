@@ -30,69 +30,74 @@ return function(env)
 
     local function patch(modules)
         with(modules.clock, function(c)
-            c.osc:set      { pitch = hz(5) }
-            c.multiple:set { input = c.osc:output('pulse') }
+            set(c.osc, { pitch = hz(5) })
+            set(c.multiple, { input = c.osc:output('pulse') })
         end)
 
         with(modules.random, function(r)
-            r.trigger:set {
-                input   = modules.clock.multiple:output(0),
+            local clock = modules.clock.multiple
+
+            set(r.trigger, {
+                input   = clock:output(0),
                 divisor = 16,
-            }
-            r.series:set {
-                clock   = modules.clock.multiple:output(1),
+            })
+            set(r.series, {
+                clock   = clock:output(1),
                 trigger = r.trigger:output(),
                 size    = 8,
-            }
-            r.quant:set { input = r.series:output('values') }
+            })
+            set(r.quant, { input = r.series:output('values') })
 
             local scale = theory.scale('C3', 'minorPentatonic', 2)
             for i,p in ipairs(scale) do
-                r.quant:set { [i-1 .. '/pitch'] = p }
+                set(r.quant, i-1 .. '/pitch', p)
             end
         end)
 
         with(modules.voice, function(v)
-            v.adsr:set {
-                gate    = modules.random.series:output('gate'),
+            local gate  = modules.random.series:output('gate')
+            local quant = modules.random.quant:output()
+
+            set(v.adsr, {
+                gate    = gate,
                 attack  = ms(30),
                 decay   = ms(50),
                 sustain = 0.3,
                 release = ms(1000),
-            }
-            v.osc:set {
-                pitch = modules.random.quant:output(),
-            }
-            v.mix:set {
+            })
+            set(v.osc, { pitch = quant })
+            set(v.mix, {
                 { input = v.osc:output('sine') },
                 { input = v.osc:output('saw'), level = 0.4 },
                 { input = v.osc:output('sub') },
-            }
-            v.amp:set {
+            })
+            set(v.amp, {
                 a = v.mix:output(),
                 b = v.adsr:output(),
-            }
+            })
         end)
 
         with(modules.delay, function(d)
-            d.cutoff:set {
+            local voice = modules.voice.amp:output()
+
+            set(d.cutoff, {
                 pitch = hz(0.1),
                 amp   = 0.1,
-            }
-            d.gain:set {
+            })
+            set(d.gain, {
                 pitch  = hz(0.2),
                 amp    = 0.2,
                 offset = 0.7
-            }
-            d.delay:set {
-                input          = modules.voice.amp:output(),
+            })
+            set(d.delay, {
+                input          = voice,
                 gain           = d.gain:output('sine'),
                 feedbackReturn = d.filter:output(),
-            }
-            d.filter:set {
+            })
+            set(d.filter, {
                 input = d.delay:output('feedbackSend'),
                 cutoff = hz(6000),
-            }
+            })
         end)
 
         return modules.delay.delay:output()

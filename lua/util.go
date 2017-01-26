@@ -5,6 +5,15 @@ function with(o, fn)
 	return fn(o)
 end
 
+function set(m, arg1, arg2)
+	if type(arg1) == "table" then
+		m:set(arg1)
+		return m
+	end
+	m:set({ [tostring(arg1)] = arg2 })
+	return m
+end
+
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if o['__type'] == 'module' then
