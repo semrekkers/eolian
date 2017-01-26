@@ -22,7 +22,7 @@ func init() {
 	Register("FBComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBComb(s) }))
 	Register("Allpass", setup(func(s MS, c Config) (Patcher, error) { return NewAllPass(s) }))
 	Register("FilteredFBComb", setup(func(s MS, c Config) (Patcher, error) { return NewFilteredFBComb(s) }))
-	Register("LoopComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBLoopComb(s) }))
+	Register("FBLoopComb", setup(func(s MS, c Config) (Patcher, error) { return NewFBLoopComb(s) }))
 }
 
 type FFComb struct {

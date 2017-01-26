@@ -22,7 +22,8 @@ return function(env)
             delay = {
                 cutoff = synth.Oscillator { algorithm = 'simple' },
                 gain   = synth.Oscillator { algorithm = 'simple' },
-                delay  = synth.FilteredFBComb(),
+                filter = synth.LPFilter(),
+                delay  = synth.FBLoopComb(),
             },
         }
     end
@@ -84,9 +85,13 @@ return function(env)
                 offset = 0.7
             }
             d.delay:set {
-                input  = modules.voice.amp:output(),
-                gain   = d.gain:output('sine'),
-                cutoff = d.cutoff:output('sine'),
+                input          = modules.voice.amp:output(),
+                gain           = d.gain:output('sine'),
+                feedbackReturn = d.filter:output(),
+            }
+            d.filter:set {
+                input = d.delay:output('feedbackSend'),
+                cutoff = hz(6000),
             }
         end)
 
