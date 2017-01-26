@@ -18,11 +18,11 @@ func init() {
 		if len(config.Allpass) == 0 {
 			config.Allpass = []int{573, 331, 178}
 		}
-		return NewFilteredReverb(config)
+		return newFilteredReverb(config)
 	})
 }
 
-type FilteredReverb struct {
+type filteredReverb struct {
 	IO
 	in, feedback, cutoff, gain *In
 
@@ -30,7 +30,7 @@ type FilteredReverb struct {
 	allpasses []*allpass
 }
 
-func NewFilteredReverb(c reverbConfig) (*FilteredReverb, error) {
+func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 	feedbackCount := len(c.Feedback)
 	allpassCount := len(c.Allpass)
 
@@ -51,7 +51,7 @@ func NewFilteredReverb(c reverbConfig) (*FilteredReverb, error) {
 		return nil, err
 	}
 
-	m := &FilteredReverb{
+	m := &filteredReverb{
 		in:       &In{Name: "input", Source: inMultiple.in},
 		feedback: &In{Name: "feedback", Source: feedbackGainMultiple.in},
 		cutoff:   &In{Name: "cutoff", Source: feedbackCutoffMultiple.in},
