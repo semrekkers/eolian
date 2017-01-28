@@ -155,16 +155,16 @@ func (c *controller) Close() error {
 }
 
 type ctrlGate struct {
-	*controller
+	controller    *controller
 	channelOffset int
 	stateFunc     gateStateFunc
 	state         *gateState
 }
 
 func (reader *ctrlGate) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		reader.state.event = reader.events[i]
+		reader.state.event = reader.controller.events[i]
 		reader.state.channelOffset = reader.channelOffset
 		reader.stateFunc = reader.stateFunc(reader.state)
 		out[i] = reader.state.value
@@ -223,16 +223,16 @@ func gateUp(s *gateState) gateStateFunc {
 type gateStateFunc func(*gateState) gateStateFunc
 
 type ctrlVelocity struct {
-	*controller
+	controller    *controller
 	channelOffset int
 	lastVelocity  module.Value
 }
 
 func (reader *ctrlVelocity) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		if int(reader.events[i].Status) == 144+reader.channelOffset {
-			data2 := int(reader.events[i].Data2)
+		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
+			data2 := int(reader.controller.events[i].Data2)
 			if data2 == 0 {
 				out[i] = reader.lastVelocity
 			} else {
@@ -246,18 +246,18 @@ func (reader *ctrlVelocity) Read(out module.Frame) {
 }
 
 type ctrlSync struct {
-	*controller
-	tick int
+	controller *controller
+	tick       int
 }
 
 func (reader *ctrlSync) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		if reader.events[i].Status == 248 || reader.events[i].Status == 250 {
+		if reader.controller.events[i].Status == 248 || reader.controller.events[i].Status == 250 {
 			reader.tick++
 		}
 
-		if reader.tick%reader.frameRate == 0 {
+		if reader.tick%reader.controller.frameRate == 0 {
 			out[i] = 1
 			reader.tick = 0
 		} else {
@@ -267,17 +267,17 @@ func (reader *ctrlSync) Read(out module.Frame) {
 }
 
 type ctrlPitch struct {
-	*controller
+	controller    *controller
 	channelOffset int
 	pitch         module.Value
 }
 
 func (reader *ctrlPitch) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		if int(reader.events[i].Status) == 144+reader.channelOffset {
-			data1 := int(reader.events[i].Data1)
-			data2 := int(reader.events[i].Data2)
+		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
+			data1 := int(reader.controller.events[i].Data1)
+			data2 := int(reader.controller.events[i].Data2)
 			if data2 == 0 {
 				continue
 			}
@@ -293,14 +293,14 @@ func (reader *ctrlPitch) Read(out module.Frame) {
 }
 
 type ctrlReset struct {
-	*controller
+	controller    *controller
 	channelOffset int
 }
 
 func (reader ctrlReset) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		if reader.events[i].Status == 250 {
+		if reader.controller.events[i].Status == 250 {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -309,14 +309,14 @@ func (reader ctrlReset) Read(out module.Frame) {
 }
 
 type ctrlPitchBend struct {
-	*controller
+	controller    *controller
 	channelOffset int
 }
 
 func (reader *ctrlPitchBend) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		e := reader.events[i]
+		e := reader.controller.events[i]
 		if e.Status == 224 && e.Data1 == 0 {
 			switch e.Data2 {
 			case 127:
@@ -333,15 +333,15 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 }
 
 type ctrlCC struct {
-	*controller
+	controller     *controller
 	status, number int
 	value          module.Value
 }
 
 func (reader *ctrlCC) Read(out module.Frame) {
-	reader.read(out)
+	reader.controller.read(out)
 	for i := range out {
-		e := reader.events[i]
+		e := reader.controller.events[i]
 		if int(e.Status) == reader.status && int(e.Data1) == reader.number {
 			reader.value = module.Value(float64(e.Data2) / 127)
 		}
