@@ -72,10 +72,10 @@ func (s *gateSequence) read(out Frame) {
 			s.ReadFrame()
 		}
 		for i := range out {
-			if s.lastClock < 0 && clock[i] > 0 {
+			if s.lastClock <= 0 && clock[i] > 0 {
 				s.step = (s.step + 1) % s.size
 			}
-			if s.lastReset < 0 && reset[i] > 0 {
+			if s.lastReset <= 0 && reset[i] > 0 {
 				s.step = 0
 			}
 			s.lastClock = clock[i]
