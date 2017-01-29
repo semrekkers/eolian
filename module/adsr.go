@@ -68,7 +68,7 @@ type adsrState struct {
 type adsrStateFunc func(*adsrState) adsrStateFunc
 
 func adsrIdle(s *adsrState) adsrStateFunc {
-	if s.lastGate < 0 && s.gate > 0 {
+	if s.lastGate <= 0 && s.gate > 0 {
 		s.value = 0
 		return prepAttack(s)
 	}
@@ -97,7 +97,7 @@ func adsrDecay(s *adsrState) adsrStateFunc {
 }
 
 func adsrSustain(s *adsrState) adsrStateFunc {
-	if s.gate < 0 {
+	if s.gate <= 0 {
 		return prepRelease(s)
 	}
 	return adsrSustain
@@ -105,7 +105,7 @@ func adsrSustain(s *adsrState) adsrStateFunc {
 
 func adsrRelease(s *adsrState) adsrStateFunc {
 	if s.disableSustain == 1 {
-		if s.lastGate < 0 && s.gate > 0 {
+		if s.lastGate <= 0 && s.gate > 0 {
 			return prepAttack(s)
 		}
 	} else {
