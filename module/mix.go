@@ -45,8 +45,7 @@ func newMix(size int) (*mix, error) {
 		m.levels = append(m.levels, level)
 		inputs = append(inputs, in, level)
 	}
-	err := m.Expose("Mix", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
-	return m, err
+	return m, m.Expose("Mix", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
 }
 
 func (m *mix) Read(out Frame) {
