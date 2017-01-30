@@ -17,7 +17,7 @@ func init() {
 	})
 }
 
-const tapeOversample = 10
+const tapeOversample = 20
 
 var minSpliceSize = int(Duration(10).Value())
 
@@ -242,10 +242,11 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 
 	// Write input value to memory up to the oversample limit
 	s.memory[s.offset] = s.in
-	for i := 0; i < tapeOversample; i++ {
+	oversample := int(Value(tapeOversample) * s.speed)
+	for i := 0; i < oversample; i++ {
 		s.memory[s.offset+i] = s.in
 	}
-	s.offset += tapeOversample
+	s.offset += oversample
 
 	// When we have no splices, use the end of the tape to wrap us; otherwise use the splice range
 	if s.markers.Count() == 1 {
