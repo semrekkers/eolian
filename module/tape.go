@@ -17,7 +17,7 @@ func init() {
 	})
 }
 
-const tapeOversample = 10
+const tapeOversample = 20
 
 var minSpliceSize = int(Duration(10).Value())
 
