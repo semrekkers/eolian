@@ -229,10 +229,6 @@ func leaveRecord(s *tapeState) tapeStateFunc {
 }
 
 func tapeRecord(s *tapeState) tapeStateFunc {
-	if s.speed < 0 {
-		return leaveRecord(s)
-	}
-
 	if s.lastRecord < 0 && s.record > 0 {
 		// End of recording creates the first splice
 		if s.markers.Count() == 1 {
@@ -305,6 +301,9 @@ func handleUnsplice(s *tapeState) {
 }
 
 func handleRecord(s *tapeState) tapeStateFunc {
+	if s.speed < 0 {
+		return nil
+	}
 	if s.lastRecord < 0 && s.record > 0 {
 		s.offset = s.markers.At(s.spliceStart)
 		return tapeRecord
