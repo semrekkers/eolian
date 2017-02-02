@@ -35,8 +35,8 @@ const (
 
 type oscillator struct {
 	IO
-	pitch, pitchMod, pitchModAmount *In
-	detune, amp, offset, sync       *In
+	pitch, pitchMod, pitchModAmount       *In
+	detune, amp, offset, sync, pulseWidth *In
 
 	algorithm string
 	state     *oscStateFrames
@@ -45,8 +45,8 @@ type oscillator struct {
 }
 
 type oscStateFrames struct {
-	pitch, pitchMod, pitchModAmount Frame
-	detune, amp, offset, sync       Frame
+	pitch, pitchMod, pitchModAmount       Frame
+	detune, amp, offset, sync, pulseWidth Frame
 }
 
 func newOscillator(algorithm string) (*oscillator, error) {
@@ -57,6 +57,7 @@ func newOscillator(algorithm string) (*oscillator, error) {
 		amp:            &In{Name: "amp", Source: NewBuffer(Value(1))},
 		detune:         &In{Name: "detune", Source: NewBuffer(zero)},
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
+		pulseWidth:     &In{Name: "pulseWidth", Source: NewBuffer(Value(0.5))},
 		sync:           &In{Name: "sync", Source: NewBuffer(zero)},
 		state:          &oscStateFrames{},
 		phases:         make([]float64, 5),
@@ -73,6 +74,7 @@ func newOscillator(algorithm string) (*oscillator, error) {
 			m.detune,
 			m.offset,
 			m.sync,
+			m.pulseWidth,
 		},
 		[]*Out{
 			{Name: "pulse", Provider: m.out(0, pulse, 1)},
@@ -104,6 +106,7 @@ func (o *oscillator) read(out Frame) {
 		o.state.offset = o.offset.ReadFrame()
 		o.state.detune = o.detune.ReadFrame()
 		o.state.sync = o.sync.ReadFrame()
+		o.state.pulseWidth = o.pulseWidth.ReadFrame()
 	}
 	if count := o.OutputsActive(); count > 0 {
 		o.reads = (o.reads + 1) % count
@@ -138,7 +141,8 @@ func (o *oscOut) blep(out Frame, i int) {
 		delta  = float64(pitch +
 			o.state.detune[i] +
 			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10))
-		next = blepSample(o.shape, phase)*o.state.amp[i] + o.state.offset[i]
+		pulseWidth = float64(clampValue(o.state.pulseWidth[i], 0.1, 0.9))
+		next       = blepSample(o.shape, phase, pulseWidth)*o.state.amp[i] + o.state.offset[i]
 	)
 
 	switch o.shape {
@@ -167,7 +171,7 @@ func (o *oscOut) blep(out Frame, i int) {
 	o.last = next
 }
 
-func blepSample(shape int, phase float64) Value {
+func blepSample(shape int, phase, pulseWidth float64) Value {
 	switch shape {
 	case sine:
 		return Value(math.Sin(phase))
@@ -176,7 +180,7 @@ func blepSample(shape int, phase float64) Value {
 	case triangle:
 		fallthrough
 	case pulse:
-		if phase < math.Pi {
+		if phase < math.Pi*pulseWidth {
 			return 1
 		}
 		return -1
