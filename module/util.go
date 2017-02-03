@@ -28,6 +28,10 @@ func absValue(v Value) Value {
 	return Value(math.Abs(float64(v)))
 }
 
+func maxValue(v1, v2 Value) Value {
+	return Value(math.Max(float64(v1), float64(v2)))
+}
+
 func expRatio(ratio, speed Value) Value {
 	return Value(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))
 }

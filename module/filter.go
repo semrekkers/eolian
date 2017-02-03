@@ -109,7 +109,7 @@ func (f *filter) Tick(in Value) (lp, bp, hp Value) {
 	}
 	f.lastCutoff = f.cutoff
 
-	r := Value(1 / f.resonance)
+	r := Value(1 / maxValue(f.resonance, 1))
 	h := 1 / (1 + r*f.g + f.g*f.g)
 
 	for j := 0; j < f.poles; j++ {

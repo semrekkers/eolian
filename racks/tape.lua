@@ -40,7 +40,10 @@ return function(env)
                 duration = { min = ms(10), max = ms(1000) },
                 gain     = { max = 1 },
             }),
-            filter = synth.Filter(),
+            filter = interpolate(synth.Filter(), {
+                cutoff    = { min = hz(1000), max = hz(5000) },
+                resonance = { min = 1, max = 50 },
+            }),
         }
     end
 
@@ -107,7 +110,7 @@ return function(env)
             bias     = cc(22),
             organize = cc(23),
         })
-        set(modules.filter, { input = out(modules.tape), cutoff = hz(3000) })
+        set(modules.filter, { input = out(modules.tape), cutoff = cc(41), resonance = cc(42) })
 
         return out(modules.filter, 'lowpass')
     end
