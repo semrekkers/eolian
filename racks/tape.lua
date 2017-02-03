@@ -109,7 +109,7 @@ return function(env)
         })
         set(modules.filter, { input = out(modules.tape), cutoff = hz(3000) })
 
-        return out(modules.filter)
+        return out(modules.filter, 'lowpass')
     end
 
     return build, patch

@@ -22,7 +22,7 @@ return function(env)
             delay = {
                 cutoff = synth.Oscillator { algorithm = 'simple' },
                 gain   = synth.Oscillator { algorithm = 'simple' },
-                filter = synth.LPFilter(),
+                filter = synth.Filter(),
                 delay  = synth.FBLoopComb(),
             },
         }
@@ -92,7 +92,7 @@ return function(env)
             set(d.delay, {
                 input          = voice,
                 gain           = out(d.gain, 'sine'),
-                feedbackReturn = out(d.filter),
+                feedbackReturn = out(d.filter, 'lowpass'),
             })
             set(d.filter, {
                 input = out(d.delay, 'feedbackSend'),

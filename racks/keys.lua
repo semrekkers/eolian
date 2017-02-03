@@ -57,7 +57,7 @@ return function(env)
             midi     = midi,
             voices   = voices,
             mix      = synth.Mix { size = polyphony },
-            filter   = synth.LPFilter(),
+            filter   = synth.Filter(),
             delay    = synth.FBComb(),
             compress = synth.Compress(),
             clip     = synth.Clip(),
@@ -71,7 +71,7 @@ return function(env)
             end
 
             m.filter:set   { input = m.mix:output(), cutoff = hz(5000) }
-            m.delay:set    { input = m.filter:output(), gain = 0.4 }
+            m.delay:set    { input = m.filter:output('lowpass'), gain = 0.4 }
             m.compress:set { input = m.delay:output() }
             m.clip:set     { input = m.compress:output(), level = 3 }
         end)

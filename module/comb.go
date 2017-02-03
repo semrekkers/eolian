@@ -143,7 +143,7 @@ func newFilteredFBComb(size MS) (*filteredFBComb, error) {
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},
 
-		filter: &filter{poles: 4},
+		filter: &filter{poles: 1},
 		line:   newDelayLine(size),
 	}
 	err := m.Expose(

@@ -13,7 +13,7 @@ return function(env)
                 adsr   = synth.ADSR(),
                 amp    = synth.Multiply(),
                 delay  = synth.FilteredFBComb(),
-                filter = synth.LPFilter(),
+                filter = synth.Filter(),
             },
             compress = synth.Compress(),
         }
@@ -35,8 +35,8 @@ return function(env)
             set(t.adsr, { 
                 gate           = out(modules.clock.multiple, 0),
                 disableSustain = 1,
-                attack         = ms(5),
-                decay          = ms(10),
+                attack         = ms(2),
+                decay          = ms(5),
                 sustain        = 0
             })
             set(t.amp, { 
@@ -44,9 +44,10 @@ return function(env)
                 b = out(t.noise)
             })
             set(t.delay, {
-                input = out(t.amp),
+                input    = out(t.amp),
+                gain     = 0.8,
                 duration = ms(20),
-                cutoff = hz(3000)
+                cutoff   = hz(5000),
             })
             set(t.filter, {
                 input  = out(t.delay),
@@ -58,7 +59,7 @@ return function(env)
         -- Mix
         -- 
         set(modules.mix, {
-            { input = out(modules.ks.filter) },
+            { input = out(modules.ks.filter, 'lowpass') },
         })
         set(modules.compress, { input = out(modules.mix) })
 

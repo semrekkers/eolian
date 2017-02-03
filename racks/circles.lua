@@ -16,7 +16,7 @@ return function(env)
                 supersaw = supersaw(3),
                 lfo      = synth.Osc(),
                 mix      = synth.Mix(),
-                lpf      = synth.Filter(),
+                filter   = synth.Filter(),
                 amp      = synth.Multiply()
             },
             low = {
@@ -28,7 +28,7 @@ return function(env)
                 subOsc   = synth.Osc(),
                 fold     = synth.Fold(),
                 mix      = synth.Mix(),
-                lpf      = synth.Filter()
+                filter   = synth.Filter()
             },
             glitch = {
                 multiplier = synth.ClockMultiply(),
@@ -39,7 +39,7 @@ return function(env)
             },
             effects = {
                 reverb = synth.FilteredReverb(),
-                lpf    = synth.Filter(),
+                filter = synth.Filter(),
                 noise  = synth.Noise()
             },
             compressor = synth.Compress()
@@ -94,13 +94,13 @@ return function(env)
                 spread = t.lfo:output('sine')
             }
 
-            t.lpf:set {
+            t.filter:set {
                 input  = t.supersaw:output(),
                 cutoff = hz(4000)
             }
 
             t.amp:set {
-                a = t.lpf:output(),
+                a = t.filter:output('lowpass'),
                 b = t.adsr:output()
             }
         end)
@@ -145,7 +145,7 @@ return function(env)
                 { input = t.subOsc:output('saw'), level = 0.7 },
             }
 
-            t.lpf:set { input = t.mix:output(), cutoff = hz(3000) }
+            t.filter:set { input = t.mix:output(), cutoff = hz(3000) }
         end)
 
         --
@@ -188,7 +188,7 @@ return function(env)
         --
         modules.mix:set {
             { input = modules.high.amp:output(), level = 0.5 },
-            { input = modules.low.lpf:output(), level = 0.5 },
+            { input = modules.low.filter:output('lowpass'), level = 0.5 },
             { input = modules.glitch.amp:output(), level = 0.05 },
         }
 
@@ -200,11 +200,11 @@ return function(env)
                 input    = modules.mix:output(),
                 cutoff   = hz(500),
                 gain     = 0.4,
-                feedback = 0.9
+                feedback = 0.7
             }
 
-            t.lpf:set { input = t.reverb:output(), cutoff = hz(5000) }
-            t.noise:set { input = t.lpf:output(), gain = 0.02 }
+            t.filter:set { input = t.reverb:output(), cutoff = hz(5000) }
+            t.noise:set { input = t.filter:output('lowpass'), gain = 0.02 }
         end)
 
         modules.compressor:set { input = modules.effects.noise:output() }
