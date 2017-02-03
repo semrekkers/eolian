@@ -1,99 +1,100 @@
 package module
 
-import "math"
+import (
+	"strings"
 
-func init() {
-	Register("LPFilter", func(Config) (Patcher, error) { return newFilter(lowPass) })
-	Register("HPFilter", func(Config) (Patcher, error) { return newFilter(highPass) })
-}
-
-type filterType int
-
-const (
-	lowPass filterType = iota
-	highPass
+	"github.com/mitchellh/mapstructure"
 )
 
-type filter struct {
-	IO
-	in, cutoff, resonance *In
-	fourPole              *fourPole
+func init() {
+	Register("Filter", func(c Config) (Patcher, error) {
+		var config struct {
+			Mode  string
+			Poles int
+		}
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+
+		var mode filterType
+		switch strings.ToLower(config.Mode) {
+		case "low":
+			fallthrough
+		case "lowpass":
+			mode = lowPass
+		case "high":
+			fallthrough
+		case "highpass":
+			mode = highPass
+		case "band":
+			fallthrough
+		case "bandpass":
+			mode = bandPass
+		default:
+			mode = lowPass
+		}
+
+		if config.Poles == 0 {
+			config.Poles = 4
+		}
+
+		return newSVFilter(mode, config.Poles)
+	})
 }
 
-func newFilter(kind filterType) (*filter, error) {
-	m := &filter{
+type svFilter struct {
+	IO
+	in, cutoff, resonance         *In
+	mode                          filterType
+	poles                         int
+	lastCutoff, g, state1, state2 Value
+}
+
+func newSVFilter(mode filterType, poles int) (*svFilter, error) {
+	m := &svFilter{
 		in:        &In{Name: "input", Source: zero},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
-		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
-		fourPole:  &fourPole{kind: kind},
-	}
-
-	var name string
-	switch kind {
-	case lowPass:
-		name = "LPFilter"
-	case highPass:
-		name = "HPFilter"
-	default:
-		name = "UnknownFilter"
+		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},
+		mode:      mode,
+		poles:     poles,
 	}
 
 	err := m.Expose(
-		name,
+		"Filter",
 		[]*In{m.in, m.cutoff, m.resonance},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
 }
 
-func (f *filter) Read(out Frame) {
+func (f *svFilter) Read(out Frame) {
 	f.in.Read(out)
 	cutoff := f.cutoff.ReadFrame()
 	resonance := f.resonance.ReadFrame()
+
 	for i := range out {
-		f.fourPole.cutoff = cutoff[i]
-		f.fourPole.resonance = resonance[i]
-		out[i] = f.fourPole.Tick(out[i])
+		if cutoff[i] != f.lastCutoff {
+			f.g = tanValue(cutoff[i])
+		}
+		r := Value(1 / resonance[i])
+		h := 1 / (1 + r*f.g + f.g*f.g)
+
+		for j := 0; j < f.poles; j++ {
+			hp := h * (out[i] - r*f.state1 - f.g*f.state1 - f.state2)
+			bp := f.g*hp + f.state1
+			lp := f.g*bp + f.state2
+
+			f.state1 = f.g*hp + bp
+			f.state2 = f.g*bp + lp
+
+			switch f.mode {
+			case lowPass:
+				out[i] = lp
+			case highPass:
+				out[i] = hp
+			case bandPass:
+				out[i] = r * bp
+			}
+		}
 	}
-}
-
-type fourPole struct {
-	kind      filterType
-	cutoff    Value
-	resonance Value
-	after     [4]Value
-}
-
-func (filter *fourPole) Tick(in Value) Value {
-	cutoff := Value(2 * math.Pi * math.Abs(float64(filter.cutoff)))
-
-	var out Value
-
-	var res Value
-	if filter.resonance > 0 {
-		res = filter.after[3]
-	}
-	out = in - (res * clampValue(filter.resonance, 0, 4.5))
-
-	clip := out
-	if clip > 1 {
-		clip = 1
-	} else if clip < -1 {
-		clip = -1
-	}
-
-	out = clip + ((-clip + out) * 0.995)
-	filter.after[0] += (-filter.after[0] + out) * cutoff
-	filter.after[1] += (-filter.after[1] + filter.after[0]) * cutoff
-	filter.after[2] += (-filter.after[2] + filter.after[1]) * cutoff
-	filter.after[3] += (-filter.after[3] + filter.after[2]) * cutoff
-
-	switch filter.kind {
-	case highPass:
-		return out - filter.after[3]
-	case lowPass:
-		return filter.after[3]
-	}
-
-	return out
 }

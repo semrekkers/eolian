@@ -16,6 +16,10 @@ func clampValue(s, min, max Value) Value {
 	return s
 }
 
+func tanValue(v Value) Value {
+	return Value(math.Tan(float64(v)))
+}
+
 func randValue() Value {
 	return Value(rand.Float64())
 }
