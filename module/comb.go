@@ -131,7 +131,7 @@ type filteredFBComb struct {
 	in, duration, gain, cutoff, resonance *In
 
 	line   *delayline
-	filter *fourPole
+	filter *filter
 	last   Value
 }
 
@@ -141,9 +141,9 @@ func newFilteredFBComb(size MS) (*filteredFBComb, error) {
 		duration:  &In{Name: "duration", Source: NewBuffer(Duration(1000))},
 		gain:      &In{Name: "gain", Source: NewBuffer(Value(0.98))},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
-		resonance: &In{Name: "resonance", Source: NewBuffer(zero)},
+		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},
 
-		filter: &fourPole{kind: lowPass},
+		filter: &filter{poles: 4},
 		line:   newDelayLine(size),
 	}
 	err := m.Expose(
@@ -164,7 +164,8 @@ func (c *filteredFBComb) Read(out Frame) {
 		out[i] += c.last
 		c.filter.cutoff = cutoff[i]
 		c.filter.resonance = resonance[i]
-		c.last = gain[i] * c.filter.Tick(c.line.TickDuration(out[i], duration[i]))
+		lp, _, _ := c.filter.Tick(c.line.TickDuration(out[i], duration[i]))
+		c.last = gain[i] * lp
 	}
 }
 

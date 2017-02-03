@@ -23,7 +23,7 @@ return function(env)
         set(m.interp, { input = out(channel, 21) })
         set(m.resinterp, { input = out(channel, 22) })
         set(m.filter, { input = out(m.osc, 'pulse'), cutoff = out(m.interp), resonance = out(m.resinterp)})
-        set(m.debug, { input = out(m.filter) })
+        set(m.debug, { input = out(m.filter, 'highpass') })
         set(m.amp, { a = out(m.debug), b = 0.5 })
         set(m.compress, { input = out(m.amp) })
 

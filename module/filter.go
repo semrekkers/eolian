@@ -1,100 +1,124 @@
 package module
 
-import (
-	"strings"
-
-	"github.com/mitchellh/mapstructure"
-)
+import "github.com/mitchellh/mapstructure"
 
 func init() {
 	Register("Filter", func(c Config) (Patcher, error) {
 		var config struct {
-			Mode  string
 			Poles int
 		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
 
-		var mode filterType
-		switch strings.ToLower(config.Mode) {
-		case "low":
-			fallthrough
-		case "lowpass":
-			mode = lowPass
-		case "high":
-			fallthrough
-		case "highpass":
-			mode = highPass
-		case "band":
-			fallthrough
-		case "bandpass":
-			mode = bandPass
-		default:
-			mode = lowPass
-		}
-
 		if config.Poles == 0 {
 			config.Poles = 4
 		}
 
-		return newSVFilter(mode, config.Poles)
+		return newSVFilter(config.Poles)
 	})
 }
 
 type svFilter struct {
 	IO
-	in, cutoff, resonance         *In
-	mode                          filterType
-	poles                         int
-	lastCutoff, g, state1, state2 Value
+	in, cutoff, resonance *In
+	filter                *filter
+	reads                 int
+	lp, bp, hp            Frame
 }
 
-func newSVFilter(mode filterType, poles int) (*svFilter, error) {
+func newSVFilter(poles int) (*svFilter, error) {
 	m := &svFilter{
 		in:        &In{Name: "input", Source: zero},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(1000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},
-		mode:      mode,
-		poles:     poles,
+		filter:    &filter{poles: poles},
+		lp:        make(Frame, FrameSize),
+		bp:        make(Frame, FrameSize),
+		hp:        make(Frame, FrameSize),
 	}
-
-	err := m.Expose(
+	return m, m.Expose(
 		"Filter",
 		[]*In{m.in, m.cutoff, m.resonance},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{
+			{Name: "lowpass", Provider: m.out(lowpass)},
+			{Name: "highpass", Provider: m.out(highpass)},
+			{Name: "bandpass", Provider: m.out(bandpass)},
+		},
 	)
-	return m, err
 }
 
-func (f *svFilter) Read(out Frame) {
-	f.in.Read(out)
-	cutoff := f.cutoff.ReadFrame()
-	resonance := f.resonance.ReadFrame()
+func (f *svFilter) out(m filterMode) ReaderProvider {
+	return Provide(&svFilterOut{svFilter: f, mode: m})
+}
 
-	for i := range out {
-		if cutoff[i] != f.lastCutoff {
-			f.g = tanValue(cutoff[i])
-		}
-		r := Value(1 / resonance[i])
-		h := 1 / (1 + r*f.g + f.g*f.g)
+func (f *svFilter) read(out Frame) {
+	if f.reads == 0 {
+		f.in.Read(out)
+		cutoff := f.cutoff.ReadFrame()
+		resonance := f.resonance.ReadFrame()
 
-		for j := 0; j < f.poles; j++ {
-			hp := h * (out[i] - r*f.state1 - f.g*f.state1 - f.state2)
-			bp := f.g*hp + f.state1
-			lp := f.g*bp + f.state2
-
-			f.state1 = f.g*hp + bp
-			f.state2 = f.g*bp + lp
-
-			switch f.mode {
-			case lowPass:
-				out[i] = lp
-			case highPass:
-				out[i] = hp
-			case bandPass:
-				out[i] = r * bp
-			}
+		for i := range out {
+			f.filter.cutoff = cutoff[i]
+			f.filter.resonance = resonance[i]
+			f.lp[i], f.bp[i], f.hp[i] = f.filter.Tick(out[i])
 		}
 	}
+	if count := f.OutputsActive(); count > 0 {
+		f.reads = (f.reads + 1) % count
+	}
+}
+
+type svFilterOut struct {
+	*svFilter
+	mode filterMode
+}
+
+func (f *svFilterOut) Read(out Frame) {
+	f.read(out)
+	for i := range out {
+		switch f.mode {
+		case lowpass:
+			out[i] = f.lp[i]
+		case highpass:
+			out[i] = f.hp[i]
+		case bandpass:
+			out[i] = f.bp[i]
+		}
+	}
+}
+
+type filterMode int
+
+const (
+	lowpass filterMode = iota
+	highpass
+	bandpass
+)
+
+type filter struct {
+	poles              int
+	cutoff, lastCutoff Value
+	resonance          Value
+	g, state1, state2  Value
+}
+
+func (f *filter) Tick(in Value) (lp, bp, hp Value) {
+	if f.cutoff != f.lastCutoff {
+		f.g = tanValue(f.cutoff)
+	}
+	f.lastCutoff = f.cutoff
+
+	r := Value(1 / f.resonance)
+	h := 1 / (1 + r*f.g + f.g*f.g)
+
+	for j := 0; j < f.poles; j++ {
+		hp = h * (in - r*f.state1 - f.g*f.state1 - f.state2)
+		bp = f.g*hp + f.state1
+		lp = f.g*bp + f.state2
+
+		f.state1 = f.g*hp + bp
+		f.state2 = f.g*bp + lp
+	}
+	return
 }

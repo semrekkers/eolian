@@ -40,7 +40,7 @@ return function(env)
                 duration = { min = ms(10), max = ms(1000) },
                 gain     = { max = 1 },
             }),
-            filter = synth.LPFilter(),
+            filter = synth.Filter(),
         }
     end
 

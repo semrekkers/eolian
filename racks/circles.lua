@@ -16,7 +16,7 @@ return function(env)
                 supersaw = supersaw(3),
                 lfo      = synth.Osc(),
                 mix      = synth.Mix(),
-                lpf      = synth.LPFilter(),
+                lpf      = synth.Filter(),
                 amp      = synth.Multiply()
             },
             low = {
@@ -28,7 +28,7 @@ return function(env)
                 subOsc   = synth.Osc(),
                 fold     = synth.Fold(),
                 mix      = synth.Mix(),
-                lpf      = synth.LPFilter()
+                lpf      = synth.Filter()
             },
             glitch = {
                 multiplier = synth.ClockMultiply(),
@@ -39,7 +39,7 @@ return function(env)
             },
             effects = {
                 reverb = synth.FilteredReverb(),
-                lpf    = synth.LPFilter(),
+                lpf    = synth.Filter(),
                 noise  = synth.Noise()
             },
             compressor = synth.Compress()
