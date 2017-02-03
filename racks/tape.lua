@@ -84,10 +84,10 @@ return function(env)
                 sustain = cc(47),
                 release = cc(48),
             })
-            set(v.osc, { pitch = out(modules.random.quant) })
+            set(v.osc, { pitch = out(modules.random.quant), pulseWidth = cc(28) })
             set(v.mix, {
                 { input = out(v.osc, 'sine') },
-                { input = out(v.osc, 'saw'), level = 0.2 },
+                { input = out(v.osc, 'pulse'), level = 0.4 },
             })
             set(v.amp, { a = out(v.mix), b = out(v.adsr) })
             return v.amp
