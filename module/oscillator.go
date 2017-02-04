@@ -207,8 +207,9 @@ func (o *oscOut) simple(out Frame, i int) {
 		pitch = o.state.pitch[i] +
 			o.state.detune[i] +
 			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10)
-		offset = o.state.offset[i]
-		next   Value
+		offset     = o.state.offset[i]
+		pulseWidth = float64(clampValue(o.state.pulseWidth[i], 0.1, 0.9))
+		next       Value
 	)
 
 	switch o.shape {
@@ -217,7 +218,7 @@ func (o *oscOut) simple(out Frame, i int) {
 	case saw:
 		next = Value(1-float32(1/math.Pi*phase)) * amp
 	case pulse:
-		if phase < math.Pi {
+		if phase < math.Pi*pulseWidth {
 			next = 1 * amp
 		} else {
 			next = -1 * amp
