@@ -17,13 +17,26 @@ var mapperOpts = gluamapper.Option{
 	},
 }
 
+var synthConsts = map[string]lua.LValue{
+	// Sequencer constants
+	"MODE_REST":   lua.LNumber(0),
+	"MODE_SINGLE": lua.LNumber(1),
+	"MODE_REPEAT": lua.LNumber(2),
+	"MODE_HOLD":   lua.LNumber(3),
+}
+
 func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}
 		for name, t := range module.Registry {
 			fns[name] = buildConstructor(name, t, mtx)
 		}
-		state.Push(state.SetFuncs(state.NewTable(), fns))
+		mod := state.NewTable()
+		for k, v := range synthConsts {
+			state.SetField(mod, k, v)
+		}
+		state.SetFuncs(mod, fns)
+		state.Push(mod)
 		return 1
 	}
 }
