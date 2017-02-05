@@ -225,7 +225,7 @@ func (o *stageSeqGate) Read(out Frame) {
 				out[i] = -1
 			}
 		case gateModeSingle:
-			if o.pulse == 0 && clock > 0 {
+			if o.pulse == 1 && clock > 0 {
 				out[i] = 1
 			} else {
 				out[i] = -1
