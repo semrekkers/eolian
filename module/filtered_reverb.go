@@ -13,10 +13,10 @@ func init() {
 			return nil, err
 		}
 		if len(config.Feedback) == 0 {
-			config.Feedback = []int{4003, 3001, 2004, 1002, 3027}
+			config.Feedback = []int{1557, 1617, 1491, 1422, 1277, 1356, 1118, 1116}
 		}
 		if len(config.Allpass) == 0 {
-			config.Allpass = []int{573, 331, 178}
+			config.Allpass = []int{225, 556, 441, 341}
 		}
 		return newFilteredReverb(config)
 	})
@@ -104,7 +104,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 			return m, err
 		}
 	}
-	feedback.Patch("input", Value(0.8))
+	feedback.Patch("input", Value(0.84))
 
 	for i, s := range c.Allpass {
 		m.allpasses[i], err = newAllpass(DurationInt(s))
@@ -127,7 +127,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 			return m, err
 		}
 	}
-	gain.Patch("input", Value(0.7))
+	gain.Patch("input", Value(0.5))
 
 	dryOut, err := input.Output("0")
 	if err != nil {
