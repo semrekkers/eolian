@@ -199,8 +199,9 @@ return function(env)
             t.reverb:set { 
                 input    = modules.mix:output(),
                 cutoff   = hz(500),
-                gain     = 0.4,
-                feedback = 0.7
+                feedback = 0.84,
+                gain     = 0.5,
+                bias     = -0.95
             }
 
             t.filter:set { input = t.reverb:output(), cutoff = hz(5000) }
