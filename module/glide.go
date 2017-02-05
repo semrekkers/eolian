@@ -1,7 +1,23 @@
 package module
 
+import "github.com/mitchellh/mapstructure"
+
 func init() {
-	Register("Glide", func(Config) (Patcher, error) { return newGlide() })
+	Register("Glide", func(c Config) (Patcher, error) {
+		var config struct {
+			Rise, Fall int
+		}
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+		if config.Rise == 0 {
+			config.Rise = 5
+		}
+		if config.Fall == 0 {
+			config.Fall = 5
+		}
+		return newGlide(config.Rise, config.Fall)
+	})
 }
 
 type glide struct {
@@ -10,11 +26,11 @@ type glide struct {
 	*slew
 }
 
-func newGlide() (*glide, error) {
+func newGlide(rise, fall int) (*glide, error) {
 	m := &glide{
 		in:   &In{Name: "input", Source: zero},
-		rise: &In{Name: "rise", Source: NewBuffer(zero)},
-		fall: &In{Name: "fall", Source: NewBuffer(zero)},
+		rise: &In{Name: "rise", Source: NewBuffer(DurationInt(rise))},
+		fall: &In{Name: "fall", Source: NewBuffer(DurationInt(fall))},
 		slew: newSlew(),
 	}
 	err := m.Expose(
