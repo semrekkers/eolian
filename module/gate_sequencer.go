@@ -23,10 +23,10 @@ func init() {
 
 type gateSequence struct {
 	IO
-	clock, reset *In
-	steps        []*In
-
-	size, step, reads    int
+	clock, reset         *In
+	steps                []*In
+	size, reads          int
+	step, lastStep       int
 	lastClock, lastReset Value
 }
 
@@ -38,6 +38,7 @@ func newGateSequence(steps int) (*gateSequence, error) {
 		steps:     make([]*In, steps),
 		lastReset: -1,
 		lastClock: -1,
+		lastStep:  -1,
 	}
 
 	inputs := []*In{m.clock, m.reset}
@@ -47,55 +48,62 @@ func newGateSequence(steps int) (*gateSequence, error) {
 	}
 
 	outputs := []*Out{
-		&Out{Name: "on", Provider: Provide(
-			&gateSequencerOut{
-				gateSequence: m,
-				onBeat:       true,
-				lastStep:     -1,
-			})},
-		&Out{Name: "off", Provider: Provide(
-			&gateSequencerOut{
-				gateSequence: m,
-				onBeat:       false,
-				lastStep:     -1,
-			})},
+		&Out{Name: "on", Provider: Provide(&gateSequencerOut{gateSequence: m, onBeat: true})},
+		&Out{Name: "off", Provider: Provide(&gateSequencerOut{gateSequence: m, onBeat: false})},
 	}
 
 	return m, m.Expose("GateSequence", inputs, outputs)
 }
 
-func (s *gateSequence) read(out Frame) {
-	if s.reads == 0 {
-		clock := s.clock.ReadFrame()
-		reset := s.reset.ReadFrame()
-		for _, s := range s.steps {
-			s.ReadFrame()
-		}
-		for i := range out {
-			if s.lastClock <= 0 && clock[i] > 0 {
-				s.step = (s.step + 1) % s.size
-			}
-			if s.lastReset <= 0 && reset[i] > 0 {
-				s.step = 0
-			}
-			s.lastClock = clock[i]
-			s.lastReset = reset[i]
-		}
+func (s *gateSequence) read() {
+	if s.reads > 0 {
+		return
 	}
+	s.clock.ReadFrame()
+	s.reset.ReadFrame()
+	for _, s := range s.steps {
+		s.ReadFrame()
+	}
+}
+
+func (s *gateSequence) postRead() {
 	if outs := s.OutputsActive(); outs > 0 {
 		s.reads = (s.reads + 1) % outs
 	}
 }
 
+func (s *gateSequence) tick(times int, op func(int)) {
+	clock := s.clock.LastFrame()
+	reset := s.reset.LastFrame()
+	for i := 0; i < times; i++ {
+		if s.reads > 0 {
+			op(i)
+			continue
+		}
+
+		if s.lastClock <= 0 && clock[i] > 0 {
+			s.step = (s.step + 1) % s.size
+		}
+		if s.lastReset <= 0 && reset[i] > 0 {
+			s.step = 0
+		}
+		s.lastClock = clock[i]
+		s.lastReset = reset[i]
+
+		op(i)
+
+		s.lastStep = s.step
+	}
+}
+
 type gateSequencerOut struct {
 	*gateSequence
-	onBeat   bool
-	lastStep int
+	onBeat bool
 }
 
 func (o *gateSequencerOut) Read(out Frame) {
-	o.read(out)
-	for i := range out {
+	o.read()
+	o.tick(len(out), func(i int) {
 		mode := o.steps[o.step].LastFrame()[i]
 		if o.step != o.lastStep {
 			out[i] = -1
@@ -108,6 +116,6 @@ func (o *gateSequencerOut) Read(out Frame) {
 				out[i] = -1
 			}
 		}
-		o.lastStep = o.step
-	}
+	})
+	o.postRead()
 }
