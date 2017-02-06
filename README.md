@@ -1,7 +1,8 @@
 # Eolian
 
-**Eolian** is a modular synthesizer. It provides a variety of different modules that can be patched together to create
-music. While the program is written in [Go](https://golang.org/), you don't need to know Go to use it. Patches for the
+**Eolian** is a modular synthesizer. It provides a [variety of different
+modules](https://github.com/brettbuddin/eolian/wiki/Available-Modules) that can be patched together to create music.
+While the program is written in [Go](https://golang.org/), you don't need to know Go to use it. Patches for the
 synthesizer are written in [Lua](https://www.lua.org/). A
 [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) is also provided for interacting with the
 patches in real-time.
