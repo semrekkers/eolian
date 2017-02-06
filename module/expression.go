@@ -88,6 +88,8 @@ func (e *expression) Read(out Frame) {
 }
 
 var expFns = map[string]govaluate.ExpressionFunction{
+	"pi": func(args ...interface{}) (interface{}, error) { return math.Pi, nil },
+	"e":  func(args ...interface{}) (interface{}, error) { return math.E, nil },
 	"abs": func(args ...interface{}) (interface{}, error) {
 		v := args[0].(float64)
 		return math.Abs(v), nil
