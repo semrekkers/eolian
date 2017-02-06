@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "xHpVLBIHQygN44KOw7a66VzVxiY=",
+			"path": "github.com/Knetic/govaluate",
+			"revision": "5598166b6fc09f038e53f628eec79f0c004a4299",
+			"revisionTime": "2017-01-30T16:31:17Z"
+		},
+		{
 			"checksumSHA1": "bi71f6HRAL9OzwrNUf5HjSt1THc=",
 			"path": "github.com/brettbuddin/musictheory",
 			"revision": "31bb916c66fbd4f6b180bca9c133a951770c0959",
