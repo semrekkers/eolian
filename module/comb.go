@@ -5,9 +5,7 @@ import "github.com/mitchellh/mapstructure"
 func init() {
 	setup := func(f func(s MS, c Config) (Patcher, error)) func(Config) (Patcher, error) {
 		return func(c Config) (Patcher, error) {
-			var config struct {
-				Size int
-			}
+			var config struct{ Size int }
 			if err := mapstructure.Decode(c, &config); err != nil {
 				return nil, err
 			}
@@ -166,38 +164,6 @@ func (c *filteredFBComb) Read(out Frame) {
 		c.filter.resonance = resonance[i]
 		lp, _, _ := c.filter.Tick(c.line.TickDuration(out[i], duration[i]))
 		c.last = gain[i] * lp
-	}
-}
-
-type delayline struct {
-	buffer       Frame
-	size, offset int
-}
-
-func newDelayLine(size MS) *delayline {
-	v := int(size.Value())
-	return &delayline{
-		size:   v,
-		buffer: make(Frame, v),
-	}
-}
-
-func (d *delayline) TickDuration(v, duration Value) Value {
-	if d.offset >= int(duration) || d.offset >= d.size {
-		d.offset = 0
-	}
-	v, d.buffer[d.offset] = d.buffer[d.offset], v
-	d.offset++
-	return v
-}
-
-func (d *delayline) Tick(v Value) Value {
-	return d.TickDuration(v, 1)
-}
-
-func (l *delayline) Read(out Frame) {
-	for i := range out {
-		out[i] = l.Tick(out[i])
 	}
 }
 
