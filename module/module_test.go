@@ -45,6 +45,7 @@ var allModules = []struct {
 	{"FilteredReverb", nil, []string{"input", "gain", "feedback", "bias"}, defaultOutput},
 	{"Floor", nil, []string{"input"}, defaultOutput},
 	{"Fold", nil, []string{"input", "level"}, defaultOutput},
+	{"Follow", nil, []string{"input", "attack", "release"}, defaultOutput},
 	{"GateSequence", Config{"steps": 2}, []string{
 		"clock",
 		"reset",
@@ -55,6 +56,7 @@ var allModules = []struct {
 	{"Interpolate", nil, []string{"input", "min", "max"}, defaultOutput},
 	{"Invert", nil, []string{"input"}, defaultOutput},
 	{"Filter", nil, []string{"input", "cutoff", "resonance"}, []string{"lowpass", "bandpass", "highpass"}},
+	{"MathExp", Config{"expression": "x + y * 2"}, []string{"x", "y"}, defaultOutput},
 	{"Mix", nil, []string{
 		"0.input",
 		"0.level",
