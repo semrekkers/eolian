@@ -29,7 +29,7 @@ func newDelay(size MS) (*delay, error) {
 	}
 
 	err := m.Expose(
-		"delay",
+		"Delay",
 		[]*In{m.in, m.duration},
 		[]*Out{
 			{Name: "output", Provider: Provide(m)},
