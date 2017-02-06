@@ -13,6 +13,9 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
+		if config.Expression == "" {
+			return nil, fmt.Errorf(`"expression" is required when initializing MathExp`)
+		}
 		return newExpression(config.Expression)
 	})
 }
