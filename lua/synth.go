@@ -18,11 +18,20 @@ var mapperOpts = gluamapper.Option{
 }
 
 var synthConsts = map[string]lua.LValue{
-	// Sequencer constants
+	// Sequencer gate modes
 	"MODE_REST":   lua.LNumber(0),
 	"MODE_SINGLE": lua.LNumber(1),
 	"MODE_REPEAT": lua.LNumber(2),
 	"MODE_HOLD":   lua.LNumber(3),
+
+	// Sequencer patterns
+	"MODE_SEQUENTIAL": lua.LNumber(0),
+	"MODE_PINGPONG":   lua.LNumber(1),
+	"MODE_RANDOM":     lua.LNumber(2),
+
+	// Gate sequencer modes
+	"MODE_OFF": lua.LNumber(0),
+	"MODE_ON":  lua.LNumber(1),
 }
 
 func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
