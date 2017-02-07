@@ -203,11 +203,10 @@ func (d *rcdOut) Read(out Frame) {
 	if count < 0 {
 		count = d.maxRotation + count
 	}
-	count++
 
 	d.tick(len(out), func(i int) {
 		if d.last < 0 && in[i] > 0 {
-			d.ticks[d.pos] = (d.ticks[d.pos] + 1) % count
+			d.ticks[d.pos] = (d.ticks[d.pos] + 1) % (count + 1)
 		}
 		d.last = in[i]
 		if d.ticks[d.pos] == 0 {
