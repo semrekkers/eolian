@@ -115,14 +115,20 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 	parts := strings.Split(input, ".")
 
 	table := vm.GetGlobal("_G").(*lua.LTable)
-	for _, part := range parts {
+	for i, part := range parts {
+		var found bool
 		table.ForEach(func(k, v lua.LValue) {
 			if part == k.String() {
 				if vt, ok := v.(*lua.LTable); ok {
 					table = vt
+					found = true
+					return
 				}
 			}
 		})
+		if !found && i < len(parts)-1 {
+			return [][]rune{}
+		}
 	}
 
 	candidates := [][]rune{}
