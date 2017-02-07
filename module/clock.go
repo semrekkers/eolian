@@ -1,8 +1,13 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"strconv"
+
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
+	Register("RotatingClockDivide", func(Config) (Patcher, error) { return newRCD() })
 	Register("ClockDivide", func(c Config) (Patcher, error) {
 		var config struct {
 			Divisor int
@@ -115,4 +120,101 @@ func (m *clockMultiply) Read(out Frame) {
 
 		m.tick++
 	}
+}
+
+type rcd struct {
+	IO
+	in, rotate, reset            *In
+	reads, rotation, maxRotation int
+	ticks                        []int
+
+	lastIn, lastRotate, lastReset Value
+}
+
+func newRCD() (*rcd, error) {
+	size := 8
+
+	m := &rcd{
+		in:          &In{Name: "input", Source: NewBuffer(zero)},
+		rotate:      &In{Name: "rotate", Source: NewBuffer(zero)},
+		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
+		ticks:       make([]int, size),
+		maxRotation: size,
+	}
+
+	outputs := []*Out{}
+	for i := 0; i < size; i++ {
+		outputs = append(outputs, &Out{
+			Name:     strconv.Itoa(i + 1),
+			Provider: Provide(&rcdOut{rcd: m, pos: i})})
+	}
+
+	return m, m.Expose(
+		"RCD",
+		[]*In{m.in, m.rotate, m.reset},
+		outputs,
+	)
+}
+
+func (d *rcd) read(out Frame) {
+	if d.reads > 0 {
+		return
+	}
+	d.in.ReadFrame()
+	d.rotate.ReadFrame()
+	d.reset.ReadFrame()
+}
+
+func (d *rcd) tick(times int, do func(int)) {
+	rotate := d.rotate.LastFrame()
+	reset := d.reset.LastFrame()
+	for i := 0; i < times; i++ {
+		if d.reads == 0 {
+			if d.lastRotate < 0 && rotate[i] > 0 {
+				d.rotation = (d.rotation + 1) % d.maxRotation
+			}
+			if d.lastReset < 0 && reset[i] > 0 {
+				d.rotation = 0
+			}
+			d.lastReset = reset[i]
+			d.lastRotate = rotate[i]
+		}
+		do(i)
+	}
+}
+
+func (d *rcd) postRead() {
+	if outs := d.OutputsActive(); outs > 0 {
+		d.reads = (d.reads + 1) % outs
+	}
+}
+
+type rcdOut struct {
+	*rcd
+	pos  int
+	last Value
+}
+
+func (d *rcdOut) Read(out Frame) {
+	d.read(out)
+	in := d.in.LastFrame()
+
+	count := d.pos - d.rotation
+	if count < 0 {
+		count = d.maxRotation + count
+	}
+	count++
+
+	d.tick(len(out), func(i int) {
+		if d.last < 0 && in[i] > 0 {
+			d.ticks[d.pos] = (d.ticks[d.pos] + 1) % count
+		}
+		d.last = in[i]
+		if d.ticks[d.pos] == 0 {
+			out[i] = 1
+		} else {
+			out[i] = -1
+		}
+	})
+	d.postRead()
 }

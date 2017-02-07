@@ -104,6 +104,16 @@ var allModules = []struct {
 		"trigger",
 	}, []string{"gate", "values"}},
 	{"Reverb", nil, []string{"input", "gain", "feedback"}, defaultOutput},
+	{"RotatingClockDivide", nil, []string{"input", "rotate", "reset"}, []string{
+		"1",
+		"2",
+		"3",
+		"4",
+		"5",
+		"6",
+		"7",
+		"8",
+	}},
 	{"SampleHold", nil, []string{"input", "trigger"}, defaultOutput},
 	{"Sequence", Config{"stages": 2}, []string{
 		"clock",
