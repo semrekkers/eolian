@@ -8,8 +8,8 @@ import (
 func init() {
 	Register("Tape", func(c Config) (Patcher, error) {
 		var config struct {
-			Max int
-			Wav string
+			Max  int
+			File string
 		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
@@ -17,7 +17,7 @@ func init() {
 		if config.Max == 0 {
 			config.Max = 10
 		}
-		return newTape(config.Max, config.Wav)
+		return newTape(config.Max, config.File)
 	})
 }
 
@@ -37,11 +37,11 @@ type tape struct {
 	endOfSplice Frame
 }
 
-func newTape(max int, wavFile string) (*tape, error) {
+func newTape(max int, file string) (*tape, error) {
 	var w *wav.Wav
-	if wavFile != "" {
+	if file != "" {
 		var err error
-		w, err = wav.Open(wavFile)
+		w, err = wav.Open(file)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,11 @@ func newTape(max int, wavFile string) (*tape, error) {
 			return nil, err
 		}
 		ratio := int(SampleRate / float64(w.SampleRate))
-		m.state = newTapeState(len(samples) * tapeOversample * ratio)
+		size := len(samples) * tapeOversample * ratio
+		if size > max {
+			max = size
+		}
+		m.state = newTapeState(max)
 		for _, s := range samples {
 			m.state.writeToMemory(Value(s), tapeOversample*ratio-1)
 		}
