@@ -117,15 +117,6 @@ type tapeOut struct {
 func (o *tapeOut) Read(out Frame) {
 	o.read(out)
 	for i := range out {
-		bias := o.bias.LastFrame()
-		if bias[i] > 0 {
-			out[i] = (1-bias[i])*out[i] + o.state.out
-		} else if bias[i] < 0 {
-			out[i] = out[i] + (1+bias[i])*o.state.out
-		} else {
-			out[i] = out[i] + o.state.out
-		}
-
 		o.state.in = out[i]
 		o.state.organize = o.organize.LastFrame()[i]
 		o.state.speed = o.speed.LastFrame()[i]
@@ -137,6 +128,15 @@ func (o *tapeOut) Read(out Frame) {
 		o.state.atSpliceEnd = false
 
 		o.stateFunc = o.stateFunc(o.state)
+
+		bias := o.bias.LastFrame()
+		if bias[i] > 0 {
+			out[i] = (1-bias[i])*out[i] + o.state.out
+		} else if bias[i] < 0 {
+			out[i] = out[i] + (1+bias[i])*o.state.out
+		} else {
+			out[i] = out[i] + o.state.out
+		}
 
 		o.state.lastPlay = o.state.play
 		o.state.lastRecord = o.state.record
@@ -234,7 +234,7 @@ func (s *tapeState) playheadToEnd() {
 
 func (s *tapeState) writeToMemory(in Value, oversample int) {
 	for i := 0; i < oversample; i++ {
-		s.memory[s.offset+i] += in
+		s.memory[s.offset+i] = in
 	}
 	s.offset += oversample
 }
@@ -287,8 +287,6 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 
 	// Write input value to memory up to the oversample limit
 	s.writeToMemory(s.in, int(Value(tapeOversample)*s.speed))
-
-	s.out = s.memory[s.offset]
 
 	// When we have no splices, use the end of the tape to wrap us; otherwise use the splice range
 	if s.markers.Count() == 1 {
