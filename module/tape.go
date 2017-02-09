@@ -234,7 +234,7 @@ func (s *tapeState) playheadToEnd() {
 
 func (s *tapeState) writeToMemory(in Value, oversample int) {
 	for i := 0; i < oversample; i++ {
-		s.memory[s.offset+i] += in
+		s.memory[s.offset+i] = in
 	}
 	s.offset += oversample
 }
