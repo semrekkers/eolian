@@ -1,11 +1,15 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"github.com/brettbuddin/eolian/wav"
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
 	Register("Tape", func(c Config) (Patcher, error) {
 		var config struct {
 			Max int
+			Wav string
 		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
@@ -13,7 +17,7 @@ func init() {
 		if config.Max == 0 {
 			config.Max = 10
 		}
-		return newTape(config.Max)
+		return newTape(config.Max, config.Wav)
 	})
 }
 
@@ -33,7 +37,17 @@ type tape struct {
 	endOfSplice Frame
 }
 
-func newTape(max int) (*tape, error) {
+func newTape(max int, wavFile string) (*tape, error) {
+	var w *wav.Wav
+	if wavFile != "" {
+		var err error
+		w, err = wav.Open(wavFile)
+		if err != nil {
+			return nil, err
+		}
+		defer w.Close()
+	}
+
 	m := &tape{
 		in:          &In{Name: "input", Source: zero},
 		speed:       &In{Name: "speed", Source: NewBuffer(Value(1))},
@@ -44,10 +58,26 @@ func newTape(max int) (*tape, error) {
 		organize:    &In{Name: "organize", Source: NewBuffer(zero)},
 		splice:      &In{Name: "splice", Source: NewBuffer(zero)},
 		unsplice:    &In{Name: "unsplice", Source: NewBuffer(zero)},
-		stateFunc:   tapeIdle,
-		state:       newTapeState(max * SampleRate),
+		stateFunc:   tapePlay,
 		endOfSplice: make(Frame, FrameSize),
 	}
+
+	if w != nil {
+		samples, err := w.ReadAll()
+		if err != nil {
+			return nil, err
+		}
+		ratio := int(SampleRate / float64(w.SampleRate))
+		m.state = newTapeState(len(samples) * tapeOversample * ratio)
+		for _, s := range samples {
+			m.state.writeToMemory(Value(s), tapeOversample*ratio-1)
+		}
+		m.state.createFirstMarker()
+		m.state.spliceStart = 0
+	} else {
+		m.state = newTapeState(max * SampleRate * tapeOversample)
+	}
+
 	return m, m.Expose(
 		"Tape",
 		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
@@ -140,11 +170,11 @@ type tapeState struct {
 	atSpliceEnd            bool
 }
 
-func newTapeState(max int) *tapeState {
+func newTapeState(size int) *tapeState {
 	return &tapeState{
 		markers:      newMarkers(),
 		spliceStart:  0,
-		memory:       make([]Value, max*tapeOversample),
+		memory:       make([]Value, size),
 		lastPlay:     -1,
 		lastRecord:   -1,
 		lastReset:    -1,
@@ -170,6 +200,12 @@ func (s *tapeState) unmark() {
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
 }
 
+func (s *tapeState) createFirstMarker() {
+	s.recordingEnd = s.offset
+	s.markers.Create(s.offset)
+	s.spliceEnd = 1
+}
+
 func (s *tapeState) clearMarkers() {
 	s.markers = newMarkers()
 	s.markers.Create(s.recordingEnd)
@@ -190,6 +226,13 @@ func (s *tapeState) playheadToStart() {
 func (s *tapeState) playheadToEnd() {
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
 	s.offset = s.markers.At(s.spliceEnd)
+}
+
+func (s *tapeState) writeToMemory(in Value, oversample int) {
+	for i := 0; i < oversample; i++ {
+		s.memory[s.offset+i] = in
+	}
+	s.offset += oversample
 }
 
 func (s *tapeState) playback() {
@@ -232,21 +275,14 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 	if s.lastRecord < 0 && s.record > 0 {
 		// End of recording creates the first splice
 		if s.markers.Count() == 1 {
-			s.recordingEnd = s.offset
-			s.markers.Create(s.offset)
-			s.spliceEnd = 1
+			s.createFirstMarker()
 		}
 		s.offset = s.spliceStart
 		return leaveRecord(s)
 	}
 
 	// Write input value to memory up to the oversample limit
-	s.memory[s.offset] = s.in
-	oversample := int(Value(tapeOversample) * s.speed)
-	for i := 0; i < oversample; i++ {
-		s.memory[s.offset+i] = s.in
-	}
-	s.offset += oversample
+	s.writeToMemory(s.in, int(Value(tapeOversample)*s.speed))
 
 	// When we have no splices, use the end of the tape to wrap us; otherwise use the splice range
 	if s.markers.Count() == 1 {
