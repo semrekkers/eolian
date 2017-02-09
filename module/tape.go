@@ -285,9 +285,7 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 		return leaveRecord(s)
 	}
 
-	// Write input value to memory up to the oversample limit
 	s.writeToMemory(s.in, int(Value(tapeOversample)*s.speed))
-
 	s.out = s.memory[s.offset]
 
 	// When we have no splices, use the end of the tape to wrap us; otherwise use the splice range
