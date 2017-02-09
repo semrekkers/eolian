@@ -156,6 +156,7 @@ type tapeEndOfSplice struct {
 }
 
 func (o *tapeEndOfSplice) Read(out Frame) {
+	o.read(out)
 	for i := range out {
 		out[i] = o.endOfSplice[i]
 	}
