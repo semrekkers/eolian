@@ -31,6 +31,7 @@ var allModules = []struct {
 	{"Compress", nil, []string{"input", "attack", "release"}, defaultOutput},
 	{"Crossfade", nil, []string{"a", "b", "bias"}, defaultOutput},
 	{"Concurrent", nil, []string{"input"}, defaultOutput},
+	{"Control", nil, []string{"control", "mod"}, defaultOutput},
 	{"Debug", nil, []string{"input"}, defaultOutput},
 	{"Delay", nil, []string{"input", "duration"}, defaultOutput},
 	{"Difference", nil, []string{"a", "b"}, defaultOutput},
