@@ -230,11 +230,11 @@ func (o *stageSeqPitch) Read(out Frame) {
 	o.tick(len(out), func(i int) {
 		stage := o.stages[o.stage]
 		in := stage.pitch.LastFrame()[i] * o.transpose.LastFrame()[i]
-		var amt Value
-		if glide := stage.glide.LastFrame(); glide[i] > 0 {
-			amt = glide[i]
+		glideAmount := o.glide.LastFrame()[i]
+		if stageGlide := stage.glide.LastFrame(); stageGlide[i] > 0 {
+			out[i] = o.slew.Tick(in, glideAmount, glideAmount)
 		}
-		out[i] = o.slew.Tick(in, amt, amt)
+		out[i] = in
 	})
 	o.postRead()
 }
