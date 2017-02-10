@@ -1,6 +1,8 @@
 package lua
 
 var luaRack = `
+local filepath = require('eolian.filepath')
+
 local reset = function(v)
 	if type(v) ~= 'table' then
 		return
