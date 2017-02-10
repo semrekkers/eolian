@@ -19,8 +19,8 @@ func init() {
 
 type ctrl struct {
 	IO
-	ctrl, mod     *In
-	min, max, avg Value
+	ctrl, mod         *In
+	min, max, ctrlAvg Value
 }
 
 func newCtrl(min, max float64) (*ctrl, error) {
@@ -46,14 +46,13 @@ func (c *ctrl) Read(out Frame) {
 	)
 
 	for i := range out {
+		c.ctrlAvg -= c.ctrlAvg / averageVelocitySamples
+		c.ctrlAvg += ctrl[i] / averageVelocitySamples
 		if unmodulated {
-			in = ctrl[i]
+			in = c.ctrlAvg
 		} else {
-			in = mod[i] * ctrl[i]
+			in = mod[i] * c.ctrlAvg
 		}
-		interp := in*(c.max-c.min) + c.min
-		c.avg -= c.avg / averageVelocitySamples
-		c.avg += interp / averageVelocitySamples
-		out[i] = c.avg
+		out[i] = in*(c.max-c.min) + c.min
 	}
 }
