@@ -1,20 +1,36 @@
 package lua
 
 var luaUtil = `
+local string = require('eolian.string')
+
 function with(o, fn)
 	return fn(o)
 end
 
 function set(m, arg1, arg2)
 	if type(arg1) == "table" then
+		if m == nil then
+			local keys={}
+			for k,_ in pairs(arg1) do
+				table.insert(keys, k)
+			end
+			error('attempt to set inputs "'.. string.join(keys, ', ') ..'" on nil value')
+		end
 		m:set(arg1)
 		return m
+	end
+
+	if m == nil then
+		error('attempt to set input "'.. arg1 ..'" on nil value')
 	end
 	m:set({ [tostring(arg1)] = arg2 })
 	return m
 end
 
 function out(m, name)
+	if m == nil then
+		error('attempt to get output "' .. name .. '" from nil value')
+	end
 	return m:output(name)
 end
 
