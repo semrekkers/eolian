@@ -233,8 +233,9 @@ func (o *stageSeqPitch) Read(out Frame) {
 		glideAmount := o.glide.LastFrame()[i]
 		if stageGlide := stage.glide.LastFrame(); stageGlide[i] > 0 {
 			out[i] = o.slew.Tick(in, glideAmount, glideAmount)
+		} else {
+			out[i] = in
 		}
-		out[i] = in
 	})
 	o.postRead()
 }
