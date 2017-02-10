@@ -110,12 +110,14 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
 			// Methods lock and interact with the graph
-			"close":   lock(moduleClose, mtx, p),
-			"info":    lock(moduleInfo, mtx, p),
-			"inspect": lock(moduleInspect, mtx, p),
-			"reset":   lock(moduleReset, mtx, p),
-			"set":     lock(moduleSet, mtx, p),
-			"id":      lock(moduleID, mtx, p),
+			"close":       lock(moduleClose, mtx, p),
+			"info":        lock(moduleInfo, mtx, p),
+			"inspect":     lock(moduleInspect, mtx, p),
+			"reset":       lock(moduleReset, mtx, p),
+			"set":         lock(moduleSet, mtx, p),
+			"id":          lock(moduleID, mtx, p),
+			"inputNames":  lock(moduleInputNames, mtx, p),
+			"outputNames": lock(moduleOutputNames, mtx, p),
 
 			// Methods that don't need to lock the graph
 			"scope":    moduleScopedOutput(p),
@@ -131,6 +133,32 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 	state.SetFuncs(table, funcs)
 
 	return table
+}
+
+func moduleInputNames(state *lua.LState, p module.Patcher) int {
+	l, ok := p.(module.Lister)
+	if !ok {
+		state.RaiseError("%T is not capable of listing inputs", p)
+	}
+	t := state.NewTable()
+	for in := range l.Inputs() {
+		t.Append(lua.LString(in))
+	}
+	state.Push(t)
+	return 1
+}
+
+func moduleOutputNames(state *lua.LState, p module.Patcher) int {
+	l, ok := p.(module.Lister)
+	if !ok {
+		state.RaiseError("%T is not capable of listing outputs", p)
+	}
+	t := state.NewTable()
+	for in := range l.Outputs() {
+		t.Append(lua.LString(in))
+	}
+	state.Push(t)
+	return 1
 }
 
 func moduleSet(state *lua.LState, p module.Patcher) int {
