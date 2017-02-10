@@ -10,6 +10,7 @@ func preloadString(state *lua.LState) int {
 	mod := state.NewTable()
 	state.SetFuncs(mod, map[string]lua.LGFunction{
 		"split": split,
+		"join":  join,
 	})
 	state.Push(mod)
 	return 1
@@ -23,5 +24,16 @@ func split(state *lua.LState) int {
 		t.Append(lua.LString(s))
 	}
 	state.Push(t)
+	return 1
+}
+
+func join(state *lua.LState) int {
+	table := state.CheckTable(1)
+	del := state.CheckString(2)
+	segs := []string{}
+	table.ForEach(func(k, v lua.LValue) {
+		segs = append(segs, v.String())
+	})
+	state.Push(lua.LString(strings.Join(segs, del)))
 	return 1
 }
