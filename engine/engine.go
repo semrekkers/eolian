@@ -9,6 +9,7 @@ import (
 	"github.com/gordonklaus/portaudio"
 )
 
+// Engine is the connection of the synthesizer to PortAudio
 type Engine struct {
 	sync.Mutex
 	module.IO
@@ -19,6 +20,7 @@ type Engine struct {
 	stop   chan error
 }
 
+// New returns a new Enngine
 func New(deviceIndex int) (*Engine, error) {
 	portaudio.Initialize()
 
@@ -43,6 +45,7 @@ func New(deviceIndex int) (*Engine, error) {
 	return m, err
 }
 
+// Errors returns a channel that expresses any errors during operation of the Engine
 func (e *Engine) Errors() chan error {
 	return e.errors
 }
@@ -55,6 +58,7 @@ func (e *Engine) params() portaudio.StreamParameters {
 	return params
 }
 
+// Run starts the Engine; running the audio stream
 func (e *Engine) Run() {
 	stream, err := portaudio.OpenStream(e.params(), e.portAudioCallback)
 
@@ -76,6 +80,7 @@ func (e *Engine) Run() {
 	e.stop <- err
 }
 
+// Stop shuts down the Engine
 func (e *Engine) Stop() error {
 	defer portaudio.Terminate()
 	e.stop <- nil
