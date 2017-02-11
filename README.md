@@ -36,7 +36,7 @@ $ eolian racks/circles.lua
 > -- Reload the file and only repatch it
 > Rack.repatch()
 > -- Set inputs or repatch modules
-> Rack.modules.low.lpf:inspect()
+> inspect(Rack.modules.low.lpf)
 LPFilter30
 -------------------------------------
 cutoff          <--     3000.00Hz
