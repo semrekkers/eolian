@@ -162,11 +162,13 @@ func establishReader(r io.ReadCloser, wav *Wav, size uint32) {
 	wav.Reader = &LimitReadCloser{io.LimitReader(r, int64(size)), r}
 }
 
+// LimitReadCloser is a LimitReader that can close
 type LimitReadCloser struct {
 	io.Reader
 	c io.Closer
 }
 
+// Close closes the LimitReadCloser
 func (lrc *LimitReadCloser) Close() error {
 	return lrc.c.Close()
 }
