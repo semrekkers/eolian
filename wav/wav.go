@@ -18,16 +18,19 @@ const (
 	preambleData   = "data"
 )
 
+// Wav is a WAV file
 type Wav struct {
 	Header
 	Samples int
 	Reader  io.ReadCloser
 }
 
+// ReadAll reads all samples from the WAV file
 func (w *Wav) ReadAll() ([]float32, error) {
 	return w.Read(w.Samples)
 }
 
+// Read reads a specific number of samples of the WAV file
 func (w *Wav) Read(n int) ([]float32, error) {
 	var data interface{}
 	switch w.AudioFormat {
@@ -69,10 +72,12 @@ func (w *Wav) Read(n int) ([]float32, error) {
 	return final, nil
 }
 
+// Close closes the WAV file
 func (w *Wav) Close() error {
 	return w.Reader.Close()
 }
 
+// Header is a WAV file header
 type Header struct {
 	AudioFormat    uint16
 	NumChannels    uint16
@@ -82,6 +87,7 @@ type Header struct {
 	BitsPerSample  uint16
 }
 
+// Open opens and reads the header of a WAV file
 func Open(path string) (*Wav, error) {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0664)
 	if err != nil {
