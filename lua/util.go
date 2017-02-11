@@ -2,6 +2,7 @@ package lua
 
 var luaUtil = `
 local string = require('eolian.string')
+local sort   = require('eolian.sort')
 
 function with(o, fn)
 	return fn(o)
@@ -45,11 +46,26 @@ end
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if actsLikeModule(o) then
-			for k,v in pairs(o.inputs()) do
-				print(k .. " <- " .. v)
+			local inputNames  = {}
+			local outputNames = {}
+			local inputs      = o.inputs()
+			local outputs     = o.outputs()
+
+			for k,v in pairs(inputs) do
+				table.insert(inputNames, k)
 			end
-			for k,v in pairs(o.outputs()) do
-				print(k .. " -> " .. v)
+			for k,v in pairs(outputs) do
+				table.insert(outputNames, k)
+			end
+
+			inputNames = sort.strings(inputNames)
+			outputNames = sort.strings(outputNames)
+
+			for _,k in ipairs(inputNames) do
+				print(k .. " <- " .. inputs[k])
+			end
+			for _,k in ipairs(outputNames) do
+				print(k .. " -> " .. outputs[k])
 			end
 			return
 		end
