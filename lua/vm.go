@@ -38,6 +38,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.interpolate", preloadSynthInterpolate)
 	state.PreloadModule("eolian.synth.control", preloadSynthControl)
+	state.PreloadModule("eolian.synth.clock", preloadSynthClock)
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.theory", preloadTheory)
 
