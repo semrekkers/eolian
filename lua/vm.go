@@ -20,10 +20,12 @@ const (
 	defaultHistoryFile = "/tmp/eolian"
 )
 
+// VM is the Lua virtual machine
 type VM struct {
 	*lua.LState
 }
 
+// NewVM returns a new lua virtual machine centered around a Patcher
 func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state := lua.NewState()
 	lua.OpenBase(state)
@@ -51,10 +53,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	return &VM{state}, nil
 }
 
-func (vm *VM) LoadFile(path string) error {
-	return vm.DoFile(path)
-}
-
+// REPL starts the read-eval-print-loop
 func (vm *VM) REPL() error {
 	fmt.Println("Press Ctrl-D to exit")
 

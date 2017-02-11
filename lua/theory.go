@@ -155,9 +155,8 @@ func addPitchMethods(state *lua.LState, table *lua.LTable, p musictheory.Pitch) 
 					addPitchMethods(state, table, p)
 					state.Push(table)
 					return 1
-				} else {
-					state.RaiseError("userdata not an interval")
 				}
+				state.RaiseError("userdata not an interval")
 				return 0
 			},
 		}
