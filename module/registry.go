@@ -5,6 +5,7 @@ import (
 	"sort"
 )
 
+// Registry contains initializers for all known synthesizer modules
 var Registry = map[string]InitFunc{}
 
 // Config is the conduit for providing initialization information to a module

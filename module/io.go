@@ -4,6 +4,7 @@ package module
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"sort"
 	"strconv"
 	"strings"
@@ -115,7 +116,7 @@ func patchReader(t interface{}) (Reader, error) {
 		if err != nil {
 			return nil, err
 		}
-		return r.(ReadValuer), nil
+		return r.(readValuer), nil
 	case int:
 		return Value(v), nil
 	case float64:
@@ -269,7 +270,7 @@ func (i *In) LastFrame() Frame {
 
 // Close closes the input
 func (i *In) Close() error {
-	if c, ok := i.Source.(Closer); ok {
+	if c, ok := i.Source.(io.Closer); ok {
 		return c.Close()
 	}
 	return nil
@@ -302,12 +303,13 @@ func (o *Out) setDestination(r Reader) {
 	o.destination = r
 }
 
+// Close closes the output
 func (o *Out) Close() error {
 	defer func() {
 		o.reader = nil
 		o.destination = nil
 	}()
-	if c, ok := o.reader.(Closer); ok {
+	if c, ok := o.reader.(io.Closer); ok {
 		return c.Close()
 	}
 	return nil

@@ -2,6 +2,7 @@ package lua
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 
@@ -239,9 +240,13 @@ func moduleID(state *lua.LState, p module.Patcher) int {
 	return 1
 }
 
+type inspecter interface {
+	Inspect() string
+}
+
 func moduleInfo(state *lua.LState, p module.Patcher) int {
 	str := "(no info)"
-	if v, ok := p.(module.Inspecter); ok {
+	if v, ok := p.(inspecter); ok {
 		str = v.Inspect()
 	}
 	state.Push(lua.LString(str))
@@ -249,7 +254,7 @@ func moduleInfo(state *lua.LState, p module.Patcher) int {
 }
 
 func moduleInspect(state *lua.LState, p module.Patcher) int {
-	if v, ok := p.(module.Inspecter); ok {
+	if v, ok := p.(inspecter); ok {
 		fmt.Println(v.Inspect())
 	}
 	return 0
@@ -263,7 +268,7 @@ func moduleReset(state *lua.LState, p module.Patcher) int {
 }
 
 func moduleClose(state *lua.LState, p module.Patcher) int {
-	if closer, ok := p.(module.Closer); ok {
+	if closer, ok := p.(io.Closer); ok {
 		if err := closer.Close(); err != nil {
 			state.RaiseError("%s", err.Error())
 		}
