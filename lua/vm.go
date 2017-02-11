@@ -109,7 +109,6 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 
 	if start := strings.LastIndexAny(input, "({["); start > -1 && start != len(input)-1 {
 		input = input[start+1:]
-		pos -= start + 1
 	}
 	parts := strings.Split(input, ".")
 
