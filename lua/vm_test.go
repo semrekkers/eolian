@@ -25,12 +25,12 @@ func TestCreate(t *testing.T) {
 
 		-- input patching
 		local direct = synth.Direct()
-		direct:set { input = 1 }
+		set(direct, { input = 1 })
 		local mix = synth.Mix { size = 4 }
-		mix:ns(0):set { input = 2 }
-		mix:ns(1):set { input = direct:output() }
-		mix:set(2, { input = 2 })
-		mix:inspect()
+		set(mix:ns(0), { input = 2 })
+		set(mix:ns(1), { input = out(direct) })
+		set(mix, 2, { input = 2 })
+		inspect(mix)
 		mix:close()
 
 		-- value helpers

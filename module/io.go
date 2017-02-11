@@ -2,14 +2,11 @@
 package module
 
 import (
-	"bytes"
 	"fmt"
 	"io"
-	"sort"
 	"strconv"
 	"strings"
 	"sync/atomic"
-	"text/tabwriter"
 )
 
 var moduleSequence uint64
@@ -170,40 +167,6 @@ func (io *IO) String() string {
 	return io.ID()
 }
 
-// Inspect returns a formatted string detailing the internal state of the module
-func (io *IO) Inspect() string {
-	buf := bytes.NewBuffer(nil)
-	w := tabwriter.NewWriter(buf, 8, 8, 1, '\t', tabwriter.AlignRight)
-	fmt.Fprintf(w, "%s\n-------------------------------------\n", io.ID())
-
-	inputs := []string{}
-	for name := range io.ins {
-		inputs = append(inputs, name)
-	}
-	sort.Strings(inputs)
-
-	for _, name := range inputs {
-		fmt.Fprintf(w, "%s\t<--\t%v\n", name, io.ins[name].Source)
-	}
-
-	outputs := []string{}
-	for name := range io.outs {
-		outputs = append(outputs, name)
-	}
-	sort.Strings(outputs)
-
-	for _, name := range outputs {
-		e := io.outs[name]
-		if e.IsActive() {
-			fmt.Fprintf(w, "%s\t-->\t%v\n", name, e.destination)
-		} else {
-			fmt.Fprintf(w, "%s\t-->\t(none)\n", name)
-		}
-	}
-	w.Flush()
-	return strings.TrimRight(buf.String(), "\n")
-}
-
 func (io *IO) lazyInit() {
 	if io.ins == nil {
 		io.ins = map[string]*In{}
@@ -254,6 +217,13 @@ func (i *In) SetSource(r Reader) {
 	}
 }
 
+func (i *In) SourceName() string {
+	if i.Source == nil {
+		return "(none)"
+	}
+	return fmt.Sprintf("%s", i.Source)
+}
+
 func (i *In) String() string {
 	return fmt.Sprintf("%s/%s", i.owner.ID(), i.Name)
 }
@@ -301,6 +271,13 @@ func (o *Out) Read(out Frame) {
 
 func (o *Out) setDestination(r Reader) {
 	o.destination = r
+}
+
+func (o *Out) DestinationName() string {
+	if o.destination == nil {
+		return "(none)"
+	}
+	return fmt.Sprintf("%s", o.destination)
 }
 
 // Close closes the output

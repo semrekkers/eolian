@@ -37,7 +37,12 @@ end
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
 		if o['__type'] == 'module' then
-			print(o:info())
+			for k,v in pairs(o.inputs()) do
+				print(k .. " <- " .. v)
+			end
+			for k,v in pairs(o.outputs()) do
+				print(k .. " -> " .. v)
+			end
 			return
 		end
 	end

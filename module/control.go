@@ -28,7 +28,7 @@ func newCtrl(min, max float64) (*ctrl, error) {
 		max:  Value(max),
 	}
 	err := m.Expose(
-		"ctrl",
+		"Control",
 		[]*In{m.ctrl, m.mod},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
