@@ -1,8 +1,9 @@
 package lua
 
 var luaUtil = `
-local string = require('eolian.string')
-local sort   = require('eolian.sort')
+local string    = require('eolian.string')
+local sort      = require('eolian.sort')
+local tabwriter = require('eolian.tabwriter')
 
 function with(o, fn)
 	return fn(o)
@@ -61,12 +62,15 @@ function inspect(o, prefix)
 			inputNames = sort.strings(inputNames)
 			outputNames = sort.strings(outputNames)
 
+			local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
+			w.write(o.id() .. "\n-------------------------------------\n")
 			for _,k in ipairs(inputNames) do
-				print(k .. " <- " .. inputs[k])
+				w.write(k .. "\t<--\t" .. inputs[k] .. "\n")
 			end
 			for _,k in ipairs(outputNames) do
-				print(k .. " -> " .. outputs[k])
+				w.write(k .. "\t-->\t" .. outputs[k] .. "\n")
 			end
+			print(w.flush())
 			return
 		end
 	end
