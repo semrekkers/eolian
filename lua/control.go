@@ -20,7 +20,7 @@ return function(m, options, defaultInput)
 
     local synth  = require('eolian.synth')
     local proxy  = require('eolian.synth.proxy')
-    local string = require('eolian.string')
+    local eolianString = require('eolian.string')
 
     local controls = {}
     for name,_ in pairs(m.inputs()) do
@@ -32,13 +32,13 @@ return function(m, options, defaultInput)
 
     return {
         id = function()
-			return string.format("Controlled[%s]", m:id())
+			return string.format("Controlled[%s]", m.id())
 		end,
         inputs  = m.inputs,
         outputs = m.outputs,
         set = function(_, inputs)
             for k,v in pairs(inputs) do
-                local segs = string.split(k, '/')
+                local segs = eolianString.split(k, '/')
                 if #segs == 2 and controls[segs[1]] ~= nil then
                     set(controls[segs[1]], segs[2], v)
                 elseif controls[k] ~= nil then
