@@ -195,11 +195,10 @@ func gateDown(s *gateState) gateStateFunc {
 			}
 			s.which = -1
 			return gateUp
-		} else {
-			if which == s.which {
-				s.which = -1
-				return gateUp
-			}
+		}
+		if which == s.which {
+			s.which = -1
+			return gateUp
 		}
 	case 128:
 		if which == s.which {
