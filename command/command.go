@@ -11,8 +11,8 @@ import (
 
 	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/lua"
-	_ "github.com/brettbuddin/eolian/midi"
-	_ "github.com/brettbuddin/eolian/osc"
+	_ "github.com/brettbuddin/eolian/midi" // Register MIDI modules
+	_ "github.com/brettbuddin/eolian/osc"  // Register OSC modules
 )
 
 func Run(args []string) error {
