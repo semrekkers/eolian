@@ -10,9 +10,6 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		if config.Max == 0 {
-			config.Max = 1
-		}
 		return newCtrl(config.Min, config.Max)
 	})
 }
@@ -53,6 +50,10 @@ func (c *ctrl) Read(out Frame) {
 		} else {
 			in = mod[i] * c.ctrlAvg
 		}
-		out[i] = in*(c.max-c.min) + c.min
+		if c.max == 0 && c.min == 0 {
+			out[i] = in
+		} else {
+			out[i] = in*(c.max-c.min) + c.min
+		}
 	}
 }
