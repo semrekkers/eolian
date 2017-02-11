@@ -90,7 +90,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 
 	input.SetSource(reader)
 	if o, ok := reader.(*Out); ok {
-		o.SetDestination(input)
+		o.setDestination(input)
 	}
 	return nil
 }
@@ -298,7 +298,7 @@ func (o *Out) Read(out Frame) {
 	}
 }
 
-func (o *Out) SetDestination(r Reader) {
+func (o *Out) setDestination(r Reader) {
 	o.destination = r
 }
 
