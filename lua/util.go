@@ -34,9 +34,17 @@ function out(m, name)
 	return m:output(name)
 end
 
+local function actsLikeModule(m)
+	return type(m['inputs']) == 'function' and
+			type(m['outputs']) == 'function' and
+			type(m['output']) == 'function' and
+			type(m['set']) == 'function' and
+			type(m['id']) == 'function'
+end
+
 function inspect(o, prefix)
 	if type(o) == 'table' and prefix == nil then
-		if o['__type'] == 'module' then
+		if actsLikeModule(o) then
 			for k,v in pairs(o.inputs()) do
 				print(k .. " <- " .. v)
 			end
@@ -52,7 +60,7 @@ function inspect(o, prefix)
 				prefix = ''
 			end
 			if type(v) == 'table' then
-				if v['__type'] == 'module' then
+				if actsLikeModule(v) then
 					print(prefix .. k .. " (" .. v:id() .. ")")
 				else
 					print(prefix .. k)
