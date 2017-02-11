@@ -192,10 +192,9 @@ func gateDown(s *gateState) gateStateFunc {
 			if which != s.which {
 				s.which = which
 				return gateRolling
-			} else {
-				s.which = -1
-				return gateUp
 			}
+			s.which = -1
+			return gateUp
 		} else {
 			if which == s.which {
 				s.which = -1

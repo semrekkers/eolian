@@ -69,12 +69,12 @@ func (c *clock) read(out module.Frame) {
 	}
 }
 
-func (s *clock) Close() error {
-	if s.Stream != nil {
-		if err := s.Stream.Close(); err != nil {
+func (c *clock) Close() error {
+	if c.Stream != nil {
+		if err := c.Stream.Close(); err != nil {
 			return err
 		}
-		s.Stream = nil
+		c.Stream = nil
 	}
 	return nil
 }
