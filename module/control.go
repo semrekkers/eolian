@@ -38,7 +38,7 @@ func newCtrl(min, max float64) (*ctrl, error) {
 func (c *ctrl) Read(out Frame) {
 	var (
 		ctrl, mod      = c.ctrl.ReadFrame(), c.mod.ReadFrame()
-		_, unmodulated = c.mod.Source.(Valuer)
+		_, unmodulated = c.mod.Source.(*Buffer).Reader.(Valuer)
 		in             Value
 	)
 
