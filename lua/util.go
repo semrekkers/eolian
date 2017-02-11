@@ -1,7 +1,8 @@
 package lua
 
 var luaUtil = `
-local string    = require('eolian.string')
+local join      = require('eolian.string').join
+local split      = require('eolian.string').split
 local sort      = require('eolian.sort')
 local tabwriter = require('eolian.tabwriter')
 
@@ -16,7 +17,7 @@ function set(m, arg1, arg2)
 			for k,_ in pairs(arg1) do
 				table.insert(keys, k)
 			end
-			error('attempt to set inputs "'.. string.join(keys, ', ') ..'" on nil value')
+			error('attempt to set inputs "'.. join(keys, ', ') ..'" on nil value')
 		end
 		m:set(arg1)
 		return m
@@ -37,11 +38,29 @@ function out(m, name)
 end
 
 local function actsLikeModule(m)
-	return type(m['inputs']) == 'function' and
+	return type(m) == 'table' and
+			type(m['inputs']) == 'function' and
 			type(m['outputs']) == 'function' and
 			type(m['output']) == 'function' and
 			type(m['set']) == 'function' and
 			type(m['id']) == 'function'
+end
+
+function find(group, name, prefix)
+	prefix = prefix or ''
+
+	for k, v in pairs(group) do
+		if actsLikeModule(v) then
+			if v.id() == name then
+				if prefix == "" then
+					return k
+				end
+				return prefix .. "." .. k
+			end
+		elseif type(v) == 'table' then
+			return find(v, name, prefix .. "." .. k)
+		end
+	end
 end
 
 function inspect(o, prefix)
@@ -63,12 +82,37 @@ function inspect(o, prefix)
 			outputNames = sort.strings(outputNames)
 
 			local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
-			w.write(o.id() .. "\n-------------------------------------\n")
+			local self = find(Rack.modules, o.id())
+			w.write(self .. "\n-------------------------------------\n")
 			for _,k in ipairs(inputNames) do
-				w.write(k .. "\t<--\t" .. inputs[k] .. "\n")
+				local name  = inputs[k]
+				local parts = split(name, '/')
+				local path  = find(Rack.modules, parts[1])
+
+				if path ~= nil then
+					local rest = {}
+					for i=2,#parts do
+						table.insert(rest, parts[i])
+					end
+					name = path .. '/' .. join(rest, '/')
+				end
+
+				w.write(k .. "\t<--\t" .. name .. "\n")
 			end
 			for _,k in ipairs(outputNames) do
-				w.write(k .. "\t-->\t" .. outputs[k] .. "\n")
+				local name  = outputs[k]
+				local parts = split(name, '/')
+				local path  = find(Rack.modules, parts[1])
+
+				if path ~= nil then
+					local rest = {}
+					for i=2,#parts do
+						table.insert(rest, parts[i])
+					end
+					name = path .. '/' .. join(rest, '/')
+				end
+
+				w.write(k .. "\t-->\t" .. name .. "\n")
 			end
 			print(w.flush())
 			return

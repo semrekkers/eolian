@@ -31,9 +31,7 @@ return function(m, options, defaultInput)
     end
 
     return {
-        id = function()
-			return string.format("Controlled[%s]", m.id())
-		end,
+        id      = m.id,
         inputs  = m.inputs,
         outputs = m.outputs,
         set = function(_, inputs)
