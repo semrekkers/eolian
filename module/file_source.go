@@ -46,7 +46,7 @@ func (f *fileSource) Read(out Frame) {
 	}
 }
 
-func (s *fileSource) loadData(path string) error {
+func (f *fileSource) loadData(path string) error {
 	file, err := os.Open(path)
 	if err != nil {
 		return err
@@ -55,8 +55,8 @@ func (s *fileSource) loadData(path string) error {
 	scanner := bufio.NewScanner(file)
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
-		if f, err := strconv.ParseFloat(scanner.Text(), 64); err == nil {
-			s.values = append(s.values, Value(f))
+		if v, err := strconv.ParseFloat(scanner.Text(), 64); err == nil {
+			f.values = append(f.values, Value(v))
 		}
 	}
 	return nil

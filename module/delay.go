@@ -72,8 +72,8 @@ func (d *delayline) Tick(v Value) Value {
 	return d.TickDuration(v, 1)
 }
 
-func (l *delayline) Read(out Frame) {
+func (d *delayline) Read(out Frame) {
 	for i := range out {
-		out[i] = l.Tick(out[i])
+		out[i] = d.Tick(out[i])
 	}
 }

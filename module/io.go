@@ -110,13 +110,12 @@ func patchReader(t interface{}) (Reader, error) {
 	case string:
 		if floatV, err := strconv.ParseFloat(v, 64); err == nil {
 			return Value(floatV), nil
-		} else {
-			r, err := ParseValueString(v)
-			if err != nil {
-				return nil, err
-			}
-			return r.(ReadValuer), nil
 		}
+		r, err := ParseValueString(v)
+		if err != nil {
+			return nil, err
+		}
+		return r.(ReadValuer), nil
 	case int:
 		return Value(v), nil
 	case float64:

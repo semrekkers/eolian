@@ -107,8 +107,6 @@ func slewTransition(s *slewState) slewStateFunc {
 		amount = d / s.rise
 	} else if absValue(d) < Value(epsilon) {
 		return slewFinish
-	} else {
-		return slewFinish
 	}
 
 	s.value += amount
