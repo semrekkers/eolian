@@ -82,8 +82,7 @@ function inspect(o, prefix)
 			outputNames = sort.strings(outputNames)
 
 			local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
-			local self = find(Rack.modules, o.id())
-			w.write(self .. "\n-------------------------------------\n")
+			w.write("-------------------------------------\n")
 			for _,k in ipairs(inputNames) do
 				local name  = inputs[k]
 				local parts = split(name, '/')
