@@ -52,6 +52,10 @@ Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for 
 
 Here's some example videos of things I've been able to get it to do at various stages during development:
 
+- [Reverb](https://www.instagram.com/p/BQXAs98D9SU/)
+- [Tape + WAV files](https://www.instagram.com/p/BQR1J-MD4Au/)
+- [Irregular clocks](https://www.instagram.com/p/BP2pb_fD1od/)
+- [Ratcheting](https://www.instagram.com/p/BPlpuu5Df8Q/)
 - [Alien patch](https://www.instagram.com/p/BOIuYXQj2im/)
 - [Tape exploration](https://www.instagram.com/p/BNU5G1RjfT7/)
 - [Quantizer](https://www.instagram.com/p/BN21tK5Anog/)
