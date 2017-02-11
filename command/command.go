@@ -15,6 +15,7 @@ import (
 	_ "github.com/brettbuddin/eolian/osc"  // Register OSC modules
 )
 
+// Run is the main entrypoint for the eolian command
 func Run(args []string) error {
 	var (
 		device     int
