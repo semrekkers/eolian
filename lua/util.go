@@ -2,7 +2,7 @@ package lua
 
 var luaUtil = `
 local join      = require('eolian.string').join
-local split      = require('eolian.string').split
+local split     = require('eolian.string').split
 local sort      = require('eolian.sort')
 local tabwriter = require('eolian.tabwriter')
 
@@ -55,10 +55,27 @@ function find(group, name, prefix)
 				if prefix == "" then
 					return k
 				end
-				return prefix .. "." .. k
+				return string.format("%s.%s", prefix, k)
+			elseif type(v['members']) == 'function' then
+				for _,m in ipairs(v.members()) do
+					if m == name then
+						if prefix == "" then
+							return k
+						end
+						return string.format("%s.%s", prefix, k)
+					end
+				end
 			end
 		elseif type(v) == 'table' then
-			return find(v, name, prefix .. "." .. k)
+			local result = nil
+			if prefix == "" then
+				result = find(v, name, k)
+			else
+				result = find(v, name, string.format("%s.%s", prefix, k))
+			end
+			if result ~= nil then
+				return result
+			end
 		end
 	end
 end
@@ -93,10 +110,10 @@ function inspect(o, prefix)
 					for i=2,#parts do
 						table.insert(rest, parts[i])
 					end
-					name = path .. '/' .. join(rest, '/')
+					name = string.format("%s/%s", path, join(rest, '/'))
 				end
 
-				w.write(k .. "\t<--\t" .. name .. "\n")
+				w.write(string.format("%s\t<--\t%s\n", k, name))
 			end
 			for _,k in ipairs(outputNames) do
 				local name  = outputs[k]
@@ -108,10 +125,10 @@ function inspect(o, prefix)
 					for i=2,#parts do
 						table.insert(rest, parts[i])
 					end
-					name = path .. '/' .. join(rest, '/')
+					name = string.format("%s/%s", path, join(rest, '/'))
 				end
 
-				w.write(k .. "\t-->\t" .. name .. "\n")
+				w.write(string.format("%s\t-->\t%s\n", k, name))
 			end
 			print(w.flush())
 			return

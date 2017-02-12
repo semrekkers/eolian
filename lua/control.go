@@ -31,7 +31,16 @@ return function(m, options, defaultInput)
     end
 
     return {
-        id      = m.id,
+        id = function()
+			return string.format("Controlled[%s]", m.id())
+		end,
+		members = function()
+			local m = { m.id() }
+			for _,c in ipairs(controls) do
+				table.insert(m, c)
+			end
+			return m
+		end,
         inputs  = m.inputs,
         outputs = m.outputs,
         set = function(_, inputs)

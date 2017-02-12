@@ -22,6 +22,9 @@ return function(size)
         id = function()
             return string.format("Clock[%s, %s]", osc.id(), mult.id())
         end,
+		members = function()
+			return { osc.id(), mult.id() }
+		end,
         inputs  = osc.inputs,
         outputs = mult.outputs,
         set     = proxy.inputs(osc),
