@@ -12,7 +12,7 @@ type noise struct {
 func newNoise() (*noise, error) {
 	m := &noise{
 		in:   &In{Name: "input", Source: zero},
-		min:  &In{Name: "min", Source: NewBuffer(zero)},
+		min:  &In{Name: "min", Source: NewBuffer(Value(-1))},
 		max:  &In{Name: "max", Source: NewBuffer(Value(1))},
 		gain: &In{Name: "gain", Source: NewBuffer(Value(1))},
 	}
