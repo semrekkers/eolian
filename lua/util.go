@@ -140,11 +140,7 @@ function inspect(o, prefix)
 				prefix = ''
 			end
 			if type(v) == 'table' then
-				if actsLikeModule(v) then
-					print(prefix .. k .. " (" .. v:id() .. ")")
-				else
-					print(prefix .. k)
-				end
+				print(prefix .. k)
 				inspect(v, ' - ')
 			end
 		end
