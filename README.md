@@ -36,14 +36,13 @@ $ eolian racks/circles.lua
 > -- Reload the file and only repatch it
 > Rack.repatch()
 > -- Set inputs or repatch modules
-> inspect(Rack.modules.low.lpf)
-LPFilter30
+> inspect(Rack.modules.low.filter)
 -------------------------------------
 cutoff          <--     3000.00Hz
-input           <--     Mix29/output
+input           <--     low.mix/output
 resonance       <--     0
-output          -->     Mix0/1/input
-> Rack.modules.low.lpf:set { cutoff = hz(2000) }
+output          -->     mix/1/input
+> set(Rack.modules.low.fliter, 'cutoff', hz(2000))
 ...
 ```
 Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can also find some example Rack setups in the [racks directory](https://github.com/brettbuddin/eolian/tree/master/racks).
