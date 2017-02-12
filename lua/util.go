@@ -27,7 +27,6 @@ function set(m, arg1, arg2)
 		error('attempt to set input "'.. arg1 ..'" on nil value')
 	end
 	m:set({ [tostring(arg1)] = arg2 })
-	return m
 end
 
 function out(m, name)
@@ -99,7 +98,6 @@ function inspect(o, prefix)
 			outputNames = sort.strings(outputNames)
 
 			local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
-			w.write("-------------------------------------\n")
 			for _,k in ipairs(inputNames) do
 				local name  = inputs[k]
 				local parts = split(name, '/')
@@ -146,5 +144,4 @@ function inspect(o, prefix)
 		end
 	end
 end
-
 `

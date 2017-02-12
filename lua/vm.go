@@ -99,6 +99,10 @@ func (vm *VM) REPL() error {
 		}
 		session.addLine(line)
 
+		if line == "" {
+			continue
+		}
+
 		exec := fmt.Sprintf(`(function()
 			local r = %s
 			if type(r) == 'table' then inspect(r) else print(r) end
