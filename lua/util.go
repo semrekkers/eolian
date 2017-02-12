@@ -128,7 +128,7 @@ function inspect(o, prefix)
 
 				w.write(string.format("%s\t-->\t%s\n", k, name))
 			end
-			print(w.flush())
+			print(string.gsub(w.flush(), "\n$", ""))
 			return
 		end
 	end
