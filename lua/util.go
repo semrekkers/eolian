@@ -37,7 +37,7 @@ function out(m, name)
 	return m:output(name)
 end
 
-local function actsLikeModule(m)
+function actsLikeModule(m)
 	return type(m) == 'table' and
 			type(m['inputs']) == 'function' and
 			type(m['outputs']) == 'function' and
