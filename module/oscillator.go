@@ -57,7 +57,7 @@ func newOscillator(algorithm string) (*oscillator, error) {
 		amp:            &In{Name: "amp", Source: NewBuffer(Value(1))},
 		detune:         &In{Name: "detune", Source: NewBuffer(zero)},
 		offset:         &In{Name: "offset", Source: NewBuffer(zero)},
-		pulseWidth:     &In{Name: "pulseWidth", Source: NewBuffer(Value(0.5))},
+		pulseWidth:     &In{Name: "pulseWidth", Source: NewBuffer(Value(1))},
 		sync:           &In{Name: "sync", Source: NewBuffer(zero)},
 		state:          &oscStateFrames{},
 		phases:         make([]float64, 5),
@@ -141,7 +141,7 @@ func (o *oscOut) blep(out Frame, i int) {
 		delta  = float64(pitch +
 			o.state.detune[i] +
 			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10))
-		pulseWidth = float64(clampValue(o.state.pulseWidth[i], 0.1, 0.9))
+		pulseWidth = float64(clampValue(o.state.pulseWidth[i], 0.1, 1))
 		next       = blepSample(o.shape, phase, pulseWidth)*o.state.amp[i] + o.state.offset[i]
 	)
 
