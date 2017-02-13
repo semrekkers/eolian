@@ -9,7 +9,8 @@ import (
 func init() {
 	f := func(c Config) (Patcher, error) {
 		var config struct {
-			Algorithm string
+			Algorithm  string
+			Multiplier float64
 		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
@@ -17,7 +18,10 @@ func init() {
 		if config.Algorithm == "" {
 			config.Algorithm = algBLEP
 		}
-		return newOscillator(config.Algorithm)
+		if config.Multiplier == 0 {
+			config.Multiplier = 1
+		}
+		return newOscillator(config.Algorithm, config.Multiplier)
 	}
 	Register("Osc", f)
 	Register("Oscillator", f)
@@ -49,7 +53,7 @@ type oscStateFrames struct {
 	detune, amp, offset, sync, pulseWidth Frame
 }
 
-func newOscillator(algorithm string) (*oscillator, error) {
+func newOscillator(algorithm string, multiplier float64) (*oscillator, error) {
 	m := &oscillator{
 		pitch:          &In{Name: "pitch", Source: NewBuffer(zero)},
 		pitchMod:       &In{Name: "pitchMod", Source: NewBuffer(zero)},
@@ -77,11 +81,11 @@ func newOscillator(algorithm string) (*oscillator, error) {
 			m.pulseWidth,
 		},
 		[]*Out{
-			{Name: "pulse", Provider: m.out(0, pulse, 1)},
-			{Name: "saw", Provider: m.out(1, saw, 1)},
-			{Name: "sine", Provider: m.out(2, sine, 1)},
-			{Name: "triangle", Provider: m.out(3, triangle, 1)},
-			{Name: "sub", Provider: m.out(4, pulse, 0.5)},
+			{Name: "pulse", Provider: m.out(0, pulse, multiplier)},
+			{Name: "saw", Provider: m.out(1, saw, multiplier)},
+			{Name: "sine", Provider: m.out(2, sine, multiplier)},
+			{Name: "triangle", Provider: m.out(3, triangle, multiplier)},
+			{Name: "sub", Provider: m.out(4, pulse, 0.5*multiplier)},
 		},
 	)
 
@@ -207,7 +211,7 @@ func (o *oscOut) simple(out Frame, i int) {
 	var (
 		phase = o.phases[o.phaseIndex]
 		amp   = o.state.amp[i]
-		pitch = o.state.pitch[i] +
+		pitch = (o.state.pitch[i] * Value(o.multiplier)) +
 			o.state.detune[i] +
 			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10)
 		offset     = o.state.offset[i]
