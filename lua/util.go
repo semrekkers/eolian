@@ -80,68 +80,71 @@ function find(group, name, prefix)
 end
 
 function inspect(o, prefix)
-	if type(o) == 'table' and prefix == nil then
-		if actsLikeModule(o) then
-			local inputNames  = {}
-			local outputNames = {}
-			local inputs      = o.inputs()
-			local outputs     = o.outputs()
+	if actsLikeModule(o) then
+		local inputNames  = {}
+		local outputNames = {}
+		local inputs      = o.inputs()
+		local outputs     = o.outputs()
 
-			for k,v in pairs(inputs) do
-				table.insert(inputNames, k)
-			end
-			for k,v in pairs(outputs) do
-				table.insert(outputNames, k)
-			end
-
-			inputNames = sort.strings(inputNames)
-			outputNames = sort.strings(outputNames)
-
-			local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
-			for _,k in ipairs(inputNames) do
-				local name  = inputs[k]
-				local parts = split(name, '/')
-				local path  = find(Rack.modules, parts[1])
-
-				if path ~= nil then
-					local rest = {}
-					for i=2,#parts do
-						table.insert(rest, parts[i])
-					end
-					name = string.format("%s/%s", path, join(rest, '/'))
-				end
-
-				w.write(string.format("%s\t<--\t%s\n", k, name))
-			end
-			for _,k in ipairs(outputNames) do
-				local name  = outputs[k]
-				local parts = split(name, '/')
-				local path  = find(Rack.modules, parts[1])
-
-				if path ~= nil then
-					local rest = {}
-					for i=2,#parts do
-						table.insert(rest, parts[i])
-					end
-					name = string.format("%s/%s", path, join(rest, '/'))
-				end
-
-				w.write(string.format("%s\t-->\t%s\n", k, name))
-			end
-			print(string.gsub(w.flush(), "\n$", ""))
-			return
+		for k,v in pairs(inputs) do
+			table.insert(inputNames, k)
 		end
+		for k,v in pairs(outputs) do
+			table.insert(outputNames, k)
+		end
+
+		inputNames = sort.strings(inputNames)
+		outputNames = sort.strings(outputNames)
+
+		local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
+		for _,k in ipairs(inputNames) do
+			local name  = inputs[k]
+			local parts = split(name, '/')
+			local path  = find(Rack.modules, parts[1])
+
+			if path ~= nil then
+				local rest = {}
+				for i=2,#parts do
+					table.insert(rest, parts[i])
+				end
+				name = string.format("%s/%s", path, join(rest, '/'))
+			end
+
+			w.write(string.format("%s\t<--\t%s\n", k, name))
+		end
+		for _,k in ipairs(outputNames) do
+			local name  = outputs[k]
+			local parts = split(name, '/')
+			local path  = find(Rack.modules, parts[1])
+
+			if path ~= nil then
+				local rest = {}
+				for i=2,#parts do
+					table.insert(rest, parts[i])
+				end
+				name = string.format("%s/%s", path, join(rest, '/'))
+			end
+
+			w.write(string.format("%s\t-->\t%s\n", k, name))
+		end
+
+		local s, count = string.gsub(w.flush(), "\n$", "")
+		if count > 0 then print(s) end
+		return
 	end
-	for k, v in pairs(o) do
-		if k ~= '__namespace' then
-			if prefix == nil then
-				prefix = ''
-			end
-			if type(v) == 'table' then
-				print(prefix .. k)
-				inspect(v, ' - ')
+
+	if type(o) == 'table' then
+		local w = tabwriter.new(8, 8, 1, "\t", "alignRight")
+		for k, v in pairs(o) do
+			if k ~= '__namespace' then
+				if actsLikeModule(v) then
+					v = '(module)'
+				end
+				w.write(string.format("%s\t%s\n", k, v))
 			end
 		end
+		local s, count = string.gsub(w.flush(), "\n$", "")
+		if count > 0 then print(s) end
 	end
 end
 `

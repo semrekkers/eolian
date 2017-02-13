@@ -32,6 +32,10 @@ func (v Value) Value() Value {
 	return v
 }
 
+func (v Value) String() string {
+	return fmt.Sprintf("%.2f", v)
+}
+
 // Valuer is the wrapper interface around the Value method; which is used in obtaining the constant value
 type Valuer interface {
 	Value() Value
