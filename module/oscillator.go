@@ -178,7 +178,10 @@ func blepSample(shape int, phase, pulseWidth float64) Value {
 	case saw:
 		return Value(2.0*phase/(2*math.Pi) - 1.0)
 	case triangle:
-		fallthrough
+		if phase < math.Pi {
+			return 1
+		}
+		return -1
 	case pulse:
 		if phase < math.Pi*pulseWidth {
 			return 1
