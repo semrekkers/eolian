@@ -29,22 +29,18 @@ $ make test
 ```
 $ make install
 $ eolian racks/circles.lua
-> 
 > -- Reload the file, rebuild the Rack and remount it
 > Rack.rebuild()
-> nil
->
+nil
 > -- Reload the file and only repatch it
 > Rack.repatch()
-> nil
->
+nil
 > -- Set inputs or repatch modules
 > Rack.modules.low.filter
 cutoff          <--     3000.00Hz
 input           <--     low.mix/output
 resonance       <--     0
 output          -->     mix/1/input
->
 > set(Rack.modules.low.filter, 'cutoff', hz(2000))
 nil
 ...
