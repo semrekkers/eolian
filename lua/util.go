@@ -28,7 +28,7 @@ function actsLikeModule(m)
 	return type(m) == 'table' and
 			type(m['inputs']) == 'function' and
 			type(m['outputs']) == 'function' and
-			type(m['output']) == 'function' and
+			type(m['out']) == 'function' and
 			type(m['set']) == 'function' and
 			type(m['id']) == 'function'
 end
