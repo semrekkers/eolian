@@ -192,7 +192,8 @@ func moduleSet(state *lua.LState, p module.Patcher) int {
 	}
 
 	setInputs(state, p, getNamespace(self), inputs)
-	return 0
+	state.Push(self)
+	return 1
 }
 
 func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) {
