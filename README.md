@@ -30,10 +30,10 @@ $ make test
 $ make install
 $ eolian racks/circles.lua
 > -- Reload the file, rebuild the Rack and remount it
-> Rack.rebuild()
+> Rack.build()
 nil
 > -- Reload the file and only repatch it
-> Rack.repatch()
+> Rack.patch()
 nil
 > -- Set inputs or repatch modules
 > Rack.modules.low.filter

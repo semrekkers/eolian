@@ -40,7 +40,7 @@ function Rack.clear()
 	Engine:set { input = 0 }
 end
 
-function Rack.rebuild()
+function Rack.build()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 
 	local build, patch = dofile(Rack.env.filepath)(Rack.env)
@@ -52,7 +52,7 @@ function Rack.rebuild()
 	Engine:set { input = patch(Rack.modules) }
 end
 
-function Rack.repatch()
+function Rack.patch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 	local _, patch = dofile(Rack.env.filepath)(Rack.env)
 	reset(Rack.modules)

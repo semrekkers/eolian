@@ -79,9 +79,9 @@ func Run(args []string) error {
 		for s := range sig {
 			switch s {
 			case syscall.SIGUSR1:
-				vm.DoString("Rack.repatch()")
+				vm.DoString("Rack.patch()")
 			case syscall.SIGUSR2:
-				vm.DoString("Rack.rebuild()")
+				vm.DoString("Rack.build()")
 			}
 		}
 	}()
