@@ -22,7 +22,7 @@ return function(module, ranges)
 
     for k, range in pairs(ranges) do
         proxied[k] = synth.Interpolate(range)
-        module:set { [k] = proxied[k]:output() }
+        module:set { [k] = proxied[k]:out() }
     end
 
     return {

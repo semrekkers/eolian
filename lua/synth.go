@@ -119,10 +119,10 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 			"outputs": lock(moduleOutputs, mtx, p),
 
 			// Methods that don't need to lock the graph
-			"scope":    moduleScopedOutput(p),
-			"ns":       moduleScopedOutput(p),
-			"output":   moduleOutput(p),
-			"outputFn": moduleOutputFunc(p),
+			"scope": moduleScopedOutput(p),
+			"ns":    moduleScopedOutput(p),
+			"out":   moduleOutput(p),
+			"outFn": moduleOutputFunc(p),
 		}
 	}(p)
 

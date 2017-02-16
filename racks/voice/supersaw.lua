@@ -12,17 +12,17 @@ return function(count)
         -- Create detune amount
         local detune = synth.Multiply()
         detune:set {
-            a = spread:output(tostring(i)),
-            b = scale:output()
+            a = spread:out(tostring(i)),
+            b = scale:out()
         }
 
         -- Mix the oscillator
         local osc = synth.Osc()
         osc:set {
-            pitch = pitch:output(tostring(i)),
-            detune = detune:output(),
+            pitch = pitch:out(tostring(i)),
+            detune = detune:out(),
         }
-        mix:scope(i):set { input = osc:output('saw') }
+        mix:scope(i):set { input = osc:out('saw') }
     end
 
     return { 
@@ -35,7 +35,7 @@ return function(count)
             end
         end,
         output = function()
-            return mix:output()
+            return mix:out()
         end
     }
 end

@@ -15,29 +15,29 @@ return function(env)
         local adsr = synth.ADSR()
         local mult = synth.Multiply()
 
-        pitch:set { input = midi:scope(idx):output('pitch') }
+        pitch:set { input = midi:scope(idx):out('pitch') }
 
-        high.osc:set  { pitch = pitch:output(0) }
-        low.pitch:set { a = pitch:output(1), b = 0.5 }
-        low.osc:set   { pitch = low.pitch:output() }
+        high.osc:set  { pitch = pitch:out(0) }
+        low.pitch:set { a = pitch:out(1), b = 0.5 }
+        low.osc:set   { pitch = low.pitch:out() }
 
         mix:set {
-            { input = high.osc:output('saw') },
-            { input = low.osc:output('saw') },
+            { input = high.osc:out('saw') },
+            { input = low.osc:out('saw') },
         }
 
         adsr:set  {
-            gate    = midi:scope(idx):output('gate'),
+            gate    = midi:scope(idx):out('gate'),
             attack  = ms(100),
             decay   = ms(50),
             sustain = 0.9,
             release = ms(3000),
         }
-        mult:set { a = mix:output(), b = adsr:output() }
+        mult:set { a = mix:out(), b = adsr:out() }
 
         return { 
             output = function() 
-                return mult:output()
+                return mult:out()
             end
         }
     end
@@ -67,16 +67,16 @@ return function(env)
     local function patch(modules)
         with(modules, function(m)
             for i = 0,polyphony-1 do
-                m.mix:scope(i):set { input = m.voices[i+1]:output() }
+                m.mix:scope(i):set { input = m.voices[i+1]:out() }
             end
 
-            m.filter:set   { input = m.mix:output(), cutoff = hz(5000) }
-            m.delay:set    { input = m.filter:output('lowpass'), gain = 0.4 }
-            m.compress:set { input = m.delay:output() }
-            m.clip:set     { input = m.compress:output(), level = 3 }
+            m.filter:set   { input = m.mix:out(), cutoff = hz(5000) }
+            m.delay:set    { input = m.filter:out('lowpass'), gain = 0.4 }
+            m.compress:set { input = m.delay:out() }
+            m.clip:set     { input = m.compress:out(), level = 3 }
         end)
 
-        return modules.clip:output()
+        return modules.clip:out()
     end
 
     return build, patch

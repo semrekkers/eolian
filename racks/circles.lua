@@ -52,7 +52,7 @@ return function(env)
         --
         with(modules.clock, function(t)
             t.osc:set { pitch = hz(7) }
-            t.multiple:set { input = t.osc:output('pulse') }
+            t.multiple:set { input = t.osc:out('pulse') }
         end)
 
         --
@@ -60,7 +60,7 @@ return function(env)
         --
         with(modules.high, function(t)
             t.sequence:set { 
-                clock = modules.clock.multiple:output(0), 
+                clock = modules.clock.multiple:out(0), 
                 mode = 1,
                 glide = ms(30)
             }
@@ -76,7 +76,7 @@ return function(env)
             }
 
             t.adsr:set {
-                gate    = t.sequence:output('gate'),
+                gate    = t.sequence:out('gate'),
                 attack  = ms(10),
                 decay   = ms(70),
                 sustain = 0.2,
@@ -90,18 +90,18 @@ return function(env)
             }
 
             t.supersaw:set {
-                pitch  = t.sequence:output('pitch'),
-                spread = t.lfo:output('sine')
+                pitch  = t.sequence:out('pitch'),
+                spread = t.lfo:out('sine')
             }
 
             t.filter:set {
-                input  = t.supersaw:output(),
+                input  = t.supersaw:out(),
                 cutoff = hz(4000)
             }
 
             t.amp:set {
-                a = t.filter:output('lowpass'),
-                b = t.adsr:output()
+                a = t.filter:out('lowpass'),
+                b = t.adsr:out()
             }
         end)
 
@@ -110,11 +110,11 @@ return function(env)
         --
         with(modules.low, function(t)
             t.divider:set { 
-                input = modules.clock.multiple:output(1), 
+                input = modules.clock.multiple:out(1), 
                 divisor = 16 
             }
 
-            t.sequence:set { clock = t.divider:output() }
+            t.sequence:set { clock = t.divider:out() }
             t.sequence:set {
                 { pitch = pitch('C2') },
                 { pitch = pitch('C2') },
@@ -126,33 +126,33 @@ return function(env)
                 { pitch = pitch('G2') },
             }
 
-            t.pitch:set { input = t.sequence:output('pitch') }
+            t.pitch:set { input = t.sequence:out('pitch') }
 
-            t.osc:set { pitch = t.pitch:output(0) }
+            t.osc:set { pitch = t.pitch:out(0) }
             t.fold:set { 
-                input = t.osc:output('sine'), 
+                input = t.osc:out('sine'), 
                 level = 0.7
             }
 
             t.subPitch:set { 
-                a = t.pitch:output(1), 
+                a = t.pitch:out(1), 
                 b = 0.5 
             }
-            t.subOsc:set { pitch = t.subPitch:output() }
+            t.subOsc:set { pitch = t.subPitch:out() }
 
             t.mix:set {
-                { input = t.fold:output() },
-                { input = t.subOsc:output('saw'), level = 0.7 },
+                { input = t.fold:out() },
+                { input = t.subOsc:out('saw'), level = 0.7 },
             }
 
-            t.filter:set { input = t.mix:output(), cutoff = hz(3000) }
+            t.filter:set { input = t.mix:out(), cutoff = hz(3000) }
         end)
 
         --
         -- Glitch
         --
         with(modules.glitch, function(t)
-            t.sequence:set { clock = modules.clock.multiple:output(2), mode = 2 }
+            t.sequence:set { clock = modules.clock.multiple:out(2), mode = 2 }
             t.sequence:set {
                 { pitch = pitch('C5'), pulses = 1, mode = 2 },
                 { pitch = pitch('C6'), pulses = 1, mode = 2 },
@@ -164,22 +164,22 @@ return function(env)
                 { pitch = pitch('C7'), pulses = 1, mode = 2 },
             }
 
-            t.multiplier:set { input = t.sequence:output('gate'), multiplier = 1 }
+            t.multiplier:set { input = t.sequence:out('gate'), multiplier = 1 }
 
             t.adsr:set {
-                gate = t.multiplier:output(),
+                gate = t.multiplier:out(),
                 attack = ms(1),
                 decay = ms(1),
                 sustain = 0
             }
 
             t.osc:set {
-                pitch = t.sequence:output('pitch')
+                pitch = t.sequence:out('pitch')
             }
 
             t.amp:set {
-                a = t.osc:output('pulse'),
-                b = t.adsr:output()
+                a = t.osc:out('pulse'),
+                b = t.adsr:out()
             }
         end)
 
@@ -187,9 +187,9 @@ return function(env)
         -- Mix
         --
         modules.mix:set {
-            { input = modules.high.amp:output(), level = 0.5 },
-            { input = modules.low.filter:output('lowpass'), level = 0.5 },
-            { input = modules.glitch.amp:output(), level = 0.05 },
+            { input = modules.high.amp:out(), level = 0.5 },
+            { input = modules.low.filter:out('lowpass'), level = 0.5 },
+            { input = modules.glitch.amp:out(), level = 0.05 },
         }
 
         --
@@ -197,20 +197,20 @@ return function(env)
         --
         with(modules.effects, function(t)
             t.reverb:set { 
-                input    = modules.mix:output(),
+                input    = modules.mix:out(),
                 cutoff   = hz(500),
                 feedback = 0.84,
                 gain     = 0.5,
                 bias     = -0.95
             }
 
-            t.filter:set { input = t.reverb:output(), cutoff = hz(5000) }
-            t.noise:set { input = t.filter:output('lowpass'), gain = 0.02 }
+            t.filter:set { input = t.reverb:out(), cutoff = hz(5000) }
+            t.noise:set { input = t.filter:out('lowpass'), gain = 0.02 }
         end)
 
-        modules.compressor:set { input = modules.effects.noise:output() }
+        modules.compressor:set { input = modules.effects.noise:out() }
 
-        return modules.compressor:output()
+        return modules.compressor:out()
     end
 
     return build, patch

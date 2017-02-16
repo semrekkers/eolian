@@ -27,13 +27,14 @@ function set(m, arg1, arg2)
 		error('attempt to set input "'.. arg1 ..'" on nil value')
 	end
 	m:set({ [tostring(arg1)] = arg2 })
+	return m
 end
 
 function out(m, name)
 	if m == nil then
 		error('attempt to get output "' .. name .. '" from nil value')
 	end
-	return m:output(name)
+	return m:out(name)
 end
 
 function actsLikeModule(m)
