@@ -10,24 +10,11 @@ function with(o, fn)
 	return fn(o)
 end
 
-function set(m, arg1, arg2)
-	if type(arg1) == "table" then
-		if m == nil then
-			local keys={}
-			for k,_ in pairs(arg1) do
-				table.insert(keys, k)
-			end
-			error('attempt to set inputs "'.. join(keys, ', ') ..'" on nil value')
-		end
-		m:set(arg1)
-		return m
-	end
-
+function set(m, ...)
 	if m == nil then
-		error('attempt to set input "'.. arg1 ..'" on nil value')
+		error('attempt to set inputs on nil value')
 	end
-	m:set({ [tostring(arg1)] = arg2 })
-	return m
+	return m:set(unpack(arg))
 end
 
 function out(m, name)
