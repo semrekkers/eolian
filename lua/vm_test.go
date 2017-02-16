@@ -23,15 +23,19 @@ func TestCreate(t *testing.T) {
 	err = vm.DoString(`
 		local synth = require 'eolian.synth'
 
+		Rack = {
+			modules = {}
+		}
+
 		-- input patching
-		local direct = synth.Direct()
-		set(direct, { input = 1 })
-		local mix = synth.Mix { size = 4 }
-		set(mix:ns(0), { input = 2 })
-		set(mix:ns(1), { input = out(direct) })
-		set(mix, 2, { input = 2 })
-		inspect(mix)
-		mix:close()
+		Rack.modules.direct = synth.Direct()
+		Rack.modules.direct:set { input = 1 }
+		Rack.modules.direct:set('input', 1)
+		Rack.modules.mix = synth.Mix { size = 4 }
+		Rack.modules.mix:ns(0):set { input = 2 }
+		Rack.modules.mix:ns(1):set { input = Rack.modules.direct:out() }
+		inspect(Rack.modules.mix)
+		Rack.modules.mix:close()
 
 		-- value helpers
 		hz(440)
@@ -44,8 +48,8 @@ func TestCreate(t *testing.T) {
 
 		-- proxying
 		local proxy = require 'eolian.synth.proxy'
-		local directInputs = proxy.inputs(direct)
-		local directOutputs = proxy.outputs(direct)
+		local directInputs = proxy.inputs(Rack.modules.direct)
+		local directOutputs = proxy.outputs(Rack.modules.direct)
 		directInputs(_, { inputs = 2 })
 		directOutputs(_, nil)
 		local osc = synth.Oscillator()
