@@ -133,6 +133,8 @@ function inspect(o, prefix)
 		end
 		local s, count = string.gsub(w.flush(), "\n$", "")
 		if count > 0 then print(s) end
+	else
+		print(o)
 	end
 end
 `

@@ -98,19 +98,11 @@ func (vm *VM) REPL() error {
 			break
 		}
 		session.addLine(line)
-
 		if line == "" {
 			continue
 		}
-
-		exec := fmt.Sprintf(`(function()
-			local r = %s
-			if type(r) == 'table' then inspect(r) else print(r) end
-			return r
-		end)()`, line)
-
-		if err := vm.DoString(exec); err != nil {
-			log.Println("error:", err)
+		if err := vm.DoString(fmt.Sprintf(`inspect(%s)`, line)); err != nil {
+			fmt.Println("error:", err)
 		}
 	}
 	return nil
