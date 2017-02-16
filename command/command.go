@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"os/signal"
 	"runtime/trace"
+	"syscall"
 	"time"
 
 	"github.com/brettbuddin/eolian/engine"
@@ -70,6 +72,19 @@ func Run(args []string) error {
 			return err
 		}
 	}
+
+	sig := make(chan os.Signal)
+	signal.Notify(sig, syscall.SIGUSR1, syscall.SIGUSR2)
+	go func() {
+		for s := range sig {
+			switch s {
+			case syscall.SIGUSR1:
+				vm.DoString("Rack.repatch()")
+			case syscall.SIGUSR2:
+				vm.DoString("Rack.rebuild()")
+			}
+		}
+	}()
 
 	return vm.REPL()
 }
