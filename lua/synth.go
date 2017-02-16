@@ -163,36 +163,35 @@ func moduleOutputs(state *lua.LState, p module.Patcher) int {
 func moduleSet(state *lua.LState, p module.Patcher) int {
 	var (
 		self   *lua.LTable
-		prefix []string
-		raw    *lua.LTable
+		inputs = map[interface{}]interface{}{}
 	)
 
 	top := state.GetTop()
 	if top == 2 {
 		self = state.CheckTable(1)
-		raw = state.CheckTable(2)
+		raw := state.CheckTable(2)
+
+		mapped := gluamapper.ToGoValue(raw, mapperOpts)
+		switch v := mapped.(type) {
+		case map[interface{}]interface{}:
+			inputs = v
+		case []interface{}:
+			for i, rv := range v {
+				inputs[fmt.Sprintf("%d", i)] = rv
+			}
+		default:
+			state.RaiseError("expected table, but got %T instead", mapped)
+		}
 	} else if top == 3 {
 		self = state.CheckTable(1)
-		prefix = strings.Split(state.CheckAny(2).String(), "/")
-		raw = state.CheckTable(3)
+		name := state.CheckString(2)
+		raw := state.CheckAny(3)
+		inputs[name] = raw
+	} else {
+		state.RaiseError("invalid number of arguments to set")
 	}
 
-	namespace := append(getNamespace(self), prefix...)
-
-	mapped := gluamapper.ToGoValue(raw, mapperOpts)
-
-	inputs := map[interface{}]interface{}{}
-	switch v := mapped.(type) {
-	case map[interface{}]interface{}:
-		inputs = v
-	case []interface{}:
-		for i, rv := range v {
-			inputs[fmt.Sprintf("%d", i)] = rv
-		}
-	default:
-		state.RaiseError("expected table, but got %T instead", mapped)
-	}
-	setInputs(state, p, namespace, inputs)
+	setInputs(state, p, getNamespace(self), inputs)
 	return 0
 }
 

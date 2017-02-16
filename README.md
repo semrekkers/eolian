@@ -41,7 +41,7 @@ cutoff          <--     3000.00Hz
 input           <--     low.mix/output
 resonance       <--     0
 output          -->     mix/1/input
-> set(Rack.modules.low.filter, 'cutoff', hz(2000))
+> Rack.modules.low.filter:set('cutoff', hz(2000))
 nil
 ...
 ```
