@@ -55,7 +55,7 @@ return function(m, options, defaultInput)
                 end
             end
         end,
-        output = proxy.outputs(m)
+        out = proxy.outputs(m)
     }
 end
 `

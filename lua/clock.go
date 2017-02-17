@@ -28,7 +28,7 @@ return function(size)
         inputs  = osc.inputs,
         outputs = mult.outputs,
         set     = proxy.inputs(osc),
-        output  = proxy.outputs(mult),
+        out     = proxy.outputs(mult),
     }
 end
 `

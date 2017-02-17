@@ -47,7 +47,7 @@ return function(module, ranges)
                 end
             end
         end,
-        output = proxy.outputs(module),
+        out = proxy.outputs(module),
     }
 end
 `

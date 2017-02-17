@@ -33,21 +33,21 @@ func proxyOutputs(state *lua.LState) int {
 	fn := state.NewFunction(func(state *lua.LState) int {
 		if state.GetTop() == 1 {
 			state.CallByParam(lua.P{
-				Fn:      module.RawGet(lua.LString("output")),
+				Fn:      module.RawGet(lua.LString("out")),
 				Protect: true,
 				NRet:    1,
 			}, module)
 			return 1
 		} else if output := state.CheckAny(2); output != nil {
 			state.CallByParam(lua.P{
-				Fn:      module.RawGet(lua.LString("output")),
+				Fn:      module.RawGet(lua.LString("out")),
 				Protect: true,
 				NRet:    1,
 			}, module, output)
 			return 1
 		} else {
 			state.CallByParam(lua.P{
-				Fn:      module.RawGet(lua.LString("output")),
+				Fn:      module.RawGet(lua.LString("out")),
 				Protect: true,
 				NRet:    1,
 			}, module)
