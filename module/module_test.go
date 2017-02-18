@@ -22,7 +22,7 @@ var allModules = []struct {
 		"release",
 		"disableSustain",
 		"ratio",
-	}, defaultOutput},
+	}, []string{"output", "endCycle"}},
 	{"AND", nil, []string{"a", "b"}, defaultOutput},
 	{"Allpass", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"Clip", nil, []string{"input", "level"}, defaultOutput},

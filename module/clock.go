@@ -146,6 +146,8 @@ func newRCD(size int) (*rcd, error) {
 		lastRotate:  -1,
 	}
 
+	m.readTracker = manyReadTracker{counter: m}
+
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
 		m.outs[i] = make(Frame, FrameSize)
