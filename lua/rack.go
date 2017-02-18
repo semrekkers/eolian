@@ -56,6 +56,7 @@ function Rack.patch()
 	assert(Rack.modules ~= nil, 'no rackfile loaded.')
 	local _, patch = dofile(Rack.env.filepath)(Rack.env)
 	reset(Rack.modules)
+	Engine.reset()
 	Engine:set { input = patch(Rack.modules) }
 end
 

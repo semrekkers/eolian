@@ -36,12 +36,22 @@ return function(m, options, defaultInput)
 		end,
 		members = function()
 			local m = { m.id() }
-			for _,c in ipairs(controls) do
-				table.insert(m, c)
+			for _,c in pairs(controls) do
+				table.insert(m, c.id())
 			end
 			return m
 		end,
-        inputs  = m.inputs,
+        inputs = function()
+			local t = {}
+			for k,v in pairs(m.inputs()) do
+                if controls[k] ~= nil then
+					t[k] = controls[k].inputs()["control"]
+				else
+					t[k] = v
+				end
+			end
+			return t
+		end,
         outputs = m.outputs,
         set = function(_, inputs)
             for k,v in pairs(inputs) do
@@ -55,7 +65,17 @@ return function(m, options, defaultInput)
                 end
             end
         end,
-        out = proxy.outputs(m)
+        out = proxy.outputs(m),
+		close = m.close,
+		reset = function()
+			for k,v in pairs(m.inputs()) do
+                if controls[k] ~= nil then
+					controls[k].reset()
+				else
+					m.resetOnly({k})
+				end
+			end
+		end
     }
 end
 `

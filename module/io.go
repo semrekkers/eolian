@@ -17,6 +17,8 @@ type Patcher interface {
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
 	Reset() error
+	ResetOnly([]string) error
+	Close() error
 }
 
 // Lister is the port listing behavior of a module
@@ -180,17 +182,28 @@ func (io *IO) lazyInit() {
 // original default value
 func (io *IO) Reset() error {
 	for _, in := range io.ins {
-		if nested, ok := in.Source.(*In); ok {
-			if err := nested.Close(); err != nil {
+		if err := in.Reset(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (io *IO) ResetOnly(names []string) error {
+	for _, n := range names {
+		if in, ok := io.ins[n]; ok {
+			if err := in.Reset(); err != nil {
 				return err
 			}
 		} else {
-			if err := in.Close(); err != nil {
-				return err
-			}
-			in.SetSource(in.initial)
+			return fmt.Errorf(`unknown input "%s"`, n)
 		}
 	}
+	return nil
+}
+
+// Close makes IO a noop io.Closer
+func (io *IO) Close() error {
 	return nil
 }
 
@@ -243,6 +256,21 @@ func (i *In) Close() error {
 	if c, ok := i.Source.(io.Closer); ok {
 		return c.Close()
 	}
+	return nil
+}
+
+// Reset returns the input to its default "unpatched" state
+func (i *In) Reset() error {
+	if nested, ok := i.Source.(*In); ok {
+		if err := nested.Close(); err != nil {
+			return err
+		}
+		return nil
+	}
+	if err := i.Close(); err != nil {
+		return err
+	}
+	i.SetSource(i.initial)
 	return nil
 }
 
