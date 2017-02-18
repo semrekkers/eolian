@@ -24,7 +24,7 @@ return function(env)
 
             op1 = {
                 multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
-                osc        = synth.Oscillator { algorithm = 'simple' },
+                osc        = synth.Oscillator(),
             },
             op2 = {
                 multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
