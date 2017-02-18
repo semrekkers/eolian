@@ -6,11 +6,13 @@ func init() {
 
 type adsr struct {
 	IO
-	gate, attack, decay, release, ratio *In
-	sustain, disableSustain             *In
+	gate, ratio, disableSustain,
+	attack, decay, release, sustain *In
 
-	stateFunc adsrStateFunc
-	state     *adsrState
+	stateFunc            adsrStateFunc
+	state                *adsrState
+	readTracker          manyReadTracker
+	mainOut, endCycleOut Frame
 }
 
 func newADSR() (*adsr, error) {
@@ -23,25 +25,44 @@ func newADSR() (*adsr, error) {
 		sustain:        &In{Name: "sustain", Source: NewBuffer(Value(0.1))},
 		disableSustain: &In{Name: "disableSustain", Source: NewBuffer(zero)},
 
-		stateFunc: adsrIdle,
-		state:     &adsrState{lastGate: -1},
+		stateFunc:   adsrIdle,
+		state:       &adsrState{lastGate: -1},
+		mainOut:     make(Frame, FrameSize),
+		endCycleOut: make(Frame, FrameSize),
 	}
+	m.readTracker = manyReadTracker{counter: m}
 	err := m.Expose(
 		"ADSR",
 		[]*In{m.gate, m.attack, m.decay, m.release, m.sustain, m.disableSustain, m.ratio},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{
+			{Name: "output", Provider: m.out(&m.mainOut)},
+			{Name: "endCycle", Provider: m.out(&m.endCycleOut)},
+		},
 	)
 	return m, err
 }
 
-func (e *adsr) Read(out Frame) {
-	gate := e.gate.ReadFrame()
-	attack := e.attack.ReadFrame()
-	decay := e.decay.ReadFrame()
-	release := e.release.ReadFrame()
-	sustain := e.sustain.ReadFrame()
-	disableSustain := e.disableSustain.ReadFrame()
-	ratio := e.ratio.ReadFrame()
+func (e *adsr) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: e, cache: cache}
+	})
+}
+
+func (e *adsr) readMany(out Frame) {
+	if e.readTracker.count() > 0 {
+		e.readTracker.incr()
+		return
+	}
+
+	var (
+		gate           = e.gate.ReadFrame()
+		attack         = e.attack.ReadFrame()
+		decay          = e.decay.ReadFrame()
+		release        = e.release.ReadFrame()
+		sustain        = e.sustain.ReadFrame()
+		disableSustain = e.disableSustain.ReadFrame()
+		ratio          = e.ratio.ReadFrame()
+	)
 
 	for i := range out {
 		e.state.lastGate = e.state.gate
@@ -53,8 +74,15 @@ func (e *adsr) Read(out Frame) {
 		e.state.release = release[i]
 		e.state.ratio = ratio[i]
 		e.stateFunc = e.stateFunc(e.state)
-		out[i] = e.state.value
+		e.mainOut[i] = e.state.value
+
+		if e.state.endOfCycle {
+			e.endCycleOut[i] = 1
+		} else {
+			e.endCycleOut[i] = -1
+		}
 	}
+	e.readTracker.incr()
 }
 
 type adsrState struct {
@@ -63,11 +91,13 @@ type adsrState struct {
 	ratio            Value
 	base, multiplier Value
 	lastGate         Value
+	endOfCycle       bool
 }
 
 type adsrStateFunc func(*adsrState) adsrStateFunc
 
 func adsrIdle(s *adsrState) adsrStateFunc {
+	s.endOfCycle = false
 	if s.lastGate <= 0 && s.gate > 0 {
 		s.value = 0
 		return prepAttack(s)
@@ -105,6 +135,7 @@ func adsrSustain(s *adsrState) adsrStateFunc {
 
 func adsrRelease(s *adsrState) adsrStateFunc {
 	if s.disableSustain == 1 {
+		s.endOfCycle = true
 		if s.lastGate <= 0 && s.gate > 0 {
 			return prepAttack(s)
 		}
@@ -122,6 +153,7 @@ func adsrRelease(s *adsrState) adsrStateFunc {
 }
 
 func prepAttack(s *adsrState) adsrStateFunc {
+	s.endOfCycle = false
 	s.multiplier = expRatio(s.ratio, s.attack)
 	s.base = (1.0 + s.ratio) * (1.0 - s.multiplier)
 	return adsrAttack

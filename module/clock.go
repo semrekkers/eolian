@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	Register("RotatingClockDivide", func(Config) (Patcher, error) { return newRCD() })
+	Register("RotatingClockDivide", func(Config) (Patcher, error) { return newRCD(8) })
 	Register("ClockDivide", func(c Config) (Patcher, error) {
 		var config struct {
 			Divisor int
@@ -124,29 +124,34 @@ func (m *clockMultiply) Read(out Frame) {
 
 type rcd struct {
 	IO
-	in, rotate, reset            *In
-	reads, rotation, maxRotation int
-	ticks                        []int
+	in, rotate, reset     *In
+	rotation, maxRotation int
+	ticks                 []int
 
 	lastIn, lastRotate, lastReset Value
+	readTracker                   manyReadTracker
+	outs                          []Frame
 }
 
-func newRCD() (*rcd, error) {
-	size := 8
-
+func newRCD(size int) (*rcd, error) {
 	m := &rcd{
 		in:          &In{Name: "input", Source: NewBuffer(zero)},
 		rotate:      &In{Name: "rotate", Source: NewBuffer(zero)},
 		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
 		ticks:       make([]int, size),
+		outs:        make([]Frame, size),
 		maxRotation: size,
+		lastIn:      -1,
+		lastReset:   -1,
+		lastRotate:  -1,
 	}
 
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
+		m.outs[i] = make(Frame, FrameSize)
 		outputs = append(outputs, &Out{
 			Name:     strconv.Itoa(i + 1),
-			Provider: Provide(&rcdOut{rcd: m, pos: i})})
+			Provider: m.out(&m.outs[i])})
 	}
 
 	return m, m.Expose(
@@ -156,64 +161,51 @@ func newRCD() (*rcd, error) {
 	)
 }
 
-func (d *rcd) read(out Frame) {
-	if d.reads > 0 {
+func (d *rcd) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: d, cache: cache}
+	})
+}
+
+func (d *rcd) readMany(out Frame) {
+	if d.readTracker.count() > 0 {
+		d.readTracker.incr()
 		return
 	}
-	d.in.ReadFrame()
-	d.rotate.ReadFrame()
-	d.reset.ReadFrame()
-}
 
-func (d *rcd) tick(times int, do func(int)) {
-	rotate := d.rotate.LastFrame()
-	reset := d.reset.LastFrame()
-	for i := 0; i < times; i++ {
-		if d.reads == 0 {
-			if d.lastRotate < 0 && rotate[i] > 0 {
-				d.rotation = (d.rotation + 1) % d.maxRotation
+	var (
+		in     = d.in.ReadFrame()
+		rotate = d.rotate.ReadFrame()
+		reset  = d.reset.ReadFrame()
+	)
+
+	for i := range out {
+		if d.lastRotate < 0 && rotate[i] > 0 {
+			d.rotation = (d.rotation + 1) % d.maxRotation
+		}
+		if d.lastReset < 0 && reset[i] > 0 {
+			d.rotation = 0
+		}
+
+		for j := 0; j < len(d.outs); j++ {
+			count := j - d.rotation
+			if count < 0 {
+				count = d.maxRotation + count
 			}
-			if d.lastReset < 0 && reset[i] > 0 {
-				d.rotation = 0
+			if d.lastIn < 0 && in[i] > 0 {
+				d.ticks[j] = (d.ticks[j] + 1) % (count + 1)
 			}
-			d.lastReset = reset[i]
-			d.lastRotate = rotate[i]
+			if d.ticks[j] == 0 {
+				d.outs[j][i] = 1
+			} else {
+				d.outs[j][i] = -1
+			}
 		}
-		do(i)
-	}
-}
 
-func (d *rcd) postRead() {
-	if outs := d.OutputsActive(); outs > 0 {
-		d.reads = (d.reads + 1) % outs
-	}
-}
-
-type rcdOut struct {
-	*rcd
-	pos  int
-	last Value
-}
-
-func (d *rcdOut) Read(out Frame) {
-	d.read(out)
-	in := d.in.LastFrame()
-
-	count := d.pos - d.rotation
-	if count < 0 {
-		count = d.maxRotation + count
+		d.lastIn = in[i]
+		d.lastReset = reset[i]
+		d.lastRotate = rotate[i]
 	}
 
-	d.tick(len(out), func(i int) {
-		if d.last < 0 && in[i] > 0 {
-			d.ticks[d.pos] = (d.ticks[d.pos] + 1) % (count + 1)
-		}
-		d.last = in[i]
-		if d.ticks[d.pos] == 0 {
-			out[i] = 1
-		} else {
-			out[i] = -1
-		}
-	})
-	d.postRead()
+	d.readTracker.incr()
 }

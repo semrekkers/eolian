@@ -10,11 +10,13 @@ const randomSeriesMax = 32
 
 type randomSeries struct {
 	IO
-	clock, size, trigger             *In
-	min, max                         *In
-	reads, idx                       int
+	clock, size, trigger, min, max   *In
+	idx                              int
 	memory, gateMemory               []Value
 	lastSize, lastTrigger, lastClock Value
+
+	readTracker        manyReadTracker
+	valuesOut, gateOut Frame
 }
 
 func newRandomSeries() (*randomSeries, error) {
@@ -26,48 +28,45 @@ func newRandomSeries() (*randomSeries, error) {
 		max:         &In{Name: "max", Source: NewBuffer(Value(1))},
 		memory:      make([]Value, randomSeriesMax),
 		gateMemory:  make([]Value, randomSeriesMax),
+		valuesOut:   make(Frame, FrameSize),
+		gateOut:     make(Frame, FrameSize),
 		lastTrigger: -1,
 		lastClock:   -1,
 	}
+
+	m.readTracker = manyReadTracker{counter: m}
+
 	return m, m.Expose(
 		"RandomSeries",
 		[]*In{m.size, m.trigger, m.clock, m.min, m.max},
 		[]*Out{
-			{Name: "values", Provider: Provide(&randomSeriesOut{randomSeries: m})},
-			{Name: "gate", Provider: Provide(&randomSeriesGate{randomSeries: m})},
+			{Name: "values", Provider: m.out(&m.valuesOut)},
+			{Name: "gate", Provider: m.out(&m.gateOut)},
 		},
 	)
 }
 
-func (s *randomSeries) read() {
-	if s.reads > 0 {
+func (s *randomSeries) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: s, cache: cache}
+	})
+}
+
+func (s *randomSeries) readMany(out Frame) {
+	if s.readTracker.count() > 0 {
+		s.readTracker.incr()
 		return
 	}
-	s.min.ReadFrame()
-	s.max.ReadFrame()
-	s.trigger.ReadFrame()
-	s.size.ReadFrame()
-	s.clock.ReadFrame()
-}
 
-func (s *randomSeries) postRead() {
-	if outs := s.OutputsActive(); outs > 0 {
-		s.reads = (s.reads + 1) % outs
-	}
-}
+	var (
+		min     = s.min.ReadFrame()
+		max     = s.max.ReadFrame()
+		trigger = s.trigger.ReadFrame()
+		size    = s.size.ReadFrame()
+		clock   = s.clock.ReadFrame()
+	)
 
-func (s *randomSeries) tick(times int, op func(int)) {
-	min := s.min.LastFrame()
-	max := s.max.LastFrame()
-	trigger := s.trigger.LastFrame()
-	size := s.size.LastFrame()
-	clock := s.clock.LastFrame()
-
-	for i := 0; i < times; i++ {
-		if s.reads > 0 {
-			op(i)
-			continue
-		}
+	for i := range out {
 		size := clampValue(size[i], 1, randomSeriesMax)
 		if s.lastClock < 0 && clock[i] > 0 {
 			s.idx++
@@ -85,39 +84,18 @@ func (s *randomSeries) tick(times int, op func(int)) {
 				}
 			}
 		}
+
+		s.valuesOut[i] = s.memory[s.idx]
+		if s.gateMemory[s.idx] > 0 {
+			s.gateOut[i] = clock[i]
+		} else {
+			s.gateOut[i] = -1
+		}
+
 		s.lastSize = size
 		s.lastTrigger = trigger[i]
 		s.lastClock = clock[i]
-
-		op(i)
 	}
-}
 
-type randomSeriesOut struct {
-	*randomSeries
-}
-
-func (o *randomSeriesOut) Read(out Frame) {
-	o.read()
-	o.tick(len(out), func(i int) {
-		out[i] = o.memory[o.idx]
-	})
-	o.postRead()
-}
-
-type randomSeriesGate struct {
-	*randomSeries
-}
-
-func (o *randomSeriesGate) Read(out Frame) {
-	o.read()
-	clock := o.clock.LastFrame()
-	o.tick(len(out), func(i int) {
-		if o.gateMemory[o.idx] > 0 {
-			out[i] = clock[i]
-		} else {
-			out[i] = -1
-		}
-	})
-	o.postRead()
+	s.readTracker.incr()
 }
