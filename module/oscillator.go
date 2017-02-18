@@ -44,8 +44,9 @@ type oscillator struct {
 
 	algorithm string
 	state     *oscStateFrames
-	reads     int
 	phases    []float64
+
+	readTracker manyReadTracker
 }
 
 type oscStateFrames struct {
@@ -67,6 +68,8 @@ func newOscillator(algorithm string, multiplier float64) (*oscillator, error) {
 		phases:         make([]float64, 5),
 		algorithm:      algorithm,
 	}
+
+	m.readTracker = manyReadTracker{counter: m}
 
 	err := m.Expose(
 		"Oscillator",
@@ -93,28 +96,32 @@ func newOscillator(algorithm string, multiplier float64) (*oscillator, error) {
 }
 
 func (o *oscillator) out(idx int, shape int, multiplier float64) ReaderProvider {
-	return Provide(&oscOut{
-		oscillator: o,
-		phaseIndex: idx,
-		shape:      shape,
-		multiplier: multiplier,
+	return ReaderProviderFunc(func() Reader {
+		return &oscOut{
+			oscillator: o,
+			phaseIndex: idx,
+			shape:      shape,
+			multiplier: multiplier,
+		}
 	})
 }
 
 func (o *oscillator) read(out Frame) {
-	if o.reads == 0 {
-		o.state.pitch = o.pitch.ReadFrame()
-		o.state.pitchMod = o.pitchMod.ReadFrame()
-		o.state.pitchModAmount = o.pitchModAmount.ReadFrame()
-		o.state.amp = o.amp.ReadFrame()
-		o.state.offset = o.offset.ReadFrame()
-		o.state.detune = o.detune.ReadFrame()
-		o.state.sync = o.sync.ReadFrame()
-		o.state.pulseWidth = o.pulseWidth.ReadFrame()
+	if o.readTracker.count() > 0 {
+		o.readTracker.incr()
+		return
 	}
-	if count := o.OutputsActive(); count > 0 {
-		o.reads = (o.reads + 1) % count
-	}
+
+	o.state.pitch = o.pitch.ReadFrame()
+	o.state.pitchMod = o.pitchMod.ReadFrame()
+	o.state.pitchModAmount = o.pitchModAmount.ReadFrame()
+	o.state.amp = o.amp.ReadFrame()
+	o.state.offset = o.offset.ReadFrame()
+	o.state.detune = o.detune.ReadFrame()
+	o.state.sync = o.sync.ReadFrame()
+	o.state.pulseWidth = o.pulseWidth.ReadFrame()
+
+	o.readTracker.incr()
 }
 
 type oscOut struct {

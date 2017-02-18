@@ -27,14 +27,14 @@ var minSpliceSize = int(Duration(10).Value())
 
 type tape struct {
 	IO
-	in, speed, play, record, reset, bias *In
-	organize, splice, unsplice           *In
 
-	state     *tapeState
-	stateFunc tapeStateFunc
-	reads     int
+	in, play, record, reset, splice, unsplice,
+	speed, bias, organize *In
 
-	endOfSplice Frame
+	state                 *tapeState
+	stateFunc             tapeStateFunc
+	readTracker           manyReadTracker
+	mainOut, endSpliceOut Frame
 }
 
 func newTape(max int, file string) (*tape, error) {
@@ -49,18 +49,20 @@ func newTape(max int, file string) (*tape, error) {
 	}
 
 	m := &tape{
-		in:          &In{Name: "input", Source: zero},
-		speed:       &In{Name: "speed", Source: NewBuffer(Value(1))},
-		play:        &In{Name: "play", Source: NewBuffer(Value(1))},
-		record:      &In{Name: "record", Source: NewBuffer(zero)},
-		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
-		bias:        &In{Name: "bias", Source: NewBuffer(zero)},
-		organize:    &In{Name: "organize", Source: NewBuffer(zero)},
-		splice:      &In{Name: "splice", Source: NewBuffer(zero)},
-		unsplice:    &In{Name: "unsplice", Source: NewBuffer(zero)},
-		stateFunc:   tapeIdle,
-		endOfSplice: make(Frame, FrameSize),
+		in:           &In{Name: "input", Source: zero},
+		speed:        &In{Name: "speed", Source: NewBuffer(Value(1))},
+		play:         &In{Name: "play", Source: NewBuffer(Value(1))},
+		record:       &In{Name: "record", Source: NewBuffer(zero)},
+		reset:        &In{Name: "reset", Source: NewBuffer(zero)},
+		bias:         &In{Name: "bias", Source: NewBuffer(zero)},
+		organize:     &In{Name: "organize", Source: NewBuffer(zero)},
+		splice:       &In{Name: "splice", Source: NewBuffer(zero)},
+		unsplice:     &In{Name: "unsplice", Source: NewBuffer(zero)},
+		stateFunc:    tapeIdle,
+		mainOut:      make(Frame, FrameSize),
+		endSpliceOut: make(Frame, FrameSize),
 	}
+	m.readTracker = manyReadTracker{counter: m}
 
 	if w != nil {
 		samples, err := w.ReadAll()
@@ -87,78 +89,74 @@ func newTape(max int, file string) (*tape, error) {
 		"Tape",
 		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
 		[]*Out{
-			{Name: "output", Provider: Provide(&tapeOut{tape: m})},
-			{Name: "endsplice", Provider: Provide(&tapeEndOfSplice{tape: m})},
+			{Name: "output", Provider: m.out(&m.mainOut)},
+			{Name: "endsplice", Provider: m.out(&m.endSpliceOut)},
 		},
 	)
 }
 
-func (t *tape) read(out Frame) {
-	if t.reads == 0 {
-		t.in.Read(out)
-		t.speed.ReadFrame()
-		t.play.ReadFrame()
-		t.record.ReadFrame()
-		t.reset.ReadFrame()
-		t.organize.ReadFrame()
-		t.splice.ReadFrame()
-		t.unsplice.ReadFrame()
-		t.bias.ReadFrame()
-	}
-
-	if outs := t.OutputsActive(); outs > 0 {
-		t.reads = (t.reads + 1) % outs
-	}
+func (t *tape) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: t, cache: cache}
+	})
 }
 
-type tapeOut struct {
-	*tape
-}
+func (t *tape) readMany(out Frame) {
+	if t.readTracker.count() > 0 {
+		t.readTracker.incr()
+		return
+	}
 
-func (o *tapeOut) Read(out Frame) {
-	o.read(out)
+	t.in.Read(out)
+
+	var (
+		speed    = t.speed.ReadFrame()
+		play     = t.play.ReadFrame()
+		record   = t.record.ReadFrame()
+		reset    = t.reset.ReadFrame()
+		organize = t.organize.ReadFrame()
+		splice   = t.splice.ReadFrame()
+		unsplice = t.unsplice.ReadFrame()
+		bias     = t.bias.ReadFrame()
+	)
+
 	for i := range out {
-		o.state.in = out[i]
-		o.state.bias = o.bias.LastFrame()[i]
-		o.state.organize = o.organize.LastFrame()[i]
-		o.state.speed = o.speed.LastFrame()[i]
-		o.state.play = o.play.LastFrame()[i]
-		o.state.record = o.record.LastFrame()[i]
-		o.state.reset = o.reset.LastFrame()[i]
-		o.state.splice = o.splice.LastFrame()[i]
-		o.state.unsplice = o.unsplice.LastFrame()[i]
-		o.state.atSpliceEnd = false
+		t.state.in = out[i]
+		t.state.bias = bias[i]
+		t.state.organize = organize[i]
+		t.state.speed = speed[i]
+		t.state.play = play[i]
+		t.state.record = record[i]
+		t.state.reset = reset[i]
+		t.state.splice = splice[i]
+		t.state.unsplice = unsplice[i]
+		t.state.atSpliceEnd = false
 
-		o.stateFunc = o.stateFunc(o.state)
-		out[i] = o.state.out
+		t.stateFunc = t.stateFunc(t.state)
+		t.mainOut[i] = t.state.out
 
-		o.state.lastPlay = o.state.play
-		o.state.lastRecord = o.state.record
-		o.state.lastReset = o.state.reset
-		o.state.lastSplice = o.state.splice
-		o.state.lastUnsplice = o.state.unsplice
-		if o.state.atSpliceEnd {
-			o.endOfSplice[i] = 1
+		t.state.lastPlay = t.state.play
+		t.state.lastRecord = t.state.record
+		t.state.lastReset = t.state.reset
+		t.state.lastSplice = t.state.splice
+		t.state.lastUnsplice = t.state.unsplice
+
+		if t.state.atSpliceEnd {
+			t.endSpliceOut[i] = 1
 		} else {
-			o.endOfSplice[i] = -1
+			t.endSpliceOut[i] = -1
 		}
 	}
-}
 
-type tapeEndOfSplice struct {
-	*tape
-}
-
-func (o *tapeEndOfSplice) Read(out Frame) {
-	o.read(out)
-	for i := range out {
-		out[i] = o.endOfSplice[i]
-	}
+	t.readTracker.incr()
 }
 
 type tapeState struct {
-	in, out, speed, play, organize, reset, record, splice, unsplice, bias Value
-	lastPlay, lastRecord, lastReset, lastSplice, lastUnsplice             Value
+	in, out, speed, play, organize, reset,
+	record, splice, unsplice, bias Value
+
+	lastPlay, lastRecord, lastReset,
+	lastSplice, lastUnsplice Value
 
 	markers *markers
 	memory  []Value

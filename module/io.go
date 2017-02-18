@@ -301,3 +301,36 @@ type Port struct {
 func canonicalPort(v string) string {
 	return strings.Replace(v, ".", "/", -1)
 }
+
+type outputCounter interface {
+	OutputsActive() int
+}
+
+type manyReadTracker struct {
+	counter outputCounter
+	reads   int
+}
+
+func (t *manyReadTracker) incr() {
+	if outs := t.counter.OutputsActive(); outs > 0 {
+		t.reads = (t.reads + 1) % outs
+	}
+}
+
+func (t *manyReadTracker) count() int {
+	return t.reads
+}
+
+type manyOutReader interface {
+	readMany(Frame)
+}
+
+type manyOut struct {
+	reader manyOutReader
+	cache  *Frame
+}
+
+func (o *manyOut) Read(out Frame) {
+	o.reader.readMany(out)
+	copy(out, *o.cache)
+}

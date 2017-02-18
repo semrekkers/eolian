@@ -35,14 +35,21 @@ const (
 
 type stageSequence struct {
 	IO
+	readTracker manyReadTracker
+
 	clock, transpose, reset, glide, mode *In
 	stages                               []stage
-	reads                                int
-	stage, lastStage                     int
-	pulse                                int
-	gateMode                             int
-	lastClock, lastReset                 Value
+	pulse, stage, lastStage              int
 	pong                                 bool
+	slew                                 *slew
+
+	lastClock, lastReset, rollingVelocity Value
+
+	gateOut,
+	pitchOut,
+	velocityOut,
+	syncOut,
+	endStageOut Frame
 }
 
 type stage struct {
@@ -51,17 +58,24 @@ type stage struct {
 
 func newStageSequence(stages int) (*stageSequence, error) {
 	m := &stageSequence{
-		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
-		transpose: &In{Name: "transpose", Source: NewBuffer(Value(1))},
-		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
-		glide:     &In{Name: "glide", Source: NewBuffer(zero)},
-		mode:      &In{Name: "mode", Source: NewBuffer(zero)},
-		stages:    make([]stage, stages),
-		lastClock: -1,
-		lastReset: -1,
-		lastStage: -1,
-		pulse:     -1,
+		clock:       &In{Name: "clock", Source: NewBuffer(zero)},
+		transpose:   &In{Name: "transpose", Source: NewBuffer(Value(1))},
+		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
+		glide:       &In{Name: "glide", Source: NewBuffer(zero)},
+		mode:        &In{Name: "mode", Source: NewBuffer(zero)},
+		stages:      make([]stage, stages),
+		lastClock:   -1,
+		lastReset:   -1,
+		lastStage:   -1,
+		pulse:       -1,
+		slew:        newSlew(),
+		gateOut:     make(Frame, FrameSize),
+		pitchOut:    make(Frame, FrameSize),
+		velocityOut: make(Frame, FrameSize),
+		syncOut:     make(Frame, FrameSize),
+		endStageOut: make(Frame, FrameSize),
 	}
+	m.readTracker = manyReadTracker{counter: m}
 
 	inputs := []*In{m.clock, m.transpose, m.reset, m.glide, m.mode}
 
@@ -100,25 +114,32 @@ func newStageSequence(stages int) (*stageSequence, error) {
 		"StageSequence",
 		inputs,
 		[]*Out{
-			{Name: "gate", Provider: Provide(&stageSeqGate{stageSequence: m})},
-			{Name: "pitch", Provider: Provide(&stageSeqPitch{stageSequence: m, slew: newSlew()})},
-			{Name: "velocity", Provider: Provide(&stageSeqVelocity{stageSequence: m})},
-			{Name: "endstage", Provider: Provide(&stageSeqEndStage{stageSequence: m})},
-			{Name: "sync", Provider: Provide(&stageSeqSync{stageSequence: m})},
+			{Name: "gate", Provider: m.out(&m.gateOut)},
+			{Name: "pitch", Provider: m.out(&m.pitchOut)},
+			{Name: "velocity", Provider: m.out(&m.velocityOut)},
+			{Name: "endstage", Provider: m.out(&m.endStageOut)},
+			{Name: "sync", Provider: m.out(&m.syncOut)},
 		},
 	)
 }
 
-func (s *stageSequence) read(out Frame) {
-	if s.reads > 0 {
+func (s *stageSequence) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: s, cache: cache}
+	})
+}
+
+func (s *stageSequence) readMany(out Frame) {
+	if s.readTracker.count() > 0 {
+		s.readTracker.incr()
 		return
 	}
 
-	s.clock.ReadFrame()
-	s.reset.ReadFrame()
-	s.mode.ReadFrame()
-	s.transpose.ReadFrame()
-	s.glide.ReadFrame()
+	clock := s.clock.ReadFrame()
+	reset := s.reset.ReadFrame()
+	mode := s.mode.ReadFrame()
+	transpose := s.transpose.ReadFrame()
+	glide := s.glide.ReadFrame()
 
 	for _, stg := range s.stages {
 		stg.pitch.ReadFrame()
@@ -127,25 +148,8 @@ func (s *stageSequence) read(out Frame) {
 		stg.glide.ReadFrame()
 		stg.velocity.ReadFrame()
 	}
-}
 
-func (s *stageSequence) postRead() {
-	if outs := s.OutputsActive(); outs > 0 {
-		s.reads = (s.reads + 1) % outs
-	}
-}
-
-func (s *stageSequence) tick(times int, op func(int)) {
-	clock := s.clock.LastFrame()
-	reset := s.reset.LastFrame()
-	mode := s.mode.LastFrame()
-
-	for i := 0; i < times; i++ {
-		if s.reads > 0 {
-			op(i)
-			continue
-		}
-
+	for i := range out {
 		if s.lastClock < 0 && clock[i] > 0 {
 			pulses := s.stages[s.stage].pulses.LastFrame()[i]
 			lastPulse := s.pulse
@@ -181,113 +185,68 @@ func (s *stageSequence) tick(times int, op func(int)) {
 			s.pulse = 0
 			s.stage = 0
 		}
+
+		s.fillGate(i, clock[i])
+		s.fillPitch(i, transpose[i], glide[i])
+		s.fillEndOfStage(i)
+		s.fillVelocity(i)
+
 		s.lastClock = clock[i]
 		s.lastReset = reset[i]
+	}
+	s.readTracker.incr()
+}
 
-		s.gateMode = mapGateMode(s.stages[s.stage].gateMode.LastFrame()[i])
+func (s *stageSequence) fillGate(i int, clock Value) {
+	gateMode := s.stages[s.stage].gateMode.LastFrame()
 
-		op(i)
+	switch mapGateMode(gateMode[i]) {
+	case gateModeHold:
+		s.gateOut[i] = 1
+	case gateModeRepeat:
+		if clock > 0 {
+			s.gateOut[i] = 1
+		} else {
+			s.gateOut[i] = -1
+		}
+	case gateModeSingle:
+		if s.pulse == 0 && clock > 0 {
+			s.gateOut[i] = 1
+		} else {
+			s.gateOut[i] = -1
+		}
+	case gateModeRest:
+		s.gateOut[i] = -1
 	}
 }
 
-type stageSeqGate struct {
-	*stageSequence
+func (s *stageSequence) fillPitch(i int, transpose, glideAmount Value) {
+	stage := s.stages[s.stage]
+	in := stage.pitch.LastFrame()[i] * transpose
+	glide := stage.glide.LastFrame()[i]
+	if glide > 0 {
+		s.pitchOut[i] = s.slew.Tick(in, glideAmount, glideAmount)
+	} else {
+		s.pitchOut[i] = in
+	}
 }
 
-func (o *stageSeqGate) Read(out Frame) {
-	o.read(out)
-	clock := o.clock.LastFrame()
-	o.tick(len(out), func(i int) {
-		switch o.gateMode {
-		case gateModeHold:
-			out[i] = 1
-		case gateModeRepeat:
-			if clock[i] > 0 {
-				out[i] = 1
-			} else {
-				out[i] = -1
-			}
-		case gateModeSingle:
-			if o.pulse == 0 && clock[i] > 0 {
-				out[i] = 1
-			} else {
-				out[i] = -1
-			}
-		case gateModeRest:
-			out[i] = -1
-		}
-	})
-	o.postRead()
+func (s *stageSequence) fillEndOfStage(i int) {
+	if s.lastStage != s.stage {
+		s.endStageOut[i] = 1
+	} else {
+		s.endStageOut[i] = -1
+	}
 }
 
-type stageSeqPitch struct {
-	*stageSequence
-	slew *slew
-}
-
-func (o *stageSeqPitch) Read(out Frame) {
-	o.read(out)
-	o.tick(len(out), func(i int) {
-		stage := o.stages[o.stage]
-		in := stage.pitch.LastFrame()[i] * o.transpose.LastFrame()[i]
-		glideAmount := o.glide.LastFrame()[i]
-		if stageGlide := stage.glide.LastFrame(); stageGlide[i] > 0 {
-			out[i] = o.slew.Tick(in, glideAmount, glideAmount)
-		} else {
-			out[i] = in
-		}
-	})
-	o.postRead()
-}
-
-type stageSeqSync struct {
-	*stageSequence
-}
-
-func (o *stageSeqSync) Read(out Frame) {
-	o.read(out)
-	o.tick(len(out), func(i int) {
-		if o.stage == 0 && o.pulse == 0 {
-			out[i] = 1
-		} else {
-			out[i] = -1
-		}
-	})
-	o.postRead()
-}
-
-type stageSeqEndStage struct {
-	*stageSequence
-}
-
-func (o *stageSeqEndStage) Read(out Frame) {
-	o.read(out)
-	o.tick(len(out), func(i int) {
-		if o.lastStage != o.stage {
-			out[i] = 1
-		} else {
-			out[i] = -1
-		}
-	})
-	o.postRead()
-}
-
-type stageSeqVelocity struct {
-	*stageSequence
-	rolling Value
+func (s *stageSequence) fillVelocity(i int) {
+	velocity := s.stages[s.stage].velocity.LastFrame()
+	s.rollingVelocity -= s.rollingVelocity / averageVelocitySamples
+	s.rollingVelocity += velocity[i] / averageVelocitySamples
+	s.velocityOut[i] = s.rollingVelocity
 }
 
 const averageVelocitySamples = 100
-
-func (o *stageSeqVelocity) Read(out Frame) {
-	o.read(out)
-	o.tick(len(out), func(i int) {
-		o.rolling -= o.rolling / averageVelocitySamples
-		o.rolling += o.stages[o.stage].velocity.LastFrame()[i] / averageVelocitySamples
-		out[i] = o.rolling
-	})
-	o.postRead()
-}
 
 func mapPatternMode(v Value) int {
 	switch v {

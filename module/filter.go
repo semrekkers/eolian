@@ -23,7 +23,7 @@ type svFilter struct {
 	IO
 	in, cutoff, resonance *In
 	filter                *filter
-	reads                 int
+	readTracker           manyReadTracker
 	lp, bp, hp            Frame
 }
 
@@ -37,64 +37,44 @@ func newSVFilter(poles int) (*svFilter, error) {
 		bp:        make(Frame, FrameSize),
 		hp:        make(Frame, FrameSize),
 	}
+
+	m.readTracker = manyReadTracker{counter: m}
+
 	return m, m.Expose(
 		"Filter",
 		[]*In{m.in, m.cutoff, m.resonance},
 		[]*Out{
-			{Name: "lowpass", Provider: m.out(lowpass)},
-			{Name: "highpass", Provider: m.out(highpass)},
-			{Name: "bandpass", Provider: m.out(bandpass)},
+			{Name: "lowpass", Provider: m.out(&m.lp)},
+			{Name: "highpass", Provider: m.out(&m.hp)},
+			{Name: "bandpass", Provider: m.out(&m.bp)},
 		},
 	)
 }
 
-func (f *svFilter) out(m filterMode) ReaderProvider {
-	return Provide(&svFilterOut{svFilter: f, mode: m})
+func (f *svFilter) out(cache *Frame) ReaderProvider {
+	return ReaderProviderFunc(func() Reader {
+		return &manyOut{reader: f, cache: cache}
+	})
 }
 
-func (f *svFilter) read(out Frame) {
-	if f.reads == 0 {
-		f.in.Read(out)
-		cutoff := f.cutoff.ReadFrame()
-		resonance := f.resonance.ReadFrame()
-
-		for i := range out {
-			f.filter.cutoff = cutoff[i]
-			f.filter.resonance = resonance[i]
-			f.lp[i], f.bp[i], f.hp[i] = f.filter.Tick(out[i])
-		}
+func (f *svFilter) readMany(out Frame) {
+	if f.readTracker.count() > 0 {
+		f.readTracker.incr()
+		return
 	}
-	if count := f.OutputsActive(); count > 0 {
-		f.reads = (f.reads + 1) % count
-	}
-}
 
-type svFilterOut struct {
-	*svFilter
-	mode filterMode
-}
+	f.in.Read(out)
+	cutoff := f.cutoff.ReadFrame()
+	resonance := f.resonance.ReadFrame()
 
-func (f *svFilterOut) Read(out Frame) {
-	f.read(out)
 	for i := range out {
-		switch f.mode {
-		case lowpass:
-			out[i] = f.lp[i]
-		case highpass:
-			out[i] = f.hp[i]
-		case bandpass:
-			out[i] = f.bp[i]
-		}
+		f.filter.cutoff = cutoff[i]
+		f.filter.resonance = resonance[i]
+		f.lp[i], f.bp[i], f.hp[i] = f.filter.Tick(out[i])
 	}
+
+	f.readTracker.incr()
 }
-
-type filterMode int
-
-const (
-	lowpass filterMode = iota
-	highpass
-	bandpass
-)
 
 type filter struct {
 	poles              int
