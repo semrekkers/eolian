@@ -1,7 +1,7 @@
 return function(env)
-    local synth       = require('eolian.synth')
-    local theory      = require('eolian.theory')
-    local interpolate = require('eolian.synth.interpolate')
+    local synth  = require('eolian.synth')
+    local theory = require('eolian.theory')
+    local ctrl   = require('eolian.synth.control')
 
     local function build()
         return {
@@ -16,7 +16,7 @@ return function(env)
                 quant   = synth.Quantize(),
             },
             voice = {
-                adsr = interpolate(synth.ADSR(), {
+                adsr = ctrl(synth.ADSR(), {
                     attack  = { min = ms(10), max = ms(1000) },
                     decay   = { min = ms(10), max = ms(1000) },
                     release = { min = ms(10), max = ms(1000) },
@@ -26,7 +26,7 @@ return function(env)
                 mix = synth.Mix(),
                 amp = synth.Multiply(),
             },
-            tape = interpolate(synth.Tape(), {
+            tape = ctrl(synth.Tape(), {
                 record   = { min = -1, max = 1 },
                 splice   = { min = -1, max = 1 },
                 unsplice = { min = -1, max = 1 },
@@ -35,12 +35,12 @@ return function(env)
                 reset    = { min = -1, max = 1 },
                 organize = { max = 1 },
             }),
-            delay = interpolate(synth.FilteredFBComb(), {
+            delay = ctrl(synth.FilteredFBComb(), {
                 cutoff   = { min = hz(50), max = hz(3000) },
                 duration = { min = ms(10), max = ms(1000) },
                 gain     = { max = 1 },
             }),
-            filter = interpolate(synth.Filter(), {
+            filter = ctrl(synth.Filter(), {
                 cutoff    = { min = hz(1000), max = hz(5000) },
                 resonance = { min = 1, max = 50 },
             }),

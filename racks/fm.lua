@@ -1,12 +1,12 @@
 return function(env)
     local synth  = require('eolian.synth')
     local theory = require('eolian.theory')
-    local interp = require('eolian.synth.interpolate')
+    local ctrl = require('eolian.synth.control')
 
     local function build()
         return {
             clock = {
-                osc      = interp(synth.Oscillator(), { pitch = { min = hz(1), max = hz(20) }}),
+                osc      = ctrl(synth.Oscillator(), { pitch = { min = hz(1), max = hz(20) }}),
                 multiple = synth.Multiple(),
             },
 
@@ -23,34 +23,34 @@ return function(env)
             },
 
             op1 = {
-                multiplierFloor = interp(synth.Floor(), { input = { min = 1, max = 10 } }),
+                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
                 multiplier      = synth.Multiply(),
                 osc             = synth.Oscillator { algorithm = 'simple' },
                 noise           = synth.Noise(),
             },
             op2 = {
-                multiplierFloor = interp(synth.Floor(), { input = { min = 1, max = 10 } }),
+                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
                 multiplier      = synth.Multiply(),
                 osc             = synth.Oscillator(),
                 noise           = synth.Noise(),
             },
             op3 = {
-                multiplierFloor = interp(synth.Floor(), { input = { min = 1, max = 10 } }),
+                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
                 multiplier      = synth.Multiply(),
                 osc             = synth.Oscillator(),
                 noise           = synth.Noise(),
             },
             op4 = {
-                multiplierFloor = interp(synth.Floor(), { input = { min = 1, max = 10 } }),
+                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
                 multiplier      = synth.Multiply(),
                 osc             = synth.Oscillator(),
                 noise           = synth.Noise(),
             },
 
             mix    = synth.Mix(),
-            filter = interp(synth.Filter(), { cutoff = { max = hz(5000) }, resonance = { max = 100 } }),
+            filter = ctrl(synth.Filter(), { cutoff = { max = hz(5000) }, resonance = { max = 100 } }),
 
-            adsr   = interp(synth.ADSR(), {
+            adsr   = ctrl(synth.ADSR(), {
                 attack  = { min = ms(1), max = ms(500) },
                 decay   = { min = ms(1), max = ms(500) },
                 release = { min = ms(1), max = ms(500) },
@@ -133,12 +133,11 @@ return function(env)
             { input = op3 },
             { input = op4 },
         })
-        set(m.filter, { input = out(m.mix), 
-                        cutoff = cc(27) })
 
-        set(m.amp, { a = out(m.filter, 'lowpass'), b = out(m.adsr) })
-        set(m.delay, { input = out(m.amp), gain = 0.3, duration = ms(200) })
-        return out(m.delay)
+        set(m.amp, { a = out(m.mix), b = out(m.adsr) })
+        set(m.delay, { input = out(m.amp), gain = 0.4, duration = ms(100) })
+        set(m.filter, { input = out(m.delay), cutoff = cc(27) })
+        return out(m.filter, 'lowpass')
     end
 
     return build, patch
