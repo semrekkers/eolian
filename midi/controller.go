@@ -364,7 +364,7 @@ func polyphonicOutputs(m *controller, count int) []*module.Out {
 	} else {
 		for i := 0; i < count; i++ {
 			outs = append(outs, &module.Out{
-				Name: fmt.Sprintf("%d.gate", i),
+				Name: fmt.Sprintf("%d/gate", i),
 				Provider: module.Provide(&ctrlGate{
 					controller:    m,
 					stateFunc:     gateUp,
@@ -372,8 +372,8 @@ func polyphonicOutputs(m *controller, count int) []*module.Out {
 					channelOffset: i,
 				}),
 			},
-				&module.Out{Name: fmt.Sprintf("%d.pitch", i), Provider: module.Provide(&ctrlPitch{controller: m, channelOffset: i})},
-				&module.Out{Name: fmt.Sprintf("%d.velocity", i), Provider: module.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
+				&module.Out{Name: fmt.Sprintf("%d/pitch", i), Provider: module.Provide(&ctrlPitch{controller: m, channelOffset: i})},
+				&module.Out{Name: fmt.Sprintf("%d/velocity", i), Provider: module.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
 		}
 	}
 
