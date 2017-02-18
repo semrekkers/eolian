@@ -321,12 +321,12 @@ func (t *manyReadTracker) count() int {
 	return t.reads
 }
 
-type manyOutReader interface {
+type trackedReader interface {
 	readMany(Frame)
 }
 
 type manyOut struct {
-	reader manyOutReader
+	reader trackedReader
 	cache  *Frame
 }
 
