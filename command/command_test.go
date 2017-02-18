@@ -10,7 +10,7 @@ func TestRun(t *testing.T) {
 	err := Run([]string{})
 	assert.Equal(t, err, nil)
 
-	err = Run([]string{"../racks/template.lua"})
+	err = Run([]string{"../examples/template.lua"})
 	assert.Equal(t, err, nil)
 
 	err = Run([]string{"notexistant.lua"})
