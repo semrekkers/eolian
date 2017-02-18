@@ -34,7 +34,7 @@ return function(count)
                 spread:set { input = inputs.spread }
             end
         end,
-        output = function()
+        out = function()
             return mix:out()
         end
     }
