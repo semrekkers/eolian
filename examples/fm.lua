@@ -23,28 +23,22 @@ return function(env)
             },
 
             op1 = {
-                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
-                multiplier      = synth.Multiply(),
-                osc             = synth.Oscillator { algorithm = 'simple' },
-                noise           = synth.Noise(),
+                multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
+                osc        = synth.Oscillator { algorithm = 'simple' },
             },
             op2 = {
-                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
-                multiplier      = synth.Multiply(),
-                osc             = synth.Oscillator(),
-                noise           = synth.Noise(),
+                multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
+                osc        = synth.Oscillator(),
+                noise      = synth.Noise(),
             },
             op3 = {
-                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
-                multiplier      = synth.Multiply(),
-                osc             = synth.Oscillator(),
-                noise           = synth.Noise(),
+                multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
+                osc        = synth.Oscillator(),
             },
             op4 = {
-                multiplierFloor = ctrl(synth.Floor(), { input = { min = 1, max = 10 } }),
-                multiplier      = synth.Multiply(),
-                osc             = synth.Oscillator(),
-                noise           = synth.Noise(),
+                multiplier = ctrl(synth.Multiply(), { a = { min = 1, max = 10 } }),
+                osc        = synth.Oscillator(),
+                noise      = synth.Noise(),
             },
 
             mix    = synth.Mix(),
@@ -98,39 +92,33 @@ return function(env)
         end)
 
         local op1 = with(m.op1, function(op)
-            set(op.multiplierFloor, { input = cc(21) })
-            set(op.multiplier, { a = out(op.multiplierFloor), b = out(oscA, 0) })
+            set(op.multiplier, { a = cc(21), b = out(oscA, 0) })
             set(op.osc, { pitch = out(op.multiplier), amp = cc(22) })
             return out(op.osc, 'sine')
         end)
 
         local op2 = with(m.op2, function(op)
-            set(op.multiplierFloor, { input = cc(41) })
-            set(op.multiplier, { a = out(op.multiplierFloor), b = out(oscA, 1) })
+            set(op.multiplier, { a = cc(41), b = out(oscA, 1) })
             set(op.osc, { pitch = out(op.multiplier), pitchMod = op1, amp = cc(42) })
-            set(op.noise, { input = out(op.osc, 'sine'), gain = 0.01 })
+            set(op.noise, { input = out(op.osc, 'sine'), gain = 0.1 })
             return out(op.noise)
         end)
 
         local op3 = with(m.op3, function(op)
-            set(op.multiplierFloor, { input = cc(23) })
-            set(op.multiplier, { a = out(op.multiplierFloor), b = out(oscB, 0) })
+            set(op.multiplier, { a = cc(23), b = out(oscB, 0) })
             set(op.osc, { pitch = out(op.multiplier), amp = cc(24) })
-            set(op.noise, { input = out(op.osc, 'saw'), gain = 0.1 })
-            return out(op.noise)
+            return out(op.osc, 'saw')
         end)
 
         local op4 = with(m.op4, function(op)
-            set(op.multiplierFloor, { input = cc(43) })
-            set(op.multiplier, { a = out(op.multiplierFloor), b = out(oscB, 1) })
-            set(op.osc, { pitch = out(op.multiplier), amp = cc(44) })
-            set(op.noise, { input = out(op.osc, 'pulse'), gain = 0.1 })
+            set(op.multiplier, { a = cc(43), b = out(oscB, 1) })
+            set(op.osc, { pitch = out(op.multiplier), pitchMod = op3, amp = cc(44) })
+            set(op.noise, { input = out(op.osc, 'sine'), gain = 0.1 })
             return out(op.noise)
         end)
 
         set(m.mix, {
             { input = op2 },
-            { input = op3 },
             { input = op4 },
         })
 
