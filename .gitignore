@@ -4,4 +4,4 @@ bin/*
 coverage.out
 trace.out
 
-lua/static.go
+lua/lib.go
