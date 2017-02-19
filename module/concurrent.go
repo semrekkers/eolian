@@ -1,14 +1,19 @@
 package module
 
+import (
+	"sync/atomic"
+)
+
 func init() {
 	Register("Concurrent", func(Config) (Patcher, error) { return newConcurrent() })
 }
 
 type concurrent struct {
 	IO
-	in   *In
-	ch   chan Frame
-	stop chan struct{}
+	in      *In
+	ch      chan Frame
+	stop    chan struct{}
+	running atomic.Value
 }
 
 func newConcurrent() (*concurrent, error) {
@@ -17,6 +22,7 @@ func newConcurrent() (*concurrent, error) {
 		ch:   make(chan Frame),
 		stop: make(chan struct{}),
 	}
+	m.running.Store(true)
 	go m.readInput()
 	return m, m.Expose(
 		"Concurrent",
@@ -43,7 +49,16 @@ func (c *concurrent) Read(out Frame) {
 	}
 }
 
+func (c *concurrent) Patch(name string, t interface{}) error {
+	if !c.running.Load().(bool) {
+		c.stop = make(chan struct{})
+		go c.readInput()
+	}
+	return c.IO.Patch(name, t)
+}
+
 func (c *concurrent) Close() error {
 	close(c.stop)
+	c.running.Store(false)
 	return nil
 }
