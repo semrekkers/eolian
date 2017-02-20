@@ -123,6 +123,9 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 		table.ForEach(func(k, v lua.LValue) {
 			if part == k.String() {
 				if vt, ok := v.(*lua.LTable); ok {
+					if vt.Len() == 0 {
+						return
+					}
 					table = vt
 					found = true
 					return
