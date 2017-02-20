@@ -16,12 +16,22 @@ var proxyFuncs = map[string]lua.LGFunction{
 func proxyInputs(state *lua.LState) int {
 	module := state.CheckTable(1)
 	fn := state.NewFunction(func(state *lua.LState) int {
-		inputs := state.CheckTable(2)
-		state.CallByParam(lua.P{
-			Fn:      module.RawGet(lua.LString("set")),
-			Protect: true,
-			NRet:    1,
-		}, module, inputs)
+		if state.GetTop() == 2 {
+			inputs := state.CheckTable(2)
+			state.CallByParam(lua.P{
+				Fn:      module.RawGet(lua.LString("set")),
+				Protect: true,
+				NRet:    1,
+			}, module, inputs)
+		} else if state.GetTop() == 3 {
+			name := state.CheckString(2)
+			input := state.CheckAny(3)
+			state.CallByParam(lua.P{
+				Fn:      module.RawGet(lua.LString("set")),
+				Protect: true,
+				NRet:    1,
+			}, module, lua.LString(name), input)
+		}
 		return 1
 	})
 	state.Push(fn)
