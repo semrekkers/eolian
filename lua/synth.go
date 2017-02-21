@@ -9,6 +9,7 @@ import (
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
+	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/module"
 )
 
@@ -109,7 +110,7 @@ func lock(m lockingModuleMethod, mtx *sync.Mutex, p module.Patcher) lua.LGFuncti
 
 func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
-		return map[string]lua.LGFunction{
+		fns := map[string]lua.LGFunction{
 			// Methods lock and interact with the graph
 			"close":     lock(moduleClose, mtx, p),
 			"reset":     lock(moduleReset, mtx, p),
@@ -125,6 +126,14 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 			"out":   moduleOutput(p),
 			"outFn": moduleOutputFunc(p),
 		}
+
+		if e, ok := p.(*engine.Engine); ok {
+			fns["latency"] = func(state *lua.LState) int {
+				state.Push(lua.LString(e.CurrentLatency().String()))
+				return 1
+			}
+		}
+		return fns
 	}(p)
 
 	table := state.NewTable()

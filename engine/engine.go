@@ -4,6 +4,7 @@ package engine
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/brettbuddin/eolian/module"
 	"github.com/gordonklaus/portaudio"
@@ -15,9 +16,11 @@ type Engine struct {
 	module.IO
 	in *module.In
 
-	device *portaudio.DeviceInfo
-	errors chan error
-	stop   chan error
+	device         *portaudio.DeviceInfo
+	errors         chan error
+	stop           chan error
+	timings        chan time.Duration
+	timingRequests chan chan time.Duration
 }
 
 // New returns a new Enngine
@@ -36,13 +39,24 @@ func New(deviceIndex int) (*Engine, error) {
 	fmt.Println("Output:", devices[deviceIndex].Name)
 
 	m := &Engine{
-		in:     &module.In{Name: "input", Source: module.NewBuffer(module.Value(0))},
-		errors: make(chan error),
-		stop:   make(chan error),
-		device: devices[deviceIndex],
+		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0))},
+		errors:         make(chan error),
+		stop:           make(chan error),
+		timings:        make(chan time.Duration),
+		timingRequests: make(chan chan time.Duration),
+		device:         devices[deviceIndex],
 	}
+
+	go collectTimings(m.timings, m.timingRequests)
+
 	err = m.Expose("Engine", []*module.In{m.in}, nil)
 	return m, err
+}
+
+func (e *Engine) CurrentLatency() time.Duration {
+	r := make(chan time.Duration)
+	e.timingRequests <- r
+	return <-r
 }
 
 // Errors returns a channel that expresses any errors during operation of the Engine
@@ -92,9 +106,23 @@ func (e *Engine) Stop() error {
 
 func (e *Engine) portAudioCallback(_, out []float32) {
 	e.Lock()
+	now := time.Now()
 	frame := e.in.ReadFrame()
 	for i := range out {
 		out[i] = float32(frame[i])
 	}
+	e.timings <- time.Since(now)
 	e.Unlock()
+}
+
+func collectTimings(timings <-chan time.Duration, requests chan chan time.Duration) {
+	var current time.Duration
+	for {
+		select {
+		case d := <-timings:
+			current = d
+		case ch := <-requests:
+			ch <- current
+		}
+	}
 }
