@@ -99,7 +99,8 @@ func (vm *VM) REPL() error {
 		if line == "" {
 			continue
 		}
-		if err := vm.DoString(fmt.Sprintf(`inspect(%s)`, line)); err != nil {
+
+		if err := vm.DoString(fmt.Sprintf("execLine(%q)", line)); err != nil {
 			fmt.Println("error:", err)
 		}
 	}

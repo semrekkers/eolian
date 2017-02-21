@@ -134,3 +134,33 @@ function inspect(o, prefix)
         print(o)
     end
 end
+
+local function autoReturn(line)
+    local f, err = loadstring('return ' .. line)
+    if not f then
+        f, err = loadstring(line)
+    end
+    return f, err
+end
+
+local function collectResults(success, ...)
+    local n = select('#', ...)
+    return success, { n = n, ... }
+end
+
+function execLine(line)
+    local f, err = autoReturn(line)
+    if not f then
+        error(err)
+        return
+    end
+
+    local success, results = collectResults(pcall(f))
+    if success then
+        for _,v in ipairs(results) do
+            inspect(v)
+        end
+    else
+        debug.trackback()
+    end
+end
