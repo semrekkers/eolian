@@ -25,6 +25,7 @@ func init() {
 type clock struct {
 	module.IO
 	stream                  *portmidi.Stream
+	streamEvents            <-chan portmidi.Event
 	deviceID                portmidi.DeviceID
 	frameRate, reads, count int
 	events                  []portmidi.Event
@@ -41,10 +42,11 @@ func newClock(device string, frameRate int) (*clock, error) {
 		return nil, err
 	}
 	m := &clock{
-		stream:    stream,
-		deviceID:  id,
-		frameRate: frameRate,
-		events:    make([]portmidi.Event, module.FrameSize),
+		stream:       stream,
+		streamEvents: stream.Listen(),
+		deviceID:     id,
+		frameRate:    frameRate,
+		events:       make([]portmidi.Event, module.FrameSize),
 	}
 	outs := []*module.Out{
 		{Name: "pulse", Provider: module.Provide(&clockPulse{m})},
@@ -56,13 +58,13 @@ func newClock(device string, frameRate int) (*clock, error) {
 func (c *clock) read(out module.Frame) {
 	if c.reads == 0 && c.stream != nil {
 		for i := range out {
-			events, err := c.stream.Read(1)
-			if err != nil {
-				panic(err)
-			}
-			if len(events) == 1 && (events[0].Status == 248 || events[0].Status == 250) {
-				c.events[i] = events[0]
-				c.count++
+			select {
+			case c.events[i] = <-c.streamEvents:
+				if e := c.events[i]; e.Status == 248 || e.Status == 250 {
+					c.count++
+				}
+			default:
+				c.events[i] = portmidi.Event{}
 			}
 		}
 	}
