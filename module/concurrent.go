@@ -53,6 +53,7 @@ func (c *concurrent) Patch(name string, t interface{}) error {
 	if !c.running.Load().(bool) {
 		c.stop = make(chan struct{})
 		go c.readInput()
+		c.running.Store(true)
 	}
 	return c.IO.Patch(name, t)
 }

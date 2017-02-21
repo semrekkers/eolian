@@ -2,6 +2,7 @@
 package midi
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/rakyll/portmidi"
@@ -26,4 +27,25 @@ func terminate() error {
 		return portmidi.Terminate()
 	}
 	return nil
+}
+
+func findInputDevice(name string) (portmidi.DeviceID, error) {
+	if name == "" {
+		return -1, fmt.Errorf("no device name specified")
+	}
+
+	var deviceID portmidi.DeviceID = -1
+	for i := 0; i < portmidi.CountDevices(); i++ {
+		id := portmidi.DeviceID(i)
+		info := portmidi.Info(id)
+		if info.Name == name && info.IsInputAvailable {
+			deviceID = id
+		}
+	}
+
+	if deviceID == -1 {
+		return -1, fmt.Errorf(`unknown device "%s"`, name)
+	}
+
+	return deviceID, nil
 }

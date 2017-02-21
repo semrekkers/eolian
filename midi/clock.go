@@ -8,40 +8,42 @@ import (
 
 func init() {
 	module.Register("MIDIClock", func(c module.Config) (module.Patcher, error) {
-		var config clockConfig
+		var config struct {
+			Device    string
+			FrameRate int
+		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
 		if config.FrameRate == 0 {
 			config.FrameRate = 24
 		}
-		return newClock(config)
+		return newClock(config.Device, config.FrameRate)
 	})
 }
 
-type clockConfig struct {
-	Device, FrameRate int
-}
-
 type clock struct {
-	*portmidi.Stream
 	module.IO
-
-	frameRate int
-	reads     int
-	count     int
-	events    []portmidi.Event
+	stream                  *portmidi.Stream
+	deviceID                portmidi.DeviceID
+	frameRate, reads, count int
+	events                  []portmidi.Event
 }
 
-func newClock(config clockConfig) (*clock, error) {
+func newClock(device string, frameRate int) (*clock, error) {
 	initMIDI()
-	stream, err := portmidi.NewInputStream(portmidi.DeviceID(config.Device), int64(module.FrameSize))
+	id, err := findInputDevice(device)
+	if err != nil {
+		return nil, err
+	}
+	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
 	if err != nil {
 		return nil, err
 	}
 	m := &clock{
-		Stream:    stream,
-		frameRate: config.FrameRate,
+		stream:    stream,
+		deviceID:  id,
+		frameRate: frameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
 	}
 	outs := []*module.Out{
@@ -52,9 +54,9 @@ func newClock(config clockConfig) (*clock, error) {
 }
 
 func (c *clock) read(out module.Frame) {
-	if c.reads == 0 {
+	if c.reads == 0 && c.stream != nil {
 		for i := range out {
-			events, err := c.Stream.Read(1)
+			events, err := c.stream.Read(1)
 			if err != nil {
 				panic(err)
 			}
@@ -69,12 +71,23 @@ func (c *clock) read(out module.Frame) {
 	}
 }
 
+func (c *clock) Output(name string) (*module.Out, error) {
+	if c.stream == nil {
+		var err error
+		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(module.FrameSize))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.IO.Output(name)
+}
+
 func (c *clock) Close() error {
-	if c.Stream != nil {
-		if err := c.Stream.Close(); err != nil {
+	if c.stream != nil {
+		if err := c.stream.Close(); err != nil {
 			return err
 		}
-		c.Stream = nil
+		c.stream = nil
 	}
 	return nil
 }

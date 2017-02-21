@@ -54,8 +54,9 @@ type cc struct {
 
 type controller struct {
 	module.IO
-	*portmidi.Stream
+	stream *portmidi.Stream
 
+	deviceID  portmidi.DeviceID
 	frameRate int
 	events    []portmidi.Event
 	reads     int
@@ -66,32 +67,19 @@ type controller struct {
 
 func newController(config controllerConfig) (*controller, error) {
 	initMIDI()
-
-	if config.Device == "" {
-		return nil, fmt.Errorf("no device name specified")
-	}
-
-	var deviceID portmidi.DeviceID = -1
-	for i := 0; i < portmidi.CountDevices(); i++ {
-		id := portmidi.DeviceID(i)
-		info := portmidi.Info(id)
-		if info.Name == config.Device && info.IsInputAvailable {
-			deviceID = id
-		}
-	}
-
-	if deviceID == -1 {
-		return nil, fmt.Errorf(`unknown device "%s"`, config.Device)
-	}
-
-	stream, err := portmidi.NewInputStream(deviceID, int64(module.FrameSize))
+	id, err := findInputDevice(config.Device)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("MIDI: %s\n", portmidi.Info(deviceID).Name)
+	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("MIDI: %s\n", portmidi.Info(id).Name)
 
 	m := &controller{
-		Stream:    stream,
+		stream:    stream,
+		deviceID:  id,
 		frameRate: config.FrameRate,
 		events:    make([]portmidi.Event, module.FrameSize),
 	}
@@ -123,12 +111,9 @@ func newController(config controllerConfig) (*controller, error) {
 }
 
 func (c *controller) read(out module.Frame) {
-	if c.reads == 0 {
+	if c.reads == 0 && c.stream != nil {
 		for i := range out {
-			if c.Stream == nil {
-				continue
-			}
-			events, err := c.Stream.Read(1)
+			events, err := c.stream.Read(1)
 			if err != nil {
 				panic(err)
 			}
@@ -144,12 +129,23 @@ func (c *controller) read(out module.Frame) {
 	}
 }
 
+func (c *controller) Output(name string) (*module.Out, error) {
+	if c.stream == nil {
+		var err error
+		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(module.FrameSize))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.IO.Output(name)
+}
+
 func (c *controller) Close() error {
-	if c.Stream != nil {
-		if err := c.Stream.Close(); err != nil {
+	if c.stream != nil {
+		if err := c.stream.Close(); err != nil {
 			return err
 		}
-		c.Stream = nil
+		c.stream = nil
 	}
 	return nil
 }
