@@ -5,7 +5,10 @@ import (
 	"math/rand"
 )
 
-var epsilon = math.Nextafter(1, 2) - 1
+var (
+	epsilon     = math.Nextafter(1, 2) - 1
+	alphaSeries = "abcdefghijklmnopqrstuvwxyz"
+)
 
 func clampValue(s, min, max Value) Value {
 	if s > max {
