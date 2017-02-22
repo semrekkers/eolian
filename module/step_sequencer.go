@@ -131,6 +131,9 @@ func (s *stepSequence) readMany(out Frame) {
 	}
 
 	for i := range out {
+		s.fillPitches(i)
+		s.fillGates(i, clock[i])
+
 		if s.lastClock < 0 && clock[i] > 0 {
 			s.step = (s.step + 1) % s.stepCount
 		}
@@ -140,9 +143,6 @@ func (s *stepSequence) readMany(out Frame) {
 		if s.enables[s.step].LastFrame()[i] <= 0 {
 			s.step = 0
 		}
-
-		s.fillPitches(i)
-		s.fillGates(i, clock[i])
 
 		s.lastClock = clock[i]
 		s.lastReset = reset[i]
