@@ -7,6 +7,7 @@ import (
 )
 
 var valueFuncs = map[string]lua.LGFunction{
+	"bpm":   bpm,
 	"hz":    hz,
 	"ms":    ms,
 	"pitch": pitch,
@@ -16,6 +17,13 @@ func hz(state *lua.LState) int {
 	value := state.ToNumber(1)
 	hz := module.Frequency(float64(value))
 	state.Push(&lua.LUserData{Value: hz})
+	return 1
+}
+
+func bpm(state *lua.LState) int {
+	value := state.ToNumber(1)
+	bpm := module.BPM(float64(value))
+	state.Push(&lua.LUserData{Value: bpm})
 	return 1
 }
 

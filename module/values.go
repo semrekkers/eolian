@@ -127,3 +127,23 @@ func ParseValueString(value string) (Valuer, error) {
 		return v, nil
 	}
 }
+
+// BeatsPerMin represents beats-per-minute
+type BeatsPerMin struct {
+	Valuer
+	Raw float64
+}
+
+// BPM returns a scalar value in beats-per-minute
+func BPM(v float64) BeatsPerMin {
+	return BeatsPerMin{Raw: v, Valuer: Value(v / 60 / SampleRate)}
+}
+
+func (bpm BeatsPerMin) String() string {
+	return fmt.Sprintf("%.2fBPM", bpm.Raw)
+}
+
+// Read reads the BPM real value to a Frame
+func (bpm BeatsPerMin) Read(out Frame) {
+	bpm.Value().Read(out)
+}
