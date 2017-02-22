@@ -135,6 +135,13 @@ var allModules = []struct {
 		"1.pulses",
 		"1.velocity",
 	}, []string{"gate", "pitch", "sync", "endstage"}},
+	{"StepSequence", Config{"steps": 2, "layers": 1}, []string{
+		"clock",
+		"a/0/pitch",
+		"a/1/pitch",
+		"1/enabled",
+		"1/enabled",
+	}, []string{"a/pitch", "a/0/gate", "a/1/gate"}},
 	{"Sum", nil, []string{"a", "b"}, defaultOutput},
 	{"Switch", nil, []string{"clock", "reset"}, defaultOutput},
 	{"Tape", nil, []string{
