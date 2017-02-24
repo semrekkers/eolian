@@ -32,29 +32,23 @@ type stepSequence struct {
 
 	clock, reset                          *In
 	enables                               []*In
-	steps                                 [][]step
+	pitches                               [][]*In
 	step, lastStep, layerCount, stepCount int
 	pong                                  bool
 
 	lastClock, lastReset Value
 
-	pitchesOut []Frame
-	gatesOut   [][]Frame
-}
-
-type step struct {
-	pitch *In
-	gate  *Out
+	pitchesOut, gatesOut []Frame
 }
 
 func newStepSequence(steps, layers int) (*stepSequence, error) {
 	m := &stepSequence{
 		clock:      &In{Name: "clock", Source: NewBuffer(zero)},
 		reset:      &In{Name: "reset", Source: NewBuffer(zero)},
-		enables:    make([]*In, steps),
 		pitchesOut: make([]Frame, layers),
-		gatesOut:   make([][]Frame, layers),
-		steps:      make([][]step, layers),
+		pitches:    make([][]*In, layers),
+		enables:    make([]*In, steps),
+		gatesOut:   make([]Frame, steps),
 		lastClock:  -1,
 		lastReset:  -1,
 		lastStep:   -1,
@@ -69,31 +63,19 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 	)
 
 	for i := 0; i < layers; i++ {
-		m.gatesOut[i] = make([]Frame, steps)
-		m.steps[i] = make([]step, steps)
-
+		m.pitches[i] = make([]*In, steps)
+		for j := 0; j < steps; j++ {
+			m.pitches[i][j] = &In{
+				Name:   fmt.Sprintf("%c/%d/pitch", alphaSeries[i], j),
+				Source: NewBuffer(zero),
+			}
+			inputs = append(inputs, m.pitches[i][j])
+		}
 		m.pitchesOut[i] = make(Frame, FrameSize)
-
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%c/pitch", alphaSeries[i]),
 			Provider: m.out(&m.pitchesOut[i]),
 		})
-
-		for j := 0; j < steps; j++ {
-			m.gatesOut[i][j] = make(Frame, FrameSize)
-			m.steps[i][j] = step{
-				pitch: &In{
-					Name:   fmt.Sprintf("%c/%d/pitch", alphaSeries[i], j),
-					Source: NewBuffer(zero),
-				},
-				gate: &Out{
-					Name:     fmt.Sprintf("%c/%d/gate", alphaSeries[i], j),
-					Provider: m.out(&m.gatesOut[i][j]),
-				},
-			}
-			inputs = append(inputs, m.steps[i][j].pitch)
-			outputs = append(outputs, m.steps[i][j].gate)
-		}
 	}
 
 	for i := 0; i < steps; i++ {
@@ -102,6 +84,12 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 			Source: NewBuffer(Value(1)),
 		}
 		inputs = append(inputs, m.enables[i])
+
+		m.gatesOut[i] = make(Frame, FrameSize)
+		outputs = append(outputs, &Out{
+			Name:     fmt.Sprintf("%d/gate", i),
+			Provider: m.out(&m.gatesOut[i]),
+		})
 	}
 
 	return m, m.Expose("StepSequence", inputs, outputs)
@@ -121,9 +109,9 @@ func (s *stepSequence) readMany(out Frame) {
 
 	clock := s.clock.ReadFrame()
 	reset := s.reset.ReadFrame()
-	for l, layer := range s.steps {
+	for l, layer := range s.pitches {
 		for i := range layer {
-			s.steps[l][i].pitch.ReadFrame()
+			s.pitches[l][i].ReadFrame()
 		}
 	}
 	for i := 0; i < s.stepCount; i++ {
@@ -151,19 +139,17 @@ func (s *stepSequence) readMany(out Frame) {
 }
 
 func (s *stepSequence) fillPitches(i int) {
-	for l := range s.steps {
-		s.pitchesOut[l][i] = s.steps[l][s.step].pitch.LastFrame()[i]
+	for l := range s.pitches {
+		s.pitchesOut[l][i] = s.pitches[l][s.step].LastFrame()[i]
 	}
 }
 
 func (s *stepSequence) fillGates(i int, clock Value) {
-	for l, layer := range s.gatesOut {
-		for step := range layer {
-			if clock > 0 && step == s.step {
-				s.gatesOut[l][step][i] = 1
-			} else {
-				s.gatesOut[l][step][i] = -1
-			}
+	for j := range s.gatesOut {
+		if clock > 0 && j == s.step {
+			s.gatesOut[j][i] = 1
+		} else {
+			s.gatesOut[j][i] = -1
 		}
 	}
 }
