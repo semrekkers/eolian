@@ -15,7 +15,7 @@ return function(env)
         local adsr = synth.ADSR()
         local mult = synth.Multiply()
 
-        pitch:set { input = midi:scope(idx):out('pitch') }
+        pitch:set { input = midi:ns(idx):out('pitch') }
 
         high.osc:set  { pitch = pitch:out(0) }
         low.pitch:set { a = pitch:out(1), b = 0.5 }
@@ -27,7 +27,7 @@ return function(env)
         }
 
         adsr:set  {
-            gate    = midi:scope(idx):out('gate'),
+            gate    = midi:ns(idx):out('gate'),
             attack  = ms(100),
             decay   = ms(50),
             sustain = 0.9,
@@ -36,7 +36,7 @@ return function(env)
         mult:set { a = mix:out(), b = adsr:out() }
 
         return { 
-            output = function() 
+            out = function() 
                 return mult:out()
             end
         }
@@ -44,7 +44,7 @@ return function(env)
 
     local function build()
         local midi = synth.MIDIController { 
-            device    = "DEVICE_NAME",
+            device    = "QuNexus Port 1",
             polyphony = polyphony,
         }
 
@@ -67,7 +67,7 @@ return function(env)
     local function patch(modules)
         with(modules, function(m)
             for i = 0,polyphony-1 do
-                m.mix:scope(i):set { input = m.voices[i+1]:out() }
+                m.mix:ns(i):set { input = m.voices[i+1]:out() }
             end
 
             m.filter:set   { input = m.mix:out(), cutoff = hz(5000) }
