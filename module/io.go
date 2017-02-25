@@ -158,7 +158,11 @@ func (io *IO) OutputsActive(sinking bool) int {
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
-		if (sinking && out.IsActive() && out.IsSinking()) || out.IsActive() {
+		if sinking {
+			if out.IsActive() && out.IsSinking() {
+				i++
+			}
+		} else if out.IsActive() {
 			i++
 		}
 	}
