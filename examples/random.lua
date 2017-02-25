@@ -17,7 +17,7 @@ return function(env)
                 adsr = synth.ADSR(),
                 osc  = synth.Oscillator(),
                 mix  = synth.Mix(),
-                amp  = synth.Multiply(),
+                amp  = synth.LPGate(),
             },
             delay = {
                 cutoff = synth.Oscillator { algorithm = 'simple' },
@@ -72,8 +72,8 @@ return function(env)
                 { input = v.osc:out('sub') },
             }
             v.amp:set {
-                a = v.mix:out(),
-                b = v.adsr:out(),
+                input = v.mix:out(),
+                ctrl  = v.adsr:out(),
             }
         end)
 
