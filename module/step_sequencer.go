@@ -119,10 +119,7 @@ func (s *stepSequence) readMany(out Frame) {
 	}
 
 	for i := range out {
-		s.fillPitches(i)
-		s.fillGates(i, clock[i])
-
-		if s.lastClock < 0 && clock[i] > 0 {
+		if s.lastStep >= 0 && s.lastClock < 0 && clock[i] > 0 {
 			s.step = (s.step + 1) % s.stepCount
 		}
 		if s.lastReset < 0 && reset[i] > 0 {
@@ -132,8 +129,12 @@ func (s *stepSequence) readMany(out Frame) {
 			s.step = 0
 		}
 
+		s.fillPitches(i)
+		s.fillGates(i, clock[i])
+
 		s.lastClock = clock[i]
 		s.lastReset = reset[i]
+		s.lastStep = s.step
 	}
 	s.readTracker.incr()
 }
