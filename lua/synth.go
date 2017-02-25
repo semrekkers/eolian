@@ -194,7 +194,7 @@ func moduleSet(state *lua.LState, p module.Patcher) int {
 		}
 	} else if top == 3 {
 		self = state.CheckTable(1)
-		name := state.CheckString(2)
+		name := state.CheckAny(2).String()
 		raw := state.CheckAny(3)
 		inputs[name] = raw
 	} else {
