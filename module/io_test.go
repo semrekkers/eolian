@@ -7,41 +7,41 @@ import (
 )
 
 func TestPatching(t *testing.T) {
-	one, err := newModule()
+	one, err := newModule(false)
 	assert.Equal(t, err, nil)
 
-	two, err := newModule()
+	two, err := newModule(true)
 	assert.Equal(t, err, nil)
 
 	err = two.Patch("input", Port{one, "output"})
 	assert.Equal(t, err, nil)
 
-	actual, expected := one.OutputsActive(), 1
+	actual, expected := one.OutputsActive(true), 1
 	assert.Equal(t, actual, expected)
 
 	err = two.Reset()
 	assert.Equal(t, err, nil)
 
-	actual, expected = one.OutputsActive(), 0
+	actual, expected = one.OutputsActive(true), 0
 	assert.Equal(t, actual, expected)
 }
 
 func TestPatchingUnknownPort(t *testing.T) {
-	one, err := newModule()
+	one, err := newModule(false)
 	assert.Equal(t, err, nil)
 
-	two, err := newModule()
+	two, err := newModule(true)
 	assert.Equal(t, err, nil)
 
 	err = two.Patch("input", Port{one, "unknown"})
 	assert.NotEqual(t, err, nil)
 
-	actual, expected := one.OutputsActive(), 0
+	actual, expected := one.OutputsActive(true), 0
 	assert.Equal(t, actual, expected)
 }
 
 func TestListing(t *testing.T) {
-	module, err := newModule()
+	module, err := newModule(false)
 	assert.Equal(t, err, nil)
 
 	assert.Equal(t, module.Inputs(), module.ins)
@@ -51,7 +51,7 @@ func TestListing(t *testing.T) {
 }
 
 func TestPatchingValues(t *testing.T) {
-	one, err := newModule()
+	one, err := newModule(false)
 	assert.Equal(t, err, nil)
 
 	err = one.Patch("input", 1)
@@ -91,12 +91,12 @@ type mockOutput struct{}
 
 func (p mockOutput) Read(Frame) {}
 
-func newModule() (*IO, error) {
+func newModule(forceSinking bool) (*IO, error) {
 	io := &IO{}
 	if err := io.Expose(
 		"Module",
 		[]*In{
-			{Name: "input", Source: NewBuffer(zero)},
+			{Name: "input", Source: NewBuffer(zero), ForceSinking: forceSinking},
 			{Name: "level", Source: NewBuffer(zero)},
 		},
 		[]*Out{{Name: "output", Provider: Provide(mockOutput{})}},

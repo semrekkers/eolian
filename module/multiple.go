@@ -53,7 +53,7 @@ func (m *multiple) read(out Frame) {
 	for i := range out {
 		out[i] = m.frame[i]
 	}
-	if outs := m.OutputsActive(); outs > 0 {
+	if outs := m.OutputsActive(true); outs > 0 {
 		m.reads = (m.reads + 1) % outs
 	}
 }

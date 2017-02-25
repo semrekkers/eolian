@@ -48,6 +48,12 @@ var allModules = []struct {
 	{"Floor", nil, []string{"input"}, defaultOutput},
 	{"Fold", nil, []string{"input", "level"}, defaultOutput},
 	{"Follow", nil, []string{"input", "attack", "release"}, defaultOutput},
+	{"GateMix", nil, []string{
+		"0",
+		"1",
+		"2",
+		"3",
+	}, defaultOutput},
 	{"GateSequence", Config{"steps": 2}, []string{
 		"clock",
 		"reset",
@@ -189,11 +195,11 @@ func TestRegisteredModules(t *testing.T) {
 
 				err = p.Patch(name, out)
 				assert.Equal(t, err, nil)
-				assert.Equal(t, mock.OutputsActive(), 1)
+				assert.Equal(t, mock.OutputsActive(false), 1)
 
 				err = p.Reset()
 				assert.Equal(t, err, nil)
-				assert.Equal(t, mock.OutputsActive(), 0)
+				assert.Equal(t, mock.OutputsActive(false), 0)
 			}
 
 			frame := make(Frame, FrameSize)

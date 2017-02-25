@@ -68,7 +68,7 @@ func (c *clock) read(out module.Frame) {
 			}
 		}
 	}
-	if outs := c.OutputsActive(); outs > 0 {
+	if outs := c.OutputsActive(true); outs > 0 {
 		c.reads = (c.reads + 1) % outs
 	}
 }

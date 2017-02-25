@@ -154,11 +154,11 @@ func (io *IO) Output(name string) (*Out, error) {
 }
 
 // OutputsActive returns the total count of actively patched outputs
-func (io *IO) OutputsActive() int {
+func (io *IO) OutputsActive(sinking bool) int {
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
-		if out.IsActive() && out.IsSinking() {
+		if (sinking && out.IsActive() && out.IsSinking()) || out.IsActive() {
 			i++
 		}
 	}
@@ -276,10 +276,13 @@ func (i *In) Reset() error {
 }
 
 func (i *In) IsSinking() bool {
+	if i == nil {
+		return false
+	}
 	if i.ForceSinking {
 		return true
 	}
-	return i.owner.OutputsActive() > 0
+	return i.owner.OutputsActive(true) > 0
 }
 
 // Out is a module output
@@ -344,7 +347,7 @@ func canonicalPort(v string) string {
 }
 
 type outputCounter interface {
-	OutputsActive() int
+	OutputsActive(sinking bool) int
 }
 
 type manyReadTracker struct {
@@ -353,7 +356,7 @@ type manyReadTracker struct {
 }
 
 func (t *manyReadTracker) incr() {
-	if outs := t.counter.OutputsActive(); outs > 0 {
+	if outs := t.counter.OutputsActive(true); outs > 0 {
 		t.reads = (t.reads + 1) % outs
 	}
 }
