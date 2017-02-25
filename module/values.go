@@ -105,7 +105,7 @@ func Duration(v float64) MS {
 }
 
 func (ms MS) String() string {
-	return fmt.Sprintf("%dms", int(ms.Raw))
+	return fmt.Sprintf("%.2fms", ms.Raw)
 }
 
 // Read reads the real value to a Frame
