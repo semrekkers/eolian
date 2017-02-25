@@ -58,6 +58,7 @@ var allModules = []struct {
 	{"Interpolate", nil, []string{"input", "min", "max"}, defaultOutput},
 	{"Invert", nil, []string{"input"}, defaultOutput},
 	{"Filter", nil, []string{"input", "cutoff", "resonance"}, []string{"lowpass", "bandpass", "highpass"}},
+	{"LPGate", nil, []string{"input", "cutoff", "resonance", "ctrl", "mode"}, defaultOutput},
 	{"MathExp", Config{"expression": "x + y * 2"}, []string{"x", "y"}, defaultOutput},
 	{"Mix", nil, []string{
 		"0.input",
@@ -141,7 +142,7 @@ var allModules = []struct {
 		"a/1/pitch",
 		"1/enabled",
 		"1/enabled",
-	}, []string{"a/pitch", "a/0/gate", "a/1/gate"}},
+	}, []string{"a/pitch", "0/gate", "1/gate"}},
 	{"Sum", nil, []string{"a", "b"}, defaultOutput},
 	{"Switch", nil, []string{"clock", "reset"}, defaultOutput},
 	{"Tape", nil, []string{
