@@ -34,6 +34,11 @@ var synthConsts = map[string]lua.LValue{
 	// Gate sequencer modes
 	"MODE_OFF": lua.LNumber(0),
 	"MODE_ON":  lua.LNumber(1),
+
+	// LP gate modes
+	"MODE_LOWPASS":   lua.LNumber(0),
+	"MODE_COMBO":     lua.LNumber(1),
+	"MODE_AMPLITUDE": lua.LNumber(2),
 }
 
 func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
