@@ -39,7 +39,7 @@ func New(deviceIndex int) (*Engine, error) {
 	fmt.Println("Output:", devices[deviceIndex].Name)
 
 	m := &Engine{
-		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0))},
+		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
 		errors:         make(chan error),
 		stop:           make(chan error),
 		timings:        make(chan time.Duration),

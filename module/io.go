@@ -158,7 +158,7 @@ func (io *IO) OutputsActive() int {
 	io.lazyInit()
 	var i int
 	for _, out := range io.outs {
-		if out.IsActive() {
+		if out.IsActive() && out.IsSinking() {
 			i++
 		}
 	}
@@ -209,10 +209,11 @@ func (io *IO) Close() error {
 
 // In is a module input
 type In struct {
-	Source  Reader
-	Name    string
-	initial Reader
-	owner   *IO
+	Source       Reader
+	Name         string
+	ForceSinking bool
+	initial      Reader
+	owner        *IO
 }
 
 // Read reads the output of the source into a Frame
@@ -274,12 +275,20 @@ func (i *In) Reset() error {
 	return nil
 }
 
+func (i *In) IsSinking() bool {
+	if i.ForceSinking {
+		return true
+	}
+	return i.owner.OutputsActive() > 0
+}
+
 // Out is a module output
 type Out struct {
-	Name                string
-	Provider            ReaderProvider
-	reader, destination Reader
-	owner               *IO
+	Name        string
+	Provider    ReaderProvider
+	reader      Reader
+	destination *In
+	owner       *IO
 }
 
 func (o *Out) String() string {
@@ -297,8 +306,8 @@ func (o *Out) Read(out Frame) {
 	}
 }
 
-func (o *Out) setDestination(r Reader) {
-	o.destination = r
+func (o *Out) setDestination(in *In) {
+	o.destination = in
 }
 
 func (o *Out) DestinationName() string {
@@ -306,6 +315,10 @@ func (o *Out) DestinationName() string {
 		return "(none)"
 	}
 	return fmt.Sprintf("%s", o.destination)
+}
+
+func (o *Out) IsSinking() bool {
+	return o.destination.IsSinking()
 }
 
 // Close closes the output

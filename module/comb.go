@@ -179,10 +179,14 @@ type fbLoopComb struct {
 
 func newFBLoopComb(size MS) (*fbLoopComb, error) {
 	m := &fbLoopComb{
-		in:             &In{Name: "input", Source: zero},
-		duration:       &In{Name: "duration", Source: NewBuffer(Duration(1000))},
-		gain:           &In{Name: "gain", Source: NewBuffer(Value(0.98))},
-		feedbackReturn: &In{Name: "feedbackReturn", Source: NewBuffer(zero)},
+		in:       &In{Name: "input", Source: zero},
+		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
+		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.98))},
+		feedbackReturn: &In{
+			Name:         "feedbackReturn",
+			Source:       NewBuffer(zero),
+			ForceSinking: true,
+		},
 
 		sent: make(Frame, FrameSize),
 		line: newDelayLine(size),
