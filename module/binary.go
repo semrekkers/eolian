@@ -11,6 +11,8 @@ func init() {
 	Register("OR", func(Config) (Patcher, error) { return newBinary("OR", or, 0, 0) })
 	Register("XOR", func(Config) (Patcher, error) { return newBinary("XOR", xor, 0, 0) })
 	Register("AND", func(Config) (Patcher, error) { return newBinary("AND", and, 0, 0) })
+	Register("Max", func(Config) (Patcher, error) { return newBinary("Max", max, 0, 0) })
+	Register("Min", func(Config) (Patcher, error) { return newBinary("Min", min, 0, 0) })
 }
 
 type binary struct {
@@ -48,6 +50,18 @@ func divide(a, b Value) Value   { return a / b }
 func mod(a, b Value) Value      { return Value(math.Mod(float64(a), float64(b))) }
 func multiply(a, b Value) Value { return a * b }
 func sum(a, b Value) Value      { return a + b }
+func max(a, b Value) Value {
+	if a > b {
+		return a
+	}
+	return b
+}
+func min(a, b Value) Value {
+	if a < b {
+		return a
+	}
+	return b
+}
 func and(a, b Value) Value {
 	if a > 0 && b > 0 {
 		return 1
