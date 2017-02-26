@@ -270,7 +270,7 @@ func (s *tapeState) playback() {
 			start  = s.markers.At(s.spliceStart)
 			end    = s.markers.At(s.spliceEnd)
 			size   = (end - start) / grains
-			slide  = size * int(s.slide*Value(grains))
+			slide  = size * int(clampValue(s.slide, 0, 0.9)*Value(grains))
 		)
 
 		if s.offset >= start+slide+size {
