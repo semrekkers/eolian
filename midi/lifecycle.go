@@ -4,6 +4,7 @@ package midi
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/rakyll/portmidi"
 )
@@ -48,4 +49,26 @@ func findInputDevice(name string) (portmidi.DeviceID, error) {
 	}
 
 	return deviceID, nil
+}
+
+func streamEvents(s *portmidi.Stream, stop <-chan struct{}) <-chan portmidi.Event {
+	ch := make(chan portmidi.Event)
+	go func() {
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				time.Sleep(10 * time.Millisecond)
+				events, err := s.Read(1024)
+				if err != nil {
+					continue
+				}
+				for i := range events {
+					ch <- events[i]
+				}
+			}
+		}
+	}()
+	return ch
 }
