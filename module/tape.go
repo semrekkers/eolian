@@ -29,7 +29,7 @@ type tape struct {
 	IO
 
 	in, play, record, reset, splice, unsplice,
-	speed, bias, organize *In
+	speed, bias, organize, zoom, slide *In
 
 	state                 *tapeState
 	stateFunc             tapeStateFunc
@@ -58,6 +58,8 @@ func newTape(max int, file string) (*tape, error) {
 		organize:     &In{Name: "organize", Source: NewBuffer(zero)},
 		splice:       &In{Name: "splice", Source: NewBuffer(zero)},
 		unsplice:     &In{Name: "unsplice", Source: NewBuffer(zero)},
+		zoom:         &In{Name: "zoom", Source: NewBuffer(zero)},
+		slide:        &In{Name: "slide", Source: NewBuffer(zero)},
 		stateFunc:    tapeIdle,
 		mainOut:      make(Frame, FrameSize),
 		endSpliceOut: make(Frame, FrameSize),
@@ -87,7 +89,7 @@ func newTape(max int, file string) (*tape, error) {
 
 	return m, m.Expose(
 		"Tape",
-		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice},
+		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice, m.zoom, m.slide},
 		[]*Out{
 			{Name: "output", Provider: m.out(&m.mainOut)},
 			{Name: "endsplice", Provider: m.out(&m.endSpliceOut)},
@@ -118,6 +120,8 @@ func (t *tape) readMany(out Frame) {
 		splice   = t.splice.ReadFrame()
 		unsplice = t.unsplice.ReadFrame()
 		bias     = t.bias.ReadFrame()
+		zoom     = t.zoom.ReadFrame()
+		slide    = t.slide.ReadFrame()
 	)
 
 	for i := range out {
@@ -131,6 +135,9 @@ func (t *tape) readMany(out Frame) {
 		t.state.splice = splice[i]
 		t.state.unsplice = unsplice[i]
 		t.state.atSpliceEnd = false
+
+		t.state.zoom = zoom[i]
+		t.state.slide = slide[i]
 
 		t.stateFunc = t.stateFunc(t.state)
 		t.mainOut[i] = t.state.out
@@ -154,6 +161,8 @@ func (t *tape) readMany(out Frame) {
 type tapeState struct {
 	in, out, speed, play, organize, reset,
 	record, splice, unsplice, bias Value
+
+	zoom, slide Value
 
 	lastPlay, lastRecord, lastReset,
 	lastSplice, lastUnsplice Value
@@ -254,6 +263,23 @@ func (s *tapeState) writeToMemory(in Value, oversample int) {
 func (s *tapeState) playback() {
 	s.out = s.crossfade(s.in, s.memory[s.offset])
 	s.offset += int(s.playbackSpeed())
+
+	if s.zoom != 0 {
+		var (
+			grains = 1024 >> uint(10-(s.zoom*10))
+			start  = s.markers.At(s.spliceStart)
+			end    = s.markers.At(s.spliceEnd)
+			size   = (end - start) / grains
+			slide  = size * int(s.slide*Value(grains))
+		)
+
+		if s.offset >= start+slide+size {
+			s.offset = start + slide
+		} else if s.offset <= start+slide {
+			s.offset = start + slide + size
+		}
+		return
+	}
 
 	// Loop around (depending on which direction we are moving)
 	if s.offset >= s.markers.At(s.spliceEnd) {

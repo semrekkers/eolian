@@ -109,6 +109,8 @@ return function(env)
             speed    = cc(21),
             bias     = cc(22),
             organize = cc(23),
+            zoom     = cc(43),
+            slide    = cc(44),
         })
         set(modules.filter, { input = out(modules.tape), cutoff = cc(41), resonance = cc(42) })
 
