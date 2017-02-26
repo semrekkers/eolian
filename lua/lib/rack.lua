@@ -54,7 +54,12 @@ function Rack.build()
     end
 
     Rack.modules = modules
-    Engine:set { input = patch(Rack.modules) }
+    local result, err = pcall(function()
+        Engine:set { input = patch(Rack.modules) }
+    end)
+    if not result then
+        print(err)
+    end
 end
 
 function Rack.patch()
@@ -69,7 +74,12 @@ function Rack.patch()
         return
     end
 
-    Engine:set { input = patch(Rack.modules) }
+    local result, err = pcall(function()
+        Engine:set { input = patch(Rack.modules) }
+    end)
+    if not result then
+        print(err)
+    end
 end
 
 function Rack.load(path)
