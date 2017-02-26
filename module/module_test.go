@@ -127,7 +127,7 @@ var allModules = []struct {
 		"8",
 	}},
 	{"SampleHold", nil, []string{"input", "trigger"}, defaultOutput},
-	{"Sequence", Config{"stages": 2}, []string{
+	{"StageSequence", Config{"stages": 2}, []string{
 		"clock",
 		"glide",
 		"mode",

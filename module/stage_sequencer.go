@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	Register("Sequence", func(c Config) (Patcher, error) {
+	Register("StageSequence", func(c Config) (Patcher, error) {
 		var config struct {
 			Stages int
 		}
