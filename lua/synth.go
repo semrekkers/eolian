@@ -119,12 +119,13 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		fns := map[string]lua.LGFunction{
 			// Methods lock and interact with the graph
-			"close":       lock(moduleClose, mtx, p),
-			"closeInputs": lock(moduleCloseInputs, mtx, p),
-			"set":         lock(moduleSet, mtx, p),
-			"id":          lock(moduleID, mtx, p),
-			"inputs":      lock(moduleInputs, mtx, p),
-			"outputs":     lock(moduleOutputs, mtx, p),
+			"close":     lock(moduleClose, mtx, p),
+			"reset":     lock(moduleReset, mtx, p),
+			"resetOnly": lock(moduleResetOnly, mtx, p),
+			"set":       lock(moduleSet, mtx, p),
+			"id":        lock(moduleID, mtx, p),
+			"inputs":    lock(moduleInputs, mtx, p),
+			"outputs":   lock(moduleOutputs, mtx, p),
 
 			// Methods that don't need to lock the graph
 			"scope": moduleScopedOutput(p),
@@ -254,14 +255,21 @@ func moduleID(state *lua.LState, p module.Patcher) int {
 	return 1
 }
 
-func moduleCloseInputs(state *lua.LState, p module.Patcher) int {
+func moduleResetOnly(state *lua.LState, p module.Patcher) int {
 	names := state.CheckTable(1)
 
 	inputs := []string{}
 	names.ForEach(func(k, v lua.LValue) {
 		inputs = append(inputs, v.String())
 	})
-	if err := p.CloseInputs(inputs); err != nil {
+	if err := p.ResetOnly(inputs); err != nil {
+		state.RaiseError("%s", err.Error())
+	}
+	return 0
+}
+
+func moduleReset(state *lua.LState, p module.Patcher) int {
+	if err := p.Reset(); err != nil {
 		state.RaiseError("%s", err.Error())
 	}
 	return 0

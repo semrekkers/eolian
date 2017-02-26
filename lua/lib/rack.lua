@@ -23,7 +23,6 @@ local close = function(v)
 end
 
 Rack = {
-    latency = Engine.latency,
     env = {
         filepath = '',
         path     = '',
@@ -31,7 +30,7 @@ Rack = {
             return dofile(self.path .. '/' .. path)
         end
     },
-    modules = nil,
+    modules = nil
 }
 
 function Rack.clear()
@@ -41,17 +40,11 @@ end
 function Rack.build()
     assert(Rack.modules ~= nil, 'no rackfile loaded.')
 
-    local build, patch, modules
-    local result, err = pcall(function()
-        build, patch = dofile(Rack.env.filepath)(Rack.env)
-    end)
-    if not result then
-        print(err)
-        return
-    else
-        close(Rack.modules)
-        modules = build()
-    end
+    Rack.clear()
+    close(Rack.modules)
+
+    local build, patch = dofile(Rack.env.filepath)(Rack.env)
+    local modules = build()
 
     Rack.modules = modules
     local result, err = pcall(function()
@@ -75,6 +68,8 @@ function Rack.patch()
     end
 
     local result, err = pcall(function()
+        reset(Rack.modules)
+        Engine.reset()
         Engine:set { input = patch(Rack.modules) }
     end)
     if not result then

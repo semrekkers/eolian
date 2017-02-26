@@ -19,7 +19,7 @@ func TestPatching(t *testing.T) {
 	actual, expected := one.OutputsActive(true), 1
 	assert.Equal(t, actual, expected)
 
-	err = two.Unpatch("input")
+	err = two.Reset()
 	assert.Equal(t, err, nil)
 
 	actual, expected = one.OutputsActive(true), 0

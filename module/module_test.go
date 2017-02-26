@@ -199,7 +199,7 @@ func TestRegisteredModules(t *testing.T) {
 				assert.Equal(t, err, nil)
 				assert.Equal(t, mock.OutputsActive(false), 1)
 
-				err = p.Unpatch(name)
+				err = p.Reset()
 				assert.Equal(t, err, nil)
 				assert.Equal(t, mock.OutputsActive(false), 0)
 			}
