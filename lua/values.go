@@ -16,14 +16,14 @@ var valueFuncs = map[string]lua.LGFunction{
 func hz(state *lua.LState) int {
 	value := state.ToNumber(1)
 	hz := module.Frequency(float64(value))
-	state.Push(&lua.LUserData{Value: hz})
+	state.Push(lua.LNumber(hz.Value()))
 	return 1
 }
 
 func bpm(state *lua.LState) int {
 	value := state.ToNumber(1)
 	bpm := module.BPM(float64(value))
-	state.Push(&lua.LUserData{Value: bpm})
+	state.Push(lua.LNumber(bpm.Value()))
 	return 1
 }
 
@@ -33,13 +33,13 @@ func pitch(state *lua.LState) int {
 	if err != nil {
 		state.RaiseError("%s", err.Error())
 	}
-	state.Push(&lua.LUserData{Value: pitch})
+	state.Push(lua.LNumber(pitch.Value()))
 	return 1
 }
 
 func ms(state *lua.LState) int {
 	value := state.ToNumber(1)
 	ms := module.Duration(float64(value))
-	state.Push(&lua.LUserData{Value: ms})
+	state.Push(lua.LNumber(ms.Value()))
 	return 1
 }

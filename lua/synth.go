@@ -20,6 +20,8 @@ var mapperOpts = gluamapper.Option{
 }
 
 var synthConsts = map[string]lua.LValue{
+	"SAMPLE_RATE": lua.LNumber(module.SampleRate),
+
 	// Sequencer gate modes
 	"MODE_REST":   lua.LNumber(0),
 	"MODE_SINGLE": lua.LNumber(1),
