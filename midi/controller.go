@@ -54,8 +54,9 @@ type cc struct {
 
 type controller struct {
 	module.IO
-	stream       *portmidi.Stream
-	streamEvents <-chan portmidi.Event
+	stream           *portmidi.Stream
+	streamEvents     <-chan portmidi.Event
+	stopStreamEvents chan struct{}
 
 	deviceID  portmidi.DeviceID
 	frameRate int
@@ -78,12 +79,15 @@ func newController(config controllerConfig) (*controller, error) {
 	}
 	fmt.Printf("MIDI: %s\n", portmidi.Info(id).Name)
 
+	stop := make(chan struct{})
+
 	m := &controller{
-		stream:       stream,
-		streamEvents: stream.Listen(),
-		deviceID:     id,
-		frameRate:    config.FrameRate,
-		events:       make([]portmidi.Event, module.FrameSize),
+		stream:           stream,
+		streamEvents:     streamEvents(stream, stop),
+		stopStreamEvents: stop,
+		deviceID:         id,
+		frameRate:        config.FrameRate,
+		events:           make([]portmidi.Event, module.FrameSize),
 	}
 	outs := []*module.Out{}
 
@@ -144,6 +148,7 @@ func (c *controller) Close() error {
 			return err
 		}
 		c.stream = nil
+		go func() { c.stopStreamEvents <- struct{}{} }()
 	}
 	return nil
 }

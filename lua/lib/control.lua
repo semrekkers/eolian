@@ -68,7 +68,7 @@ return function(m, options, defaultInput)
                 if controls[k] ~= nil then
                     controls[k].reset()
                 else
-                    m.resetOnly({k})
+                    m.closeInputs({k})
                 end
             end
         end

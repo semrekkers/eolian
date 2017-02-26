@@ -16,8 +16,7 @@ type Patcher interface {
 	ID() string
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
-	Reset() error
-	ResetOnly([]string) error
+	CloseInputs([]string) error
 	Close() error
 }
 
@@ -83,7 +82,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 	if err := input.Close(); err != nil {
 		return err
 	}
-	reader, err := patchReader(t)
+	reader, err := assertReader(t)
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 	return nil
 }
 
-func patchReader(t interface{}) (Reader, error) {
+func assertReader(t interface{}) (Reader, error) {
 	switch v := t.(type) {
 	case Port:
 		return v.Patcher.Output(v.Port)
@@ -131,6 +130,20 @@ func patchReader(t interface{}) (Reader, error) {
 func (io *IO) Inputs() map[string]*In {
 	io.lazyInit()
 	return io.ins
+}
+
+// CloseInputs closes specific inputs
+func (io *IO) CloseInputs(names []string) error {
+	for _, n := range names {
+		if in, ok := io.ins[n]; ok {
+			if err := in.Close(); err != nil {
+				return err
+			}
+		} else {
+			return fmt.Errorf(`unknown input "%s"`, n)
+		}
+	}
+	return nil
 }
 
 // Outputs lists all registered outputs
@@ -180,30 +193,6 @@ func (io *IO) lazyInit() {
 	if io.outs == nil {
 		io.outs = map[string]*Out{}
 	}
-}
-
-// Reset disconnects all inputs from their sources (closing them in the process) and re-assigns the input to its
-// original default value
-func (io *IO) Reset() error {
-	for _, in := range io.ins {
-		if err := in.Reset(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (io *IO) ResetOnly(names []string) error {
-	for _, n := range names {
-		if in, ok := io.ins[n]; ok {
-			if err := in.Reset(); err != nil {
-				return err
-			}
-		} else {
-			return fmt.Errorf(`unknown input "%s"`, n)
-		}
-	}
-	return nil
 }
 
 // Close makes IO a noop io.Closer
@@ -260,20 +249,6 @@ func (i *In) LastFrame() Frame {
 func (i *In) Close() error {
 	if c, ok := i.Source.(io.Closer); ok {
 		return c.Close()
-	}
-	return nil
-}
-
-// Reset returns the input to its default "unpatched" state
-func (i *In) Reset() error {
-	if nested, ok := i.Source.(*In); ok {
-		if err := nested.Close(); err != nil {
-			return err
-		}
-		return nil
-	}
-	if err := i.Close(); err != nil {
-		return err
 	}
 	i.SetSource(i.initial)
 	return nil

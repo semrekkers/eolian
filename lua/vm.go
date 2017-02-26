@@ -33,6 +33,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	lua.OpenString(state)
 
 	state.PreloadModule("eolian.filepath", preloadFilepath)
+	state.PreloadModule("eolian.runtime", preloadRuntime)
 	state.PreloadModule("eolian.sort", preloadSort)
 	state.PreloadModule("eolian.string", preloadString)
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
