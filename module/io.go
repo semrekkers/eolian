@@ -186,7 +186,7 @@ func (io *IO) lazyInit() {
 // original default value
 func (io *IO) Reset() error {
 	for _, in := range io.ins {
-		if err := in.Reset(); err != nil {
+		if err := in.Close(); err != nil {
 			return err
 		}
 	}
@@ -196,7 +196,7 @@ func (io *IO) Reset() error {
 func (io *IO) ResetOnly(names []string) error {
 	for _, n := range names {
 		if in, ok := io.ins[n]; ok {
-			if err := in.Reset(); err != nil {
+			if err := in.Close(); err != nil {
 				return err
 			}
 		} else {
@@ -258,22 +258,12 @@ func (i *In) LastFrame() Frame {
 
 // Close closes the input
 func (i *In) Close() error {
-	if c, ok := i.Source.(io.Closer); ok {
+	if c, ok := i.Source.(*In); ok {
 		return c.Close()
-	}
-	return nil
-}
-
-// Reset returns the input to its default "unpatched" state
-func (i *In) Reset() error {
-	if nested, ok := i.Source.(*In); ok {
-		if err := nested.Close(); err != nil {
+	} else if c, ok := i.Source.(io.Closer); ok {
+		if err := c.Close(); err != nil {
 			return err
 		}
-		return nil
-	}
-	if err := i.Close(); err != nil {
-		return err
 	}
 	i.SetSource(i.initial)
 	return nil
