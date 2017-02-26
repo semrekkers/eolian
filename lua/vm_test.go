@@ -46,7 +46,6 @@ func TestCreate(t *testing.T) {
 
 		-- constructor parameters
 		local interpolate = synth.Interpolate { min = 0, max = 10 }
-		interpolate:reset()
 
 		-- proxying
 		local proxy = require 'eolian.synth.proxy'

@@ -15,6 +15,7 @@ var moduleSequence uint64
 type Patcher interface {
 	ID() string
 	Patch(string, interface{}) error
+	Unpatch(string) error
 	Output(string) (*Out, error)
 	CloseInputs([]string) error
 	Close() error
@@ -92,6 +93,15 @@ func (io *IO) Patch(name string, t interface{}) error {
 		o.setDestination(input)
 	}
 	return nil
+}
+
+func (io *IO) Unpatch(name string) error {
+	name = canonicalPort(name)
+	input, ok := io.ins[name]
+	if !ok {
+		return fmt.Errorf(`unknown input "%s"`, name)
+	}
+	return input.Close()
 }
 
 func assertReader(t interface{}) (Reader, error) {

@@ -66,6 +66,8 @@ var allModules = []struct {
 	{"Filter", nil, []string{"input", "cutoff", "resonance"}, []string{"lowpass", "bandpass", "highpass"}},
 	{"LPGate", nil, []string{"input", "cutoff", "resonance", "ctrl", "mode"}, defaultOutput},
 	{"MathExp", Config{"expression": "x + y * 2"}, []string{"x", "y"}, defaultOutput},
+	{"Max", nil, []string{"a", "b"}, defaultOutput},
+	{"Min", nil, []string{"a", "b"}, defaultOutput},
 	{"Mix", nil, []string{
 		"0.input",
 		"0.level",
@@ -146,7 +148,7 @@ var allModules = []struct {
 		"clock",
 		"a/0/pitch",
 		"a/1/pitch",
-		"1/enabled",
+		"0/enabled",
 		"1/enabled",
 	}, []string{"a/pitch", "0/gate", "1/gate"}},
 	{"Sum", nil, []string{"a", "b"}, defaultOutput},
@@ -197,7 +199,7 @@ func TestRegisteredModules(t *testing.T) {
 				assert.Equal(t, err, nil)
 				assert.Equal(t, mock.OutputsActive(false), 1)
 
-				err = p.Reset()
+				err = p.Unpatch(name)
 				assert.Equal(t, err, nil)
 				assert.Equal(t, mock.OutputsActive(false), 0)
 			}
