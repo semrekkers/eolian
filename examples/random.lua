@@ -8,6 +8,7 @@ return function(env)
                 osc      = synth.Oscillator(),
                 multiple = synth.Multiple(),
             },
+            recordTrigger = synth.ClockDivide(),
             random = {
                 trigger = synth.ClockDivide(),
                 series  = synth.RandomSeries(),
@@ -20,22 +21,24 @@ return function(env)
                 amp  = synth.LPGate(),
             },
             delay = {
-                cutoff = synth.Oscillator { algorithm = 'simple' },
                 gain   = synth.Oscillator { algorithm = 'simple' },
                 filter = synth.Filter(),
                 delay  = synth.FBLoopComb(),
             },
+            tape   = synth.Tape(),
+            filter = synth.Filter(),
+            mix    = synth.Mix(),
         }
     end
 
-    local function patch(modules)
-        with(modules.clock, function(c)
+    local function patch(rack)
+        with(rack.clock, function(c)
             c.osc:set { pitch = hz(5) }
             c.multiple:set { input = c.osc:out('pulse') }
         end)
 
-        with(modules.random, function(r)
-            local clock = modules.clock.multiple
+        with(rack.random, function(r)
+            local clock = rack.clock.multiple
 
             r.trigger:set {
                 input   = clock:out(0),
@@ -54,22 +57,22 @@ return function(env)
             end
         end)
 
-        with(modules.voice, function(v)
-            local gate  = modules.random.series:out('gate')
-            local quant = modules.random.quant:out()
+        with(rack.voice, function(v)
+            local gate  = rack.random.series:out('gate')
+            local quant = rack.random.quant:out()
 
             v.adsr:set {
                 gate    = gate,
-                attack  = ms(30),
-                decay   = ms(50),
-                sustain = 0.3,
+                attack  = ms(20),
+                decay   = ms(100),
+                sustain = 0.1,
                 release = ms(1000),
             }
             v.osc:set { pitch = quant }
             v.mix:set {
                 { input = v.osc:out('sine') },
-                { input = v.osc:out('saw'), level = 0.4 },
-                { input = v.osc:out('sub') },
+                { input = v.osc:out('saw'), level = 0.1 },
+                { input = v.osc:out('sub'), level = 0.5 },
             }
             v.amp:set {
                 input = v.mix:out(),
@@ -77,30 +80,46 @@ return function(env)
             }
         end)
 
-        with(modules.delay, function(d)
-            local voice = modules.voice.amp:out()
+        with(rack.delay, function(d)
+            local voice = rack.voice.amp:out()
 
-            d.cutoff:set {
-                pitch = hz(0.1),
-                amp   = 0.1,
-            }
             d.gain:set {
                 pitch  = hz(0.2),
-                amp    = 0.2,
+                amp    = 0.5,
                 offset = 0.7
             }
             d.delay:set {
                 input          = voice,
                 gain           = d.gain:out('sine'),
-                feedbackReturn = d.filter:out('lowpass'),
+                feedbackReturn = d.filter:out('bandpass'),
             }
             d.filter:set {
                 input = d.delay:out('feedbackSend'),
-                cutoff = hz(6000),
+                cutoff = hz(1000),
             }
         end)
 
-        return modules.delay.delay:out()
+        rack.recordTrigger:set {
+            input   = rack.clock.multiple:out(2),
+            divisor = 16,
+        }
+
+        rack.tape:set {
+            input  = rack.delay.delay:out(),
+            record = rack.recordTrigger:out(),
+        }
+        rack.filter:set {
+            input  = rack.tape:out(),
+            cutoff = hz(7000),
+            resonance = 10,
+        }
+
+        rack.mix:set { master = 0.15 }
+        rack.mix:set {
+            { input = rack.filter:out('lowpass') }
+        }
+
+        return rack.mix:out()
     end
 
     return build, patch
