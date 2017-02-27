@@ -233,14 +233,14 @@ func (s *tapeState) clearAll() {
 	s.offset, s.spliceStart, s.spliceEnd, s.recordingEnd = 0, 0, 0, 0
 }
 
-func (s *tapeState) playheadToStart() {
+func (s *tapeState) captureSpliceRange() {
 	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
-	s.offset = s.markers.At(s.spliceStart)
 }
 
-func (s *tapeState) playheadToEnd() {
-	s.spliceStart, s.spliceEnd = s.markers.GetRange(s.organize)
-	s.offset = s.markers.At(s.spliceEnd)
+func (s *tapeState) playheadTo(offset int) {
+	s.captureSpliceRange()
+	s.offset = offset
+	s.atSpliceEnd = true
 }
 
 func (s *tapeState) playbackSpeed() Value {
@@ -264,30 +264,29 @@ func (s *tapeState) playback() {
 	s.out = s.crossfade(s.in, s.memory[s.offset])
 	s.offset += int(s.playbackSpeed())
 
+	start := s.markers.At(s.spliceStart)
+	end := s.markers.At(s.spliceEnd)
+
 	if s.zoom != 0 {
 		var (
-			grains = 1024 >> uint(10-(s.zoom*10))
-			start  = s.markers.At(s.spliceStart)
-			end    = s.markers.At(s.spliceEnd)
-			size   = (end - start) / grains
-			slide  = size * int(0.9*s.slide*Value(grains))
+			grains     = 1024 >> uint(10-(s.zoom*10))
+			size       = (end - start) / grains
+			slide      = size * int(0.9*s.slide*Value(grains))
+			grainStart = start + slide
+			grainEnd   = start + slide + size
 		)
-
-		if s.offset >= start+slide+size {
-			s.offset = start + slide
-		} else if s.offset <= start+slide {
-			s.offset = start + slide + size
+		if s.offset >= grainEnd {
+			s.playheadTo(grainStart)
+		} else if s.offset <= grainStart {
+			s.playheadTo(grainEnd)
 		}
 		return
-	}
-
-	// Loop around (depending on which direction we are moving)
-	if s.offset >= s.markers.At(s.spliceEnd) {
-		s.playheadToStart()
-		s.atSpliceEnd = true
-	} else if s.offset <= s.markers.At(s.spliceStart) {
-		s.playheadToEnd()
-		s.atSpliceEnd = true
+	} else {
+		if s.offset >= end {
+			s.playheadTo(start)
+		} else if s.offset <= start {
+			s.playheadTo(end)
+		}
 	}
 }
 
@@ -300,7 +299,7 @@ func tapeIdle(s *tapeState) tapeStateFunc {
 		return next
 	}
 	if s.recordingEnd != 0 && s.play > 0 {
-		s.playheadToStart()
+		s.playheadTo(s.markers.At(s.spliceStart))
 		return tapePlay
 	}
 	s.out = s.crossfade(s.in, 0)
