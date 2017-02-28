@@ -45,7 +45,7 @@ output          -->     mix/1/input
 nil
 ...
 ```
-Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can also find some example Rack setups in the [racks directory](https://github.com/brettbuddin/eolian/tree/master/racks).
+Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can also find some example Rack setups in the [examples directory](https://github.com/brettbuddin/eolian/tree/master/examples).
 
 ### Example Sounds
 
