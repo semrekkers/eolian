@@ -19,8 +19,14 @@ type Engine struct {
 	device         *portaudio.DeviceInfo
 	errors         chan error
 	stop           chan error
-	timings        chan time.Duration
-	timingRequests chan chan time.Duration
+	timings        chan EngineMetrics
+	timingRequests chan chan EngineMetrics
+	stream         *portaudio.Stream
+}
+
+type EngineMetrics struct {
+	TotalElapsed, Callback time.Duration
+	Load                   float64
 }
 
 // New returns a new Enngine
@@ -42,8 +48,8 @@ func New(deviceIndex int) (*Engine, error) {
 		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
 		errors:         make(chan error),
 		stop:           make(chan error),
-		timings:        make(chan time.Duration),
-		timingRequests: make(chan chan time.Duration),
+		timings:        make(chan EngineMetrics),
+		timingRequests: make(chan chan EngineMetrics),
 		device:         devices[deviceIndex],
 	}
 
@@ -53,10 +59,22 @@ func New(deviceIndex int) (*Engine, error) {
 	return m, err
 }
 
-func (e *Engine) CurrentLatency() time.Duration {
-	r := make(chan time.Duration)
+func (e *Engine) TotalElapsed() time.Duration {
+	r := make(chan EngineMetrics)
 	e.timingRequests <- r
-	return <-r
+	return (<-r).TotalElapsed
+}
+
+func (e *Engine) CurrentLatency() time.Duration {
+	r := make(chan EngineMetrics)
+	e.timingRequests <- r
+	return (<-r).Callback
+}
+
+func (e *Engine) Load() float64 {
+	r := make(chan EngineMetrics)
+	e.timingRequests <- r
+	return (<-r).Load
 }
 
 // Errors returns a channel that expresses any errors during operation of the Engine
@@ -74,22 +92,23 @@ func (e *Engine) params() portaudio.StreamParameters {
 
 // Run starts the Engine; running the audio stream
 func (e *Engine) Run() {
-	stream, err := portaudio.OpenStream(e.params(), e.portAudioCallback)
+	var err error
+	e.stream, err = portaudio.OpenStream(e.params(), e.portAudioCallback)
 
 	if err != nil {
 		e.errors <- err
 		return
 	}
 
-	if err = stream.Start(); err != nil {
+	if err = e.stream.Start(); err != nil {
 		e.errors <- err
 		return
 	}
 	<-e.stop
 
-	err = stream.Stop()
+	err = e.stream.Stop()
 	if err == nil {
-		err = stream.Close()
+		err = e.stream.Close()
 	}
 	e.stop <- err
 }
@@ -106,17 +125,22 @@ func (e *Engine) Stop() error {
 
 func (e *Engine) portAudioCallback(_, out []float32) {
 	e.Lock()
+	e.stream.Time()
 	now := time.Now()
 	frame := e.in.ReadFrame()
 	for i := range out {
 		out[i] = float32(frame[i])
 	}
-	e.timings <- time.Since(now)
+	e.timings <- EngineMetrics{
+		Callback:     time.Since(now),
+		TotalElapsed: e.stream.Time(),
+		Load:         e.stream.CpuLoad(),
+	}
 	e.Unlock()
 }
 
-func collectTimings(timings <-chan time.Duration, requests chan chan time.Duration) {
-	var current time.Duration
+func collectTimings(timings <-chan EngineMetrics, requests chan chan EngineMetrics) {
+	var current EngineMetrics
 	for {
 		select {
 		case d := <-timings:

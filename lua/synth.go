@@ -139,6 +139,14 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 				state.Push(lua.LString(e.CurrentLatency().String()))
 				return 1
 			}
+			fns["elapsed"] = func(state *lua.LState) int {
+				state.Push(lua.LString(e.TotalElapsed().String()))
+				return 1
+			}
+			fns["load"] = func(state *lua.LState) int {
+				state.Push(lua.LString(fmt.Sprintf("%.2f%%", e.Load()*100)))
+				return 1
+			}
 		}
 		return fns
 	}(p)
