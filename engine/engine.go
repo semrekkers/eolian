@@ -44,8 +44,8 @@ func New(deviceIndex int) (*Engine, error) {
 
 	dev := devices[deviceIndex]
 	fmt.Println("Output:", dev.Name)
-	fmt.Println("SampleRate:", module.SampleRate)
-	fmt.Println("FrameSize:", module.FrameSize)
+	fmt.Println("Sample Rate:", module.SampleRate)
+	fmt.Println("Frame Size:", module.FrameSize)
 	fmt.Println("Latency:", dev.DefaultLowOutputLatency)
 
 	m := &Engine{
