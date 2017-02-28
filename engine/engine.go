@@ -42,7 +42,11 @@ func New(deviceIndex int) (*Engine, error) {
 		return nil, fmt.Errorf("device index out of range")
 	}
 
-	fmt.Println("Output:", devices[deviceIndex].Name)
+	dev := devices[deviceIndex]
+	fmt.Println("Output:", dev.Name)
+	fmt.Println("SampleRate:", module.SampleRate)
+	fmt.Println("FrameSize:", module.FrameSize)
+	fmt.Println("Latency:", dev.DefaultLowOutputLatency)
 
 	m := &Engine{
 		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
