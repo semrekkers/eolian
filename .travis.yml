@@ -1,9 +1,21 @@
 language: go
-env:
-  - CGO_LDFLAGS="-lportmidi -lporttime -L/usr/lib -L/usr/local/lib"
-before_install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y portaudio19-dev  libportmidi-dev
 go:
   - 1.7
   - 1.8
+os:
+  - linux
+  - osx
+addons:
+  apt:
+    packages:
+      - portaudio19-dev
+      - libportmidi-dev
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install portmidi portaudio; fi
+
+before_script:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CGO_LDFLAGS="-lportmidi -lporttime -L/usr/lib -L/usr/local/lib"; fi
+
+script: TESTARGS="-tags travis" make test

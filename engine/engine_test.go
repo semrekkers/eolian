@@ -1,4 +1,4 @@
-// +build darwin
+// +build !travis
 
 package engine
 
