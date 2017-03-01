@@ -1,5 +1,7 @@
 # Eolian
 
+[![Build Status](https://travis-ci.org/brettbuddin/eolian.svg?branch=master)](https://travis-ci.org/brettbuddin/eolian)
+
 **Eolian** is a modular synthesizer. It provides a [variety of different
 modules](https://github.com/brettbuddin/eolian/wiki/Available-Modules) that can be patched together to create music.
 While the program is written in [Go](https://golang.org/), you don't need to know Go to use it. Patches for the
