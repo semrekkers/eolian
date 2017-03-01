@@ -2,7 +2,7 @@ PKG?=$(shell go list ./... | grep -v /vendor/)
 PROJECT := github.com/brettbuddin/eolian
 BINPATH := bin
 
-default: build
+default: test
 
 $(GOPATH)/bin/govendor:
 	go get github.com/kardianos/govendor

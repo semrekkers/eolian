@@ -1,0 +1,9 @@
+language: go
+env:
+  - CGO_LDFLAGS="-lportmidi -lporttime -L/usr/lib -L/usr/local/lib"
+before_install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y portaudio19-dev  libportmidi-dev
+go:
+  - 1.7
+  - 1.8

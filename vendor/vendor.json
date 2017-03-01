@@ -73,6 +73,12 @@
 			"path": "github.com/yuin/gopher-lua/pm",
 			"revision": "d0d5dd3565a9f3c86ff5bc42a0b1cc9e5bfcf55e",
 			"revisionTime": "2016-10-13T02:33:00Z"
+		},
+		{
+			"checksumSHA1": "lLiLnR4xJTK/fWE8n3i/4AoWtg8=",
+			"path": "gopkg.in/go-playground/assert.v1",
+			"revision": "4f4dfbc7d1c48336cf93399deae81aa9067e88af",
+			"revisionTime": "2016-02-05T15:04:13Z"
 		}
 	],
 	"rootPath": "github.com/brettbuddin/eolian"
