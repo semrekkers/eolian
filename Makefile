@@ -19,10 +19,10 @@ build: govendor lua-scripts
 	go build -o $(BINPATH)/eolian -v $(PROJECT)/cmd/eolian
 
 test: govendor lua-scripts
-	go test -test.timeout=1000s -cover $(PKG)
+	go test -cover $(TESTARGS) $(PKG)
 
 benchmark: govendor lua-scripts
-	go test -test.timeout=1000s -bench=. $(PKG)
+	go test -bench=. $(PKG)
 
 install: govendor lua-scripts
 	go install $(INSTALL_FLAGS) -v $(PKG)
