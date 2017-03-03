@@ -17,6 +17,7 @@ Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Pat
 - [Go 1.7](http://golang.org)+
 - [PortAudio](http://www.portaudio.com/)
 - [PortMIDI](http://portmedia.sourceforge.net/portmidi/)
+- [govendor](https://github.com/kardianos/govendor) (development only)
 
 On macOS you can install these dependencies with: `brew install go portaudio portmidi`
 
@@ -68,6 +69,7 @@ Here's some example videos of things I've been able to get it to do at various s
 - [MIDI controller](https://www.instagram.com/p/BKhJ42FDnSY/)
 - [Static clicks](https://www.instagram.com/p/BKZQbtfj0OM/)
 - [Reverb exploration](https://www.instagram.com/p/BKCJ98Dj2RS/)
+- [Others...](https://www.instagram.com/brettbuddin)
 
 ## Contributing
 
