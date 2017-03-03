@@ -35,6 +35,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state.PreloadModule("eolian.filepath", preloadFilepath)
 	state.PreloadModule("eolian.runtime", preloadRuntime)
 	state.PreloadModule("eolian.sort", preloadSort)
+	state.PreloadModule("eolian.time", preloadTime)
 	state.PreloadModule("eolian.string", preloadString)
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.clock", preloadSynthClock)

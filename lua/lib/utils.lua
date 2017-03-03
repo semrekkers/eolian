@@ -2,6 +2,7 @@ local join      = require('eolian.string').join
 local split     = require('eolian.string').split
 local sort      = require('eolian.sort')
 local tabwriter = require('eolian.tabwriter')
+local time      = require('eolian.time')
 
 function with(o, fn)
     return fn(o)
@@ -163,4 +164,12 @@ function execLine(line)
     else
         debug.trackback()
     end
+end
+
+function ping(m, input)
+    m:set(input, -1)
+    time.sleep(50)
+    m:set(input, 1)
+    time.sleep(50)
+    m:set(input, -1)
 end
