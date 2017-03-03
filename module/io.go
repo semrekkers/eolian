@@ -187,6 +187,7 @@ func (io *IO) Reset() error {
 	return nil
 }
 
+// ResetOnly disconnects specific inputs from their sources
 func (io *IO) ResetOnly(names []string) error {
 	for _, n := range names {
 		if in, ok := io.ins[n]; ok {
@@ -229,6 +230,7 @@ func (i *In) SetSource(r Reader) {
 	}
 }
 
+// SourceName returns the name of the connected output
 func (i *In) SourceName() string {
 	if i.Source == nil {
 		return "(none)"
@@ -263,6 +265,7 @@ func (i *In) Close() error {
 	return nil
 }
 
+// IsSinking returns whether the input is sinking to audio output
 func (i *In) IsSinking() bool {
 	if i == nil {
 		return false
@@ -301,6 +304,7 @@ func (o *Out) setDestination(in *In) {
 	o.destination = in
 }
 
+// DestinationName returns the name of the destination input
 func (o *Out) DestinationName() string {
 	if o.destination == nil {
 		return "(none)"
@@ -308,6 +312,7 @@ func (o *Out) DestinationName() string {
 	return fmt.Sprintf("%s", o.destination)
 }
 
+// IsSinking returns whether the output is sinking to audio output
 func (o *Out) IsSinking() bool {
 	return o.destination.IsSinking()
 }
