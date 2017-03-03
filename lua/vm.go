@@ -35,7 +35,6 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state.PreloadModule("eolian.filepath", preloadFilepath)
 	state.PreloadModule("eolian.runtime", preloadRuntime)
 	state.PreloadModule("eolian.sort", preloadSort)
-	state.PreloadModule("eolian.time", preloadTime)
 	state.PreloadModule("eolian.string", preloadString)
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
 	state.PreloadModule("eolian.synth.clock", preloadSynthClock)
@@ -43,6 +42,7 @@ func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.tabwriter", preloadTabWriter)
 	state.PreloadModule("eolian.theory", preloadTheory)
+	state.PreloadModule("eolian.time", preloadTime)
 
 	state.SetGlobal("Engine", decoratePatcher(state, p, mtx))
 	for k, fn := range valueFuncs {
