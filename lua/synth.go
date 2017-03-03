@@ -159,8 +159,13 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 	return table
 }
 
+type lister interface {
+	Inputs() map[string]*module.In
+	Outputs() map[string]*module.Out
+}
+
 func moduleInputs(state *lua.LState, p module.Patcher) int {
-	l, ok := p.(module.Lister)
+	l, ok := p.(lister)
 	if !ok {
 		state.RaiseError("%T is not capable of listing inputs", p)
 	}
@@ -173,7 +178,7 @@ func moduleInputs(state *lua.LState, p module.Patcher) int {
 }
 
 func moduleOutputs(state *lua.LState, p module.Patcher) int {
-	l, ok := p.(module.Lister)
+	l, ok := p.(lister)
 	if !ok {
 		state.RaiseError("%T is not capable of listing outputs", p)
 	}

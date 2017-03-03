@@ -21,12 +21,6 @@ type Patcher interface {
 	Close() error
 }
 
-// Lister is the port listing behavior of a module
-type Lister interface {
-	Inputs() map[string]*In
-	Outputs() map[string]*Out
-}
-
 // IO is the input/output registry of a module. It manages the lifecycles of the ports; fascilitating connects and
 // disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
 // inside other structs that represent a module.
