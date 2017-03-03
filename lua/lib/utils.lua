@@ -168,6 +168,8 @@ end
 
 function ping(m, input)
     m:set(input, -1)
-    time.sleep(10)
+    time.sleep(50)
     m:set(input, 1)
+    time.sleep(50)
+    m:set(input, -1)
 end
