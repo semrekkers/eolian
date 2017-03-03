@@ -4,27 +4,22 @@ BINPATH := bin
 
 default: test
 
-$(GOPATH)/bin/govendor:
-	go get github.com/kardianos/govendor
-govendor: $(GOPATH)/bin/govendor
-	$(GOPATH)/bin/govendor sync
-
 $(GOPATH)/bin/go-bindata:
 	go get github.com/jteeuwen/go-bindata/...
 lua-scripts: $(GOPATH)/bin/go-bindata
 	$(GOPATH)/bin/go-bindata -pkg lua -o lua/lib.go lua/lib/...
 
-build: govendor lua-scripts
+build: lua-scripts
 	@mkdir -p $(BINPATH)
 	go build -o $(BINPATH)/eolian -v $(PROJECT)/cmd/eolian
 
-test: govendor lua-scripts
+test: lua-scripts
 	go test -cover $(TESTARGS) $(PKG)
 
-benchmark: govendor lua-scripts
+benchmark: lua-scripts
 	go test -bench=. $(PKG)
 
-install: govendor lua-scripts
+install: lua-scripts
 	go install $(INSTALL_FLAGS) -v $(PKG)
 
 clean:
