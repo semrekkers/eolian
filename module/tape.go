@@ -317,6 +317,9 @@ func tapeRecord(s *tapeState) tapeStateFunc {
 	if s.speed <= 0 {
 		return leaveRecord(s)
 	}
+	if next := handleReset(s); next != nil {
+		return next
+	}
 
 	if s.lastRecord < 0 && s.record > 0 {
 		// End of recording creates the first splice
