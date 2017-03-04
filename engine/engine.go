@@ -22,6 +22,7 @@ type Engine struct {
 	timings        chan EngineMetrics
 	timingRequests chan chan EngineMetrics
 	stream         *portaudio.Stream
+	originTime     time.Duration
 }
 
 type EngineMetrics struct {
@@ -66,7 +67,7 @@ func New(deviceIndex int) (*Engine, error) {
 func (e *Engine) TotalElapsed() time.Duration {
 	r := make(chan EngineMetrics)
 	e.timingRequests <- r
-	return (<-r).TotalElapsed
+	return (<-r).TotalElapsed - e.originTime
 }
 
 func (e *Engine) CurrentLatency() time.Duration {
@@ -98,11 +99,11 @@ func (e *Engine) params() portaudio.StreamParameters {
 func (e *Engine) Run() {
 	var err error
 	e.stream, err = portaudio.OpenStream(e.params(), e.portAudioCallback)
-
 	if err != nil {
 		e.errors <- err
 		return
 	}
+	e.originTime = e.stream.Time()
 
 	if err = e.stream.Start(); err != nil {
 		e.errors <- err
