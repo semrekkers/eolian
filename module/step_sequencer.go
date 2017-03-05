@@ -34,7 +34,6 @@ type stepSequence struct {
 	enables                               []*In
 	pitches                               [][]*In
 	step, lastStep, layerCount, stepCount int
-	pong                                  bool
 
 	lastClock, lastReset Value
 

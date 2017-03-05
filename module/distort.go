@@ -12,8 +12,6 @@ type distort struct {
 	offsetA, offsetB *In
 
 	dcBlock *dcBlock
-
-	lastIn, lastOut Value
 }
 
 func newDistort() (*distort, error) {

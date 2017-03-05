@@ -34,12 +34,14 @@ func Run(args []string) error {
 	}
 
 	if writeTrace {
-		f, err := os.OpenFile("trace.out", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0660)
+		f, err := os.OpenFile("trace.out", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
 			return err
 		}
 		defer f.Close()
-		trace.Start(f)
+		if err := trace.Start(f); err != nil {
+			return err
+		}
 		defer trace.Stop()
 	}
 

@@ -75,12 +75,12 @@ func (s *randomSeries) readMany(out Frame) {
 			}
 		}
 		if s.lastTrigger < 0 && trigger[i] > 0 {
-			for i := 0; i < int(size); i++ {
-				s.memory[i] = randValue()*(max[i]-min[i]) + min[i]
+			for j := 0; j < int(size); j++ {
+				s.memory[j] = randValue()*(max[j]-min[j]) + min[j]
 				if rand.Float32() > 0.25 {
-					s.gateMemory[i] = 1
+					s.gateMemory[j] = 1
 				} else {
-					s.gateMemory[i] = -1
+					s.gateMemory[j] = -1
 				}
 			}
 		}

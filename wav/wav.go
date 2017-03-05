@@ -89,7 +89,7 @@ type Header struct {
 
 // Open opens and reads the header of a WAV file
 func Open(path string) (*Wav, error) {
-	f, err := os.OpenFile(path, os.O_RDONLY, 0664)
+	f, err := os.OpenFile(path, os.O_RDONLY, 0600)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +134,9 @@ func load(r io.ReadCloser) (*Wav, error) {
 			establishReader(r, &wav, size)
 			return &wav, nil
 		default:
-			io.CopyN(ioutil.Discard, r, int64(size))
+			if _, err := io.CopyN(ioutil.Discard, r, int64(size)); err != nil {
+				return nil, err
+			}
 		}
 	}
 }

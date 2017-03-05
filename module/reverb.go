@@ -35,63 +35,72 @@ type reverb struct {
 }
 
 func newReverb(c reverbConfig) (*reverb, error) {
-	feedbackCount := len(c.Feedback)
-	allpassCount := len(c.Allpass)
-
-	inMultiple, err := newMultiple(feedbackCount)
-	if err != nil {
-		return nil, err
-	}
-	feedbackGainMultiple, err := newMultiple(feedbackCount)
-	if err != nil {
-		return nil, err
-	}
-	allpassGainMultiple, err := newMultiple(allpassCount)
+	feedbacks := len(c.Feedback)
+	allpasses := len(c.Allpass)
+	inputs, err := newRInputs(feedbacks, allpasses)
 	if err != nil {
 		return nil, err
 	}
 
 	m := &reverb{
-		in:       &In{Name: "input", Source: inMultiple.in},
-		feedback: &In{Name: "feedback", Source: feedbackGainMultiple.in},
-		gain:     &In{Name: "gain", Source: allpassGainMultiple.in},
-
-		fbs:       make([]*fbComb, feedbackCount),
-		allpasses: make([]*allpass, allpassCount),
+		in:        &In{Name: "input", Source: inputs.input.in},
+		feedback:  &In{Name: "feedback", Source: inputs.feedback.in},
+		gain:      &In{Name: "gain", Source: inputs.gain.in},
+		fbs:       make([]*fbComb, feedbacks),
+		allpasses: make([]*allpass, allpasses),
 	}
 
-	mixer, err := newMix(feedbackCount)
+	mixer, err := newMix(feedbacks)
 	if err != nil {
 		return m, err
 	}
-	for i, s := range c.Feedback {
+	if err := m.patchFeedbacks(mixer, inputs, c.Feedback); err != nil {
+		return m, err
+	}
+	if err := m.patchAllpasses(mixer, inputs, c.Allpass); err != nil {
+		return m, err
+	}
+
+	return m, m.Expose(
+		"Reverb",
+		[]*In{m.in, m.feedback, m.gain},
+		[]*Out{{Name: "output", Provider: Provide(m.allpasses[len(m.allpasses)-1])}},
+	)
+}
+
+func (m *reverb) patchFeedbacks(mixer *mix, inputs *rInputs, sizes []int) error {
+	for i, s := range sizes {
 		name := fmt.Sprintf("%d", i)
+		var err error
 		m.fbs[i], err = newFBComb(DurationInt(s))
 		if err != nil {
-			return m, err
+			return err
 		}
 		if err := m.fbs[i].Patch("duration", DurationInt(s)); err != nil {
-			return m, err
+			return err
 		}
-		if err := m.fbs[i].Patch("input", Port{inMultiple, name}); err != nil {
-			return m, err
+		if err := m.fbs[i].Patch("input", Port{inputs.input, name}); err != nil {
+			return err
 		}
-		if err := m.fbs[i].Patch("gain", Port{feedbackGainMultiple, name}); err != nil {
-			return m, err
+		if err := m.fbs[i].Patch("gain", Port{inputs.feedback, name}); err != nil {
+			return err
 		}
 		if err := mixer.Patch(name+".input", Port{m.fbs[i], "output"}); err != nil {
-			return m, err
+			return err
 		}
 	}
-	feedbackGainMultiple.Patch("input", Value(0.8))
+	return inputs.gain.Patch("input", Value(0.8))
+}
 
-	for i, s := range c.Allpass {
+func (m *reverb) patchAllpasses(mixer *mix, inputs *rInputs, sizes []int) error {
+	for i, s := range sizes {
+		var err error
 		m.allpasses[i], err = newAllpass(DurationInt(s))
 		if err != nil {
-			return m, err
+			return err
 		}
 		if err := m.allpasses[i].Patch("duration", DurationInt(s)); err != nil {
-			return m, err
+			return err
 		}
 		var port Port
 		if i == 0 {
@@ -100,17 +109,33 @@ func newReverb(c reverbConfig) (*reverb, error) {
 			port = Port{m.allpasses[i-1], "output"}
 		}
 		if err := m.allpasses[i].Patch("input", port); err != nil {
-			return m, err
+			return err
 		}
-		if err := m.allpasses[i].Patch("gain", Port{allpassGainMultiple, fmt.Sprintf("%d", i)}); err != nil {
-			return m, err
+		if err := m.allpasses[i].Patch("gain", Port{inputs.gain, fmt.Sprintf("%d", i)}); err != nil {
+			return err
 		}
 	}
-	allpassGainMultiple.Patch("input", Value(0.7))
+	return inputs.gain.Patch("input", Value(0.7))
+}
 
-	return m, m.Expose(
-		"Reverb",
-		[]*In{m.in, m.feedback, m.gain},
-		[]*Out{{Name: "output", Provider: Provide(m.allpasses[len(m.allpasses)-1])}},
+type rInputs struct {
+	input, feedback, gain *multiple
+}
+
+func newRInputs(feedbacks, allpasses int) (*rInputs, error) {
+	var (
+		modules = &rInputs{}
+		err     error
 	)
+
+	if modules.input, err = newMultiple(feedbacks); err != nil {
+		return nil, err
+	}
+	if modules.feedback, err = newMultiple(feedbacks); err != nil {
+		return nil, err
+	}
+	if modules.gain, err = newMultiple(allpasses); err != nil {
+		return nil, err
+	}
+	return modules, nil
 }

@@ -281,12 +281,11 @@ func (s *tapeState) playback() {
 			s.playheadTo(grainEnd)
 		}
 		return
-	} else {
-		if s.offset >= end {
-			s.playheadTo(start)
-		} else if s.offset <= start {
-			s.playheadTo(end)
-		}
+	}
+	if s.offset >= end {
+		s.playheadTo(start)
+	} else if s.offset <= start {
+		s.playheadTo(end)
 	}
 }
 

@@ -43,7 +43,7 @@ var synthConsts = map[string]lua.LValue{
 	"MODE_AMPLITUDE": lua.LNumber(2),
 }
 
-func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
+func preloadSynth(mtx sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}
 		for name, t := range module.Registry {
@@ -59,7 +59,7 @@ func preloadSynth(mtx *sync.Mutex) lua.LGFunction {
 	}
 }
 
-func buildConstructor(name string, init module.InitFunc, mtx *sync.Mutex) func(state *lua.LState) int {
+func buildConstructor(name string, init module.InitFunc, mtx sync.Locker) func(state *lua.LState) int {
 	return func(state *lua.LState) int {
 		config := module.Config{}
 
@@ -107,7 +107,7 @@ func getNamespace(table *lua.LTable) []string {
 
 type lockingModuleMethod func(state *lua.LState, p module.Patcher) int
 
-func lock(m lockingModuleMethod, mtx *sync.Mutex, p module.Patcher) lua.LGFunction {
+func lock(m lockingModuleMethod, mtx sync.Locker, p module.Patcher) lua.LGFunction {
 	return func(state *lua.LState) int {
 		mtx.Lock()
 		defer mtx.Unlock()
@@ -115,7 +115,7 @@ func lock(m lockingModuleMethod, mtx *sync.Mutex, p module.Patcher) lua.LGFuncti
 	}
 }
 
-func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.LTable {
+func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		fns := map[string]lua.LGFunction{
 			// Methods lock and interact with the graph
@@ -136,7 +136,7 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx *sync.Mutex) *lua.
 
 		if e, ok := p.(*engine.Engine); ok {
 			fns["latency"] = func(state *lua.LState) int {
-				state.Push(lua.LString(e.CurrentLatency().String()))
+				state.Push(lua.LString(e.Latency().String()))
 				return 1
 			}
 			fns["elapsed"] = func(state *lua.LState) int {

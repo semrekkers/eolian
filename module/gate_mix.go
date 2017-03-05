@@ -21,7 +21,6 @@ func init() {
 
 type gateMix struct {
 	IO
-	master  *In
 	sources []*In
 }
 

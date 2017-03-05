@@ -12,7 +12,9 @@ import (
 func TestCreate(t *testing.T) {
 	init, err := module.Lookup("Direct")
 	assert.Equal(t, err, nil)
+
 	direct, err := init(nil)
+	assert.Equal(t, err, nil)
 
 	vm, err := NewVM(direct, &sync.Mutex{})
 	assert.Equal(t, err, nil)

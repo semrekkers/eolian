@@ -26,7 +26,7 @@ type VM struct {
 }
 
 // NewVM returns a new lua virtual machine centered around a Patcher
-func NewVM(p module.Patcher, mtx *sync.Mutex) (*VM, error) {
+func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state := lua.NewState()
 	lua.OpenBase(state)
 	lua.OpenDebug(state)

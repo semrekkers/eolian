@@ -23,13 +23,6 @@ func initMIDI() {
 	})
 }
 
-func terminate() error {
-	if initialized {
-		return portmidi.Terminate()
-	}
-	return nil
-}
-
 func findInputDevice(name string) (portmidi.DeviceID, error) {
 	if name == "" {
 		return -1, fmt.Errorf("no device name specified")

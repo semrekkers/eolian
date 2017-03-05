@@ -170,7 +170,7 @@ func (o *oscOut) blep(out Frame, i int) {
 	default:
 	}
 
-	phase += float64(delta) * 2 * math.Pi
+	phase += delta * 2 * math.Pi
 	if phase >= 2*math.Pi {
 		phase -= 2 * math.Pi
 	}
@@ -228,7 +228,7 @@ func (o *oscOut) simple(out Frame, i int) {
 
 	switch o.shape {
 	case sine:
-		next = Value(math.Sin(float64(phase))) * amp
+		next = Value(math.Sin(phase)) * amp
 	case saw:
 		next = Value(1-float32(1/math.Pi*phase)) * amp
 	case pulse:

@@ -108,7 +108,7 @@ type clockPulse struct {
 func (reader *clockPulse) Read(out module.Frame) {
 	reader.read(out)
 	for i := range out {
-		if reader.count%int(reader.frameRate) == 0 {
+		if reader.count%reader.frameRate == 0 {
 			out[i] = 1
 			reader.count = 0
 		} else {

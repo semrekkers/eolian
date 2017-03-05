@@ -48,10 +48,6 @@ type controllerConfig struct {
 	CCChannels           []int `mapstructure:"ccChannels"`
 }
 
-type cc struct {
-	Channel, Number int
-}
-
 type controller struct {
 	module.IO
 	stream           *portmidi.Stream
@@ -62,9 +58,6 @@ type controller struct {
 	frameRate int
 	events    []portmidi.Event
 	reads     int
-
-	lastClock module.Value
-	clockTick int
 }
 
 func newController(config controllerConfig) (*controller, error) {
@@ -290,8 +283,7 @@ func (reader *ctrlPitch) Read(out module.Frame) {
 }
 
 type ctrlReset struct {
-	controller    *controller
-	channelOffset int
+	controller *controller
 }
 
 func (reader ctrlReset) Read(out module.Frame) {
@@ -306,8 +298,7 @@ func (reader ctrlReset) Read(out module.Frame) {
 }
 
 type ctrlPitchBend struct {
-	controller    *controller
-	channelOffset int
+	controller *controller
 }
 
 func (reader *ctrlPitchBend) Read(out module.Frame) {

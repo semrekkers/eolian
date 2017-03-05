@@ -19,20 +19,17 @@ type Engine struct {
 	device         *portaudio.DeviceInfo
 	errors         chan error
 	stop           chan error
-	timings        chan EngineMetrics
-	timingRequests chan chan EngineMetrics
+	timings        chan metrics
+	timingRequests chan chan metrics
 	stream         *portaudio.Stream
 	originTime     time.Duration
 }
 
-type EngineMetrics struct {
-	TotalElapsed, Callback time.Duration
-	Load                   float64
-}
-
 // New returns a new Enngine
 func New(deviceIndex int) (*Engine, error) {
-	portaudio.Initialize()
+	if err := portaudio.Initialize(); err != nil {
+		return nil, err
+	}
 
 	devices, err := portaudio.Devices()
 	if err != nil {
@@ -53,8 +50,8 @@ func New(deviceIndex int) (*Engine, error) {
 		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
 		errors:         make(chan error),
 		stop:           make(chan error),
-		timings:        make(chan EngineMetrics),
-		timingRequests: make(chan chan EngineMetrics),
+		timings:        make(chan metrics),
+		timingRequests: make(chan chan metrics),
 		device:         devices[deviceIndex],
 	}
 
@@ -64,20 +61,24 @@ func New(deviceIndex int) (*Engine, error) {
 	return m, err
 }
 
+// TotalElapsed returns the current wallclock duration of the session
 func (e *Engine) TotalElapsed() time.Duration {
-	r := make(chan EngineMetrics)
+	r := make(chan metrics)
 	e.timingRequests <- r
 	return (<-r).TotalElapsed - e.originTime
 }
 
-func (e *Engine) CurrentLatency() time.Duration {
-	r := make(chan EngineMetrics)
+// Latency returns the current latency within the PortAudio callback. It's an indicator of how computationally expensive
+// your Rack is, and does not include any latency between PortAudio and your speakers.
+func (e *Engine) Latency() time.Duration {
+	r := make(chan metrics)
 	e.timingRequests <- r
 	return (<-r).Callback
 }
 
+// Load returns the current CPU load of the underlying audio engine
 func (e *Engine) Load() float64 {
-	r := make(chan EngineMetrics)
+	r := make(chan metrics)
 	e.timingRequests <- r
 	return (<-r).Load
 }
@@ -136,7 +137,7 @@ func (e *Engine) portAudioCallback(_, out []float32) {
 	for i := range out {
 		out[i] = float32(frame[i])
 	}
-	e.timings <- EngineMetrics{
+	e.timings <- metrics{
 		Callback:     time.Since(now),
 		TotalElapsed: e.stream.Time(),
 		Load:         e.stream.CpuLoad(),
@@ -144,8 +145,8 @@ func (e *Engine) portAudioCallback(_, out []float32) {
 	e.Unlock()
 }
 
-func collectTimings(timings <-chan EngineMetrics, requests chan chan EngineMetrics) {
-	var current EngineMetrics
+func collectTimings(timings <-chan metrics, requests chan chan metrics) {
+	var current metrics
 	for {
 		select {
 		case d := <-timings:
@@ -154,4 +155,9 @@ func collectTimings(timings <-chan EngineMetrics, requests chan chan EngineMetri
 			ch <- current
 		}
 	}
+}
+
+type metrics struct {
+	TotalElapsed, Callback time.Duration
+	Load                   float64
 }

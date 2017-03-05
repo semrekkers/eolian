@@ -8,7 +8,9 @@ import (
 
 func TestFileLoad(t *testing.T) {
 	w, err := Open("space_ghost_action.wav")
-	defer w.Close()
+	defer func() {
+		assert.Equal(t, w.Close(), nil)
+	}()
 	assert.Equal(t, err, nil)
 
 	samples, err := w.ReadAll()
