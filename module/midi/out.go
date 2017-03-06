@@ -80,11 +80,20 @@ func (o *out) Patch(name string, t interface{}) error {
 			return fmt.Errorf("invalid midi CC input name: %s", name)
 		}
 
-		channel, _ := strconv.Atoi(matches[0][1])
-		number, _ := strconv.Atoi(matches[0][2])
-
-		in, err := o.IO.CreateInput(name, module.NewBuffer(module.Value(0)))
+		channel, err := strconv.Atoi(matches[0][1])
 		if err != nil {
+			return err
+		}
+		number, err := strconv.Atoi(matches[0][2])
+		if err != nil {
+			return err
+		}
+
+		in := &module.In{
+			Name:   name,
+			Source: module.NewBuffer(module.Value(0)),
+		}
+		if err := o.IO.AddInput(in); err != nil {
 			return err
 		}
 		o.ccs = append(o.ccs, &midiCC{

@@ -42,16 +42,9 @@ func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
 
 	io.lazyInit()
 	for _, in := range ins {
-		if _, ok := io.ins[in.Name]; ok {
-			return fmt.Errorf(`duplicate input exposed "%s"`, in.Name)
+		if err := io.AddInput(in); err != nil {
+			return err
 		}
-		if b, ok := in.Source.(*Buffer); ok {
-			in.initial = b.Reader
-		} else {
-			in.initial = in.Source
-		}
-		in.owner = io
-		io.ins[in.Name] = in
 	}
 	for _, out := range outs {
 		if _, ok := io.outs[out.Name]; ok {
@@ -66,12 +59,13 @@ func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
 	return nil
 }
 
-func (io *IO) CreateInput(name string, source Reader) (*In, error) {
-	if _, ok := io.ins[name]; ok {
-		return nil, fmt.Errorf(`duplicate input exposed "%s"`, name)
+// AddInput registers a new input with the module. This is primarily used to allow for lazy-creation of inputs when
+// patched instead of at the module's create-time.
+func (io *IO) AddInput(in *In) error {
+	if _, ok := io.ins[in.Name]; ok {
+		return fmt.Errorf(`duplicate input exposed "%s"`, in.Name)
 	}
 
-	in := &In{Name: name, Source: source}
 	if b, ok := in.Source.(*Buffer); ok {
 		in.initial = b.Reader
 	} else {
@@ -79,7 +73,8 @@ func (io *IO) CreateInput(name string, source Reader) (*In, error) {
 	}
 	in.owner = io
 	io.ins[in.Name] = in
-	return in, nil
+
+	return nil
 }
 
 // Patch assigns an input's reader to some source (Reader, Value, etc)
