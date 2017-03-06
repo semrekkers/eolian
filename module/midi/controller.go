@@ -62,7 +62,7 @@ type controller struct {
 
 func newController(config controllerConfig) (*controller, error) {
 	initMIDI()
-	id, err := findInputDevice(config.Device)
+	id, err := findDevice(config.Device, dirIn)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func newController(config controllerConfig) (*controller, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("MIDI: %s\n", portmidi.Info(id).Name)
+	fmt.Printf("MIDI: %s (in)\n", portmidi.Info(id).Name)
 
 	stop := make(chan struct{})
 

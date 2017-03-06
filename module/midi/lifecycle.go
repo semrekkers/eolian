@@ -23,7 +23,12 @@ func initMIDI() {
 	})
 }
 
-func findInputDevice(name string) (portmidi.DeviceID, error) {
+const (
+	dirIn int = iota
+	dirOut
+)
+
+func findDevice(name string, direction int) (portmidi.DeviceID, error) {
 	if name == "" {
 		return -1, fmt.Errorf("no device name specified")
 	}
@@ -32,8 +37,13 @@ func findInputDevice(name string) (portmidi.DeviceID, error) {
 	for i := 0; i < portmidi.CountDevices(); i++ {
 		id := portmidi.DeviceID(i)
 		info := portmidi.Info(id)
-		if info.Name == name && info.IsInputAvailable {
-			deviceID = id
+
+		if info.Name == name {
+			if direction == dirIn && info.IsInputAvailable {
+				deviceID = id
+			} else if direction == dirOut && info.IsOutputAvailable {
+				deviceID = id
+			}
 		}
 	}
 
