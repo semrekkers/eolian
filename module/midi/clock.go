@@ -35,7 +35,7 @@ type clock struct {
 
 func newClock(device string, frameRate int) (*clock, error) {
 	initMIDI()
-	id, err := findInputDevice(device)
+	id, err := findDevice(device, dirIn)
 	if err != nil {
 		return nil, err
 	}

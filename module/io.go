@@ -66,6 +66,22 @@ func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
 	return nil
 }
 
+func (io *IO) CreateInput(name string, source Reader) (*In, error) {
+	if _, ok := io.ins[name]; ok {
+		return nil, fmt.Errorf(`duplicate input exposed "%s"`, name)
+	}
+
+	in := &In{Name: name, Source: source}
+	if b, ok := in.Source.(*Buffer); ok {
+		in.initial = b.Reader
+	} else {
+		in.initial = in.Source
+	}
+	in.owner = io
+	io.ins[in.Name] = in
+	return in, nil
+}
+
 // Patch assigns an input's reader to some source (Reader, Value, etc)
 func (io *IO) Patch(name string, t interface{}) error {
 	io.lazyInit()
