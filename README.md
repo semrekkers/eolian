@@ -29,12 +29,6 @@ $ cd $GOPATH/src/github.com/brettbuddin/eolian
 $ make install
 ```
 
-## Running the tests
-
-```
-$ make test
-```
-
 ## Usage
 
 ```
