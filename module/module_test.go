@@ -25,6 +25,7 @@ var allModules = []struct {
 	{"Crossfade", nil, []string{"a", "b", "bias"}, defaultOutput},
 	{"Concurrent", nil, []string{"input"}, defaultOutput},
 	{"Control", nil, []string{"control", "mod"}, defaultOutput},
+	{"Count", nil, []string{"trigger", "limit", "step", "reset"}, defaultOutput},
 	{"Debug", nil, []string{"input"}, defaultOutput},
 	{"Delay", nil, []string{"input", "duration"}, defaultOutput},
 	{"Demux", nil, []string{"input", "selection"}, []string{"0", "1"}},
