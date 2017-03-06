@@ -53,7 +53,6 @@ func newOut(config controllerConfig) (*out, error) {
 	fmt.Printf("MIDI: %s (out)\n", portmidi.Info(id).Name)
 
 	signals := make(chan ccSignal)
-
 	go func() {
 		for cc := range signals {
 			stream.WriteShort(int64(176+cc.channel-1), int64(cc.number), int64(cc.value))
@@ -71,6 +70,17 @@ func newOut(config controllerConfig) (*out, error) {
 		[]*module.Out{
 			&module.Out{Name: "output", Provider: module.Provide(m)},
 		})
+}
+
+func (o *out) Close() error {
+	if o.stream != nil {
+		if err := o.stream.Close(); err != nil {
+			return err
+		}
+		o.stream = nil
+		close(o.signals)
+	}
+	return nil
 }
 
 func (o *out) Patch(name string, t interface{}) error {
