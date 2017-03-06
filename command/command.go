@@ -13,8 +13,9 @@ import (
 
 	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/lua"
-	_ "github.com/brettbuddin/eolian/midi" // Register MIDI modules
-	_ "github.com/brettbuddin/eolian/osc"  // Register OSC modules
+	_ "github.com/brettbuddin/eolian/module"      // Register standard modules
+	_ "github.com/brettbuddin/eolian/module/midi" // Register MIDI modules
+	_ "github.com/brettbuddin/eolian/module/osc"  // Register OSC modules
 )
 
 // Run is the main entrypoint for the eolian command
