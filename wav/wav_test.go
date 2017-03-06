@@ -7,7 +7,7 @@ import (
 )
 
 func TestFileLoad(t *testing.T) {
-	w, err := Open("space_ghost_action.wav")
+	w, err := Open("testdata/space_ghost_action.wav")
 	defer func() {
 		assert.Equal(t, w.Close(), nil)
 	}()

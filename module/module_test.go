@@ -35,7 +35,7 @@ var allModules = []struct {
 	{"FBComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FFComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
-	{"FileSource", Config{"path": "test/dummy_source.txt"}, nil, defaultOutput},
+	{"FileSource", Config{"path": "testdata/dummy_source.txt"}, nil, defaultOutput},
 	{"FilteredFBComb", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
 	{"FilteredReverb", nil, []string{"input", "gain", "feedback"}, defaultOutput},
 	{"Floor", nil, []string{"input"}, defaultOutput},
