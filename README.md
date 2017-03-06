@@ -21,6 +21,14 @@ Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Pat
 
 On macOS you can install these dependencies with: `brew install go portaudio portmidi`
 
+## Installing
+
+```
+$ git clone https://github.com/brettbuddin/eolian.git $GOPATH/src/github.com/brettbuddin/eolian
+$ cd $GOPATH/src/github.com/brettbuddin/eolian
+$ make install
+```
+
 ## Running the tests
 
 ```
