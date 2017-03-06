@@ -48,7 +48,7 @@ func newMux(size int) (*mux, error) {
 		m.sources = append(m.sources, in)
 		inputs = append(inputs, in)
 	}
-	return m, m.Expose("mux", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("Mux", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
 }
 
 func (m *mux) Read(out Frame) {
@@ -85,7 +85,7 @@ func newDemux(size int) (*demux, error) {
 			Provider: m.out(&m.outs[i]),
 		})
 	}
-	return m, m.Expose("mux", inputs, outputs)
+	return m, m.Expose("Demux", inputs, outputs)
 }
 
 func (m *demux) out(cache *Frame) ReaderProvider {
