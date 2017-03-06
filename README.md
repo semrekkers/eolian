@@ -38,7 +38,6 @@ $ make test
 ## Usage
 
 ```
-$ make install
 $ eolian racks/circles.lua
 > -- Reload the file, rebuild the Rack and remount it
 > Rack.build()
