@@ -3,6 +3,7 @@ package lua
 import (
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -207,7 +208,7 @@ func moduleSet(state *lua.LState, p module.Patcher) int {
 			inputs = v
 		case []interface{}:
 			for i, rv := range v {
-				inputs[fmt.Sprintf("%d", i)] = rv
+				inputs[strconv.Itoa(i)] = rv
 			}
 		default:
 			state.RaiseError("expected table, but got %T instead", mapped)
