@@ -8,7 +8,6 @@ return function(env)
                 osc      = synth.Oscillator(),
                 multiple = synth.Multiple(),
             },
-            recordTrigger = synth.ClockDivide(),
             random = {
                 trigger = synth.ClockDivide(),
                 series  = synth.RandomSeries(),
@@ -25,7 +24,6 @@ return function(env)
                 filter = synth.Filter(),
                 delay  = synth.FBLoopComb(),
             },
-            tape   = synth.Tape(),
             filter = synth.Filter(),
             mix    = synth.Mix(),
         }
@@ -99,18 +97,9 @@ return function(env)
             }
         end)
 
-        rack.recordTrigger:set {
-            input   = rack.clock.multiple:out(2),
-            divisor = 16,
-        }
-
-        rack.tape:set {
-            input  = rack.delay.delay:out(),
-            record = rack.recordTrigger:out(),
-        }
         rack.filter:set {
-            input  = rack.tape:out(),
-            cutoff = hz(7000),
+            input     = rack.delay.delay:out(),
+            cutoff    = hz(7000),
             resonance = 10,
         }
 

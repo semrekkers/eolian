@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/brettbuddin/eolian.svg?branch=master)](https://travis-ci.org/brettbuddin/eolian)
 
 **Eolian** is a modular synthesizer. It provides a [variety of different
-modules](https://github.com/brettbuddin/eolian/wiki/Available-Modules) that can be patched together to create music.
+modules](https://github.com/brettbuddin/eolian/wiki/eolian.synth) that can be patched together to create music.
 While the program is written in [Go](https://golang.org/), you don't need to know Go to use it. Patches for the
 synthesizer are written in [Lua](https://www.lua.org/). A
 [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) is also provided for interacting with the
@@ -50,7 +50,9 @@ resonance       <--     1
 output          -->     mix/1/input
 ...
 ```
-Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can also find some example Rack setups in the [examples directory](https://github.com/brettbuddin/eolian/tree/master/examples).
+Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can
+also find some example Rack setups in the [examples
+directory](https://github.com/brettbuddin/eolian/tree/master/examples).
 
 ### Example Sounds
 
