@@ -17,7 +17,7 @@ test: lua-scripts
 	go test -cover $(TESTARGS) $(PKG)
 
 benchmark: lua-scripts
-	go test -bench=. $(PKG)
+	go test -bench=. $(TESTARGS) $(PKG)
 
 install: lua-scripts
 	go install $(INSTALL_FLAGS) -v $(PKG)

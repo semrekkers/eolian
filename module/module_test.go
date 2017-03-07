@@ -2,6 +2,7 @@ package module
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -26,7 +27,7 @@ var allModules = []struct {
 	{"Concurrent", nil, []string{"input"}, defaultOutput},
 	{"Control", nil, []string{"control", "mod"}, defaultOutput},
 	{"Count", nil, []string{"trigger", "limit", "step", "reset"}, defaultOutput},
-	{"Debug", nil, []string{"input"}, defaultOutput},
+	{"Debug", Config{"output": ioutil.Discard}, []string{"input"}, defaultOutput},
 	{"Delay", nil, []string{"input", "duration"}, defaultOutput},
 	{"Demux", nil, []string{"input", "selection"}, []string{"0", "1"}},
 	{"Difference", nil, []string{"a", "b"}, defaultOutput},
