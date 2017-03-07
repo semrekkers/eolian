@@ -47,14 +47,9 @@ func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
 		}
 	}
 	for _, out := range outs {
-		if _, ok := io.outs[out.Name]; ok {
-			return fmt.Errorf(`duplicate output exposed "%s"`, out.Name)
+		if err := io.AddOutput(out); err != nil {
+			return err
 		}
-		if out.Provider == nil {
-			return fmt.Errorf(`provider must be set for output "%s"`, out.Name)
-		}
-		out.owner = io
-		io.outs[out.Name] = out
 	}
 	return nil
 }
@@ -73,7 +68,19 @@ func (io *IO) AddInput(in *In) error {
 	}
 	in.owner = io
 	io.ins[in.Name] = in
+	return nil
+}
 
+// AddOutput registers a new output with the module. Like AddInput, it is used for lazy-creation of outputs.
+func (io *IO) AddOutput(out *Out) error {
+	if _, ok := io.outs[out.Name]; ok {
+		return fmt.Errorf(`duplicate output exposed "%s"`, out.Name)
+	}
+	if out.Provider == nil {
+		return fmt.Errorf(`provider must be set for output "%s"`, out.Name)
+	}
+	out.owner = io
+	io.outs[out.Name] = out
 	return nil
 }
 
