@@ -14,20 +14,29 @@ var ccInputPattern = regexp.MustCompile("cc/([0-9]+)/([0-9]+)")
 
 func init() {
 	module.Register("MIDIOut", func(c module.Config) (module.Patcher, error) {
-		var config controllerConfig
+		var config struct {
+			Device        string
+			SendFrequency int `mapstructure:"sendFrequency"`
+		}
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		return newOut(config)
+
+		if config.SendFrequency == 0 {
+			config.SendFrequency = 100
+		}
+
+		return newOut(config.Device, config.SendFrequency)
 	})
 }
 
 type out struct {
 	module.IO
-	in      *module.In
-	ccs     []*midiCC
-	stream  *portmidi.Stream
-	signals chan ccSignal
+	in        *module.In
+	ccs       []*midiCC
+	stream    *portmidi.Stream
+	signals   chan ccSignal
+	frequency int
 }
 
 type midiCC struct {
@@ -40,9 +49,9 @@ type ccSignal struct {
 	value           module.Value
 }
 
-func newOut(config controllerConfig) (*out, error) {
+func newOut(device string, frequency int) (*out, error) {
 	initMIDI()
-	id, err := findDevice(config.Device, dirOut)
+	id, err := findDevice(device, dirOut)
 	if err != nil {
 		return nil, err
 	}
@@ -60,9 +69,10 @@ func newOut(config controllerConfig) (*out, error) {
 	}()
 
 	m := &out{
-		in:      &module.In{Name: "input", Source: module.Value(0)},
-		stream:  stream,
-		signals: signals,
+		in:        &module.In{Name: "input", Source: module.Value(0)},
+		stream:    stream,
+		signals:   signals,
+		frequency: frequency,
 	}
 	return m, m.Expose(
 		"MIDIOut",
@@ -125,7 +135,7 @@ func (o *out) Read(out module.Frame) {
 			if i == 0 {
 				o.signals <- ccSignal{cc.channel, cc.number, frame[j]}
 			}
-			i = (i + 1) % 100
+			i = (i + 1) % o.frequency
 		}
 	}
 }
