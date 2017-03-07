@@ -54,7 +54,7 @@ func (c *ctrl) Read(out Frame) {
 			in = ctrl[i]
 		}
 		if !static {
-			in = mod[i] * c.avg
+			in *= mod[i]
 		}
 		if c.max == 0 && c.min == 0 {
 			out[i] = in
