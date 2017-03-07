@@ -34,6 +34,7 @@ var allModules = []struct {
 	{"Direct", nil, []string{"input"}, defaultOutput},
 	{"Distort", nil, []string{"input", "gain", "offsetA", "offsetB"}, defaultOutput},
 	{"Divide", nil, []string{"a", "b"}, defaultOutput},
+	{"Edges", nil, []string{"input"}, []string{"endRise", "endCycle"}},
 	{"FBComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FFComb", nil, []string{"input", "duration", "gain"}, defaultOutput},
