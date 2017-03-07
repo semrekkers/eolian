@@ -15,7 +15,10 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
-		if config.Algorithm == "" {
+		switch config.Algorithm {
+		case algBLEP:
+		case algSimple:
+		default:
 			config.Algorithm = algBLEP
 		}
 		if config.Multiplier == 0 {
