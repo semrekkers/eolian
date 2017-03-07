@@ -98,6 +98,7 @@ var allModules = []struct {
 		[]string{"output", "endsplice"}},
 	{"TempoDetect", nil, []string{"tap"}, defaultOutput},
 	{"Toggle", nil, []string{"trigger"}, defaultOutput},
+	{"TrackHold", nil, []string{"input", "hang"}, defaultOutput},
 	{"Wrap", nil, []string{"input", "level"}, defaultOutput},
 	{"XOR", nil, []string{"a", "b"}, defaultOutput},
 }

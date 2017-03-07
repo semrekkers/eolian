@@ -6,8 +6,7 @@ func init() {
 
 type sampleHold struct {
 	IO
-	in, trigger *In
-
+	in, trigger         *In
 	sample, lastTrigger Value
 }
 
