@@ -109,6 +109,13 @@ func adsrAttack(s *adsrState) adsrStateFunc {
 	s.value = s.base + s.value*s.multiplier
 	if s.value >= 1 {
 		s.value = 1
+		if s.decay == 0 {
+			s.value = s.sustain
+			if s.disableSustain == 1 {
+				return prepRelease(s)
+			}
+			return adsrSustain
+		}
 		return prepDecay(s)
 	}
 	return adsrAttack
