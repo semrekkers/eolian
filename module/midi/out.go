@@ -111,6 +111,7 @@ func (o *out) Patch(name string, t interface{}) error {
 			In:      in,
 			channel: channel,
 			number:  number,
+			last:    -1,
 		})
 		return o.IO.Patch(name, t)
 	}
