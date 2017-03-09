@@ -3,14 +3,16 @@
 [![Build Status](https://travis-ci.org/brettbuddin/eolian.svg?branch=master)](https://travis-ci.org/brettbuddin/eolian)
 
 **Eolian** is a modular synthesizer. It provides a [variety of different
-modules](https://github.com/brettbuddin/eolian/wiki/eolian.synth) and music theory primitives that can be patched
-together to create music.  While the program is written in [Go](https://golang.org/), you don't need to know Go to use
-it. Patches for the synthesizer are written in [Lua](https://www.lua.org/). A
-[REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) is also provided for interacting with the
-patches in real-time.
+modules](https://github.com/brettbuddin/eolian/wiki/eolian.synth) and [music theory
+primitives](https://github.com/brettbuddin/musictheory) that can be patched together to create music.  While the program
+is written in [Go](https://golang.org/), you don't need to know Go to use it. Patches for the synthesizer are written in
+[Lua](https://www.lua.org/). A [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) is also
+provided for interacting with the patches in real-time.
 
-This project is named after the music hall, **The Eolian**, in the book [*The Name of the
-Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Patrick Rothfuss](http://patrickrothfuss.com).
+I started this project in attempt to learn more about digital signal processing and music theory. The project is named
+after the music hall, **The Eolian**, in the book [*The Name of the
+Wind*](https://www.amazon.com/Name-Wind-Patrick-Rothfuss/dp/0756404746/) by [Patrick
+Rothfuss](http://patrickrothfuss.com).
 
 ## Dependencies
 
