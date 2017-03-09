@@ -50,29 +50,17 @@ resonance       <--     1
 output          -->     mix/1/input
 ...
 ```
-Be sure to check out the [Wiki](https://github.com/brettbuddin/eolian/wiki) for more features and tutorials. You can
-also find some example Rack setups in the [examples
-directory](https://github.com/brettbuddin/eolian/tree/master/examples).
 
-### Example Sounds
+### Building a Rack
 
-Here's some example videos of things I've been able to get it to do at various stages during development:
+Documentation for all modules and synthesizer features can be found on the
+[Wiki](https://github.com/brettbuddin/eolian/wiki). I'll also be posting tutorials there soon.
 
-- [Reverb](https://www.instagram.com/p/BQXAs98D9SU/)
-- [Tape + WAV files](https://www.instagram.com/p/BQR1J-MD4Au/)
-- [Irregular clocks](https://www.instagram.com/p/BP2pb_fD1od/)
-- [Ratcheting](https://www.instagram.com/p/BPlpuu5Df8Q/)
-- [Alien patch](https://www.instagram.com/p/BOIuYXQj2im/)
-- [Tape exploration](https://www.instagram.com/p/BNU5G1RjfT7/)
-- [Quantizer](https://www.instagram.com/p/BN21tK5Anog/)
-- [Tinkering with FilteredReverb](https://www.instagram.com/p/BLxTrABjGhG/)
-- [4-Pole filter](https://www.instagram.com/p/BKCLIGYjU_F/)
-- [Karplus-Strong #1](https://www.instagram.com/p/BKx7jIpjL4O/)
-- [Karplus-Strong #2](https://www.instagram.com/p/BKzAeRQjZ7N/)
-- [MIDI controller](https://www.instagram.com/p/BKhJ42FDnSY/)
-- [Static clicks](https://www.instagram.com/p/BKZQbtfj0OM/)
-- [Reverb exploration](https://www.instagram.com/p/BKCJ98Dj2RS/)
-- [Others...](https://www.instagram.com/brettbuddin)
+A small set of example racks are maintained in the [examples directory](https://github.com/brettbuddin/eolian/tree/master/examples).
+
+I keep all of my personal racks at [brettbuddin/eolian-racks](https://github.com/brettbuddin/eolian-racks). Be warned
+that some of them might be out of date due to changes and new features in Eolian. I also frequently post [short videos
+on Instagram](https://www.instagram.com/brettbuddin) of things I've been able to get out of it.
 
 ## Contributing
 
