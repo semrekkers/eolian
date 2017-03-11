@@ -40,21 +40,6 @@ func (t *Table) Step() float64 {
 	return t.StepCatmullRom()
 }
 
-func (t *Table) StepLinear() float64 {
-	x := int(t.phase * float64(t.size))
-	t.incr()
-
-	i := int(x)
-	x -= i
-
-	j := i + 1
-	if j >= t.size {
-		j = 0
-	}
-
-	return float64(1-x)*t.tables[t.offset+i] + float64(x)*t.tables[t.offset+j]
-}
-
 func (t *Table) StepCatmullRom() float64 {
 	x := int(t.phase * float64(t.size))
 	t.incr()
