@@ -100,6 +100,7 @@ var allModules = []struct {
 	{"Toggle", nil, []string{"trigger"}, defaultOutput},
 	{"TrackHold", nil, []string{"input", "hang"}, defaultOutput},
 	{"Wrap", nil, []string{"input", "level"}, defaultOutput},
+	{"Wavetable", nil, []string{"pitch", "amp"}, defaultOutput},
 	{"XOR", nil, []string{"a", "b"}, defaultOutput},
 }
 
