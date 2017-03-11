@@ -14,7 +14,7 @@ func init() {
 			return nil, err
 		}
 		if config.Table == "" {
-			config.Table = "sin"
+			config.Table = "sine"
 		}
 		return newWavetable(config.Table)
 	})

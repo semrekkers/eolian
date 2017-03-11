@@ -15,7 +15,7 @@ const (
 )
 
 var tables = []table{
-	{"Sin", func(count uint) []float64 { return gen(count, sin, 0, false) }},
+	{"Sine", func(count uint) []float64 { return gen(count, sine, 0, false) }},
 	{"Saw", func(count uint) []float64 { return gen(count, saw, 0.5, true) }},
 	{"Square", func(count uint) []float64 { return gen(count, square, 0, true) }},
 	{"Triangle", func(count uint) []float64 { return gen(count, triangle, 0, true) }},
@@ -85,7 +85,7 @@ func triangle(p float64, k int) float64 {
 	return 0
 }
 
-func sin(p float64, k int) float64 {
+func sine(p float64, k int) float64 {
 	if k == 1 {
 		return -math.Sin(2 * math.Pi * float64(k) * p)
 	}
