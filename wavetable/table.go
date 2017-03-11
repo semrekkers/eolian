@@ -37,6 +37,10 @@ func (t *Table) incr() {
 }
 
 func (t *Table) Step() float64 {
+	return t.StepCatmullRom()
+}
+
+func (t *Table) StepLinear() float64 {
 	x := int(t.phase * float64(t.size))
 	t.incr()
 
@@ -49,4 +53,33 @@ func (t *Table) Step() float64 {
 	}
 
 	return float64(1-x)*t.tables[t.offset+i] + float64(x)*t.tables[t.offset+j]
+}
+
+func (t *Table) StepCatmullRom() float64 {
+	x := int(t.phase * float64(t.size))
+	t.incr()
+
+	i := int(x)
+	x -= i
+
+	j := i - 1
+	if j < 0 {
+		j += t.size
+	}
+	y0 := t.tables[t.offset+j]
+	y1 := t.tables[t.offset+i]
+
+	i = (i + 1) % t.size
+	y2 := t.tables[t.offset+i]
+
+	i = (i + 1) % t.size
+	y3 := t.tables[t.offset+i]
+
+	c0 := y1
+	c1 := 0.5 * (y2 - y0)
+	c2 := y0 - 2.5*y1 + 2*y2 - 0.5*y3
+	c3 := 0.5*(y3-y0) + 1.5*(y1-y2)
+
+	fx := float64(x)
+	return ((c3*fx+c2)*fx+c1)*fx + c0
 }
