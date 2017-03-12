@@ -5,12 +5,12 @@ type multiOutIO struct {
 	reads int
 }
 
-func (io *multiOutIO) incrRead(step func()) {
+func (io *multiOutIO) incrRead(read func()) {
 	if io.reads > 0 {
 		io.incr()
 		return
 	}
-	step()
+	read()
 	io.incr()
 }
 
