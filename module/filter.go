@@ -20,10 +20,9 @@ func init() {
 }
 
 type svFilter struct {
-	IO
+	multiOutIO
 	in, cutoff, resonance *In
 	filter                *filter
-	readTracker           manyReadTracker
 	lp, bp, hp            Frame
 }
 
@@ -38,42 +37,29 @@ func newSVFilter(poles int) (*svFilter, error) {
 		hp:        make(Frame, FrameSize),
 	}
 
-	m.readTracker = manyReadTracker{counter: m}
-
 	return m, m.Expose(
 		"Filter",
 		[]*In{m.in, m.cutoff, m.resonance},
 		[]*Out{
-			{Name: "lowpass", Provider: m.out(&m.lp)},
-			{Name: "highpass", Provider: m.out(&m.hp)},
-			{Name: "bandpass", Provider: m.out(&m.bp)},
+			{Name: "lowpass", Provider: provideCopyOut(m, &m.lp)},
+			{Name: "highpass", Provider: provideCopyOut(m, &m.hp)},
+			{Name: "bandpass", Provider: provideCopyOut(m, &m.bp)},
 		},
 	)
 }
 
-func (f *svFilter) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: f, cache: cache}
+func (f *svFilter) Read(out Frame) {
+	f.incrRead(func() {
+		f.in.Read(out)
+		cutoff := f.cutoff.ReadFrame()
+		resonance := f.resonance.ReadFrame()
+
+		for i := range out {
+			f.filter.cutoff = cutoff[i]
+			f.filter.resonance = resonance[i]
+			f.lp[i], f.bp[i], f.hp[i] = f.filter.Tick(out[i])
+		}
 	})
-}
-
-func (f *svFilter) readMany(out Frame) {
-	if f.readTracker.count() > 0 {
-		f.readTracker.incr()
-		return
-	}
-
-	f.in.Read(out)
-	cutoff := f.cutoff.ReadFrame()
-	resonance := f.resonance.ReadFrame()
-
-	for i := range out {
-		f.filter.cutoff = cutoff[i]
-		f.filter.resonance = resonance[i]
-		f.lp[i], f.bp[i], f.hp[i] = f.filter.Tick(out[i])
-	}
-
-	f.readTracker.incr()
 }
 
 type filter struct {

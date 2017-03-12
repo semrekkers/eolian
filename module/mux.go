@@ -63,10 +63,9 @@ func (m *mux) Read(out Frame) {
 }
 
 type demux struct {
-	IO
+	multiOutIO
 	in, selection *In
 	outs          []Frame
-	readTracker   manyReadTracker
 }
 
 func newDemux(size int) (*demux, error) {
@@ -75,43 +74,31 @@ func newDemux(size int) (*demux, error) {
 		selection: &In{Name: "selection", Source: NewBuffer(zero)},
 		outs:      make([]Frame, size),
 	}
-	m.readTracker = manyReadTracker{counter: m}
 	inputs := []*In{m.in, m.selection}
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
 		m.outs[i] = make(Frame, FrameSize)
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%d", i),
-			Provider: m.out(&m.outs[i]),
+			Provider: provideCopyOut(m, &m.outs[i]),
 		})
 	}
 	return m, m.Expose("Demux", inputs, outputs)
 }
 
-func (m *demux) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: m, cache: cache}
-	})
-}
-
-func (m *demux) readMany(out Frame) {
-	if m.readTracker.count() > 0 {
-		m.readTracker.incr()
-		return
-	}
-
-	m.in.Read(out)
-	selection := m.selection.ReadFrame()
-	for i := range out {
-		s := int(clampValue(selection[i], 0, Value(len(m.outs)-1)))
-		for j := 0; j < len(m.outs); j++ {
-			if j == s {
-				m.outs[j][i] = out[i]
-			} else {
-				m.outs[j][i] = 0
+func (m *demux) Read(out Frame) {
+	m.incrRead(func() {
+		m.in.Read(out)
+		selection := m.selection.ReadFrame()
+		for i := range out {
+			s := int(clampValue(selection[i], 0, Value(len(m.outs)-1)))
+			for j := 0; j < len(m.outs); j++ {
+				if j == s {
+					m.outs[j][i] = out[i]
+				} else {
+					m.outs[j][i] = 0
+				}
 			}
 		}
-	}
-
-	m.readTracker.incr()
+	})
 }

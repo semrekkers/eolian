@@ -41,15 +41,13 @@ const (
 )
 
 type oscillator struct {
-	IO
+	multiOutIO
 	pitch, pitchMod, pitchModAmount       *In
 	detune, amp, offset, sync, pulseWidth *In
 
 	algorithm string
 	state     *oscStateFrames
 	phases    []float64
-
-	readTracker manyReadTracker
 }
 
 type oscStateFrames struct {
@@ -71,8 +69,6 @@ func newOscillator(algorithm string, multiplier float64) (*oscillator, error) {
 		phases:         make([]float64, 5),
 		algorithm:      algorithm,
 	}
-
-	m.readTracker = manyReadTracker{counter: m}
 
 	err := m.Expose(
 		"Oscillator",
@@ -110,21 +106,16 @@ func (o *oscillator) out(idx int, shape int, multiplier float64) ReaderProvider 
 }
 
 func (o *oscillator) read(out Frame) {
-	if o.readTracker.count() > 0 {
-		o.readTracker.incr()
-		return
-	}
-
-	o.state.pitch = o.pitch.ReadFrame()
-	o.state.pitchMod = o.pitchMod.ReadFrame()
-	o.state.pitchModAmount = o.pitchModAmount.ReadFrame()
-	o.state.amp = o.amp.ReadFrame()
-	o.state.offset = o.offset.ReadFrame()
-	o.state.detune = o.detune.ReadFrame()
-	o.state.sync = o.sync.ReadFrame()
-	o.state.pulseWidth = o.pulseWidth.ReadFrame()
-
-	o.readTracker.incr()
+	o.incrRead(func() {
+		o.state.pitch = o.pitch.ReadFrame()
+		o.state.pitchMod = o.pitchMod.ReadFrame()
+		o.state.pitchModAmount = o.pitchModAmount.ReadFrame()
+		o.state.amp = o.amp.ReadFrame()
+		o.state.offset = o.offset.ReadFrame()
+		o.state.detune = o.detune.ReadFrame()
+		o.state.sync = o.sync.ReadFrame()
+		o.state.pulseWidth = o.pulseWidth.ReadFrame()
+	})
 }
 
 type oscOut struct {

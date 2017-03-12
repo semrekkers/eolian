@@ -27,8 +27,7 @@ func init() {
 }
 
 type stepSequence struct {
-	IO
-	readTracker manyReadTracker
+	multiOutIO
 
 	clock, reset                          *In
 	enables                               []*In
@@ -54,7 +53,6 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 		stepCount:  steps,
 		layerCount: layers,
 	}
-	m.readTracker = manyReadTracker{counter: m}
 
 	var (
 		inputs  = []*In{m.clock, m.reset}
@@ -73,7 +71,7 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 		m.pitchesOut[i] = make(Frame, FrameSize)
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%c/pitch", alphaSeries[i]),
-			Provider: m.out(&m.pitchesOut[i]),
+			Provider: provideCopyOut(m, &m.pitchesOut[i]),
 		})
 	}
 
@@ -87,55 +85,45 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 		m.gatesOut[i] = make(Frame, FrameSize)
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%d/gate", i),
-			Provider: m.out(&m.gatesOut[i]),
+			Provider: provideCopyOut(m, &m.gatesOut[i]),
 		})
 	}
 
 	return m, m.Expose("StepSequence", inputs, outputs)
 }
 
-func (s *stepSequence) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: s, cache: cache}
+func (s *stepSequence) Read(out Frame) {
+	s.incrRead(func() {
+		clock := s.clock.ReadFrame()
+		reset := s.reset.ReadFrame()
+		for l, layer := range s.pitches {
+			for i := range layer {
+				s.pitches[l][i].ReadFrame()
+			}
+		}
+		for i := 0; i < s.stepCount; i++ {
+			s.enables[i].ReadFrame()
+		}
+
+		for i := range out {
+			if s.lastStep >= 0 && s.lastClock < 0 && clock[i] > 0 {
+				s.step = (s.step + 1) % s.stepCount
+			}
+			if s.lastReset < 0 && reset[i] > 0 {
+				s.step = 0
+			}
+			if s.enables[s.step].LastFrame()[i] <= 0 {
+				s.step = 0
+			}
+
+			s.fillPitches(i)
+			s.fillGates(i, clock[i])
+
+			s.lastClock = clock[i]
+			s.lastReset = reset[i]
+			s.lastStep = s.step
+		}
 	})
-}
-
-func (s *stepSequence) readMany(out Frame) {
-	if s.readTracker.count() > 0 {
-		s.readTracker.incr()
-		return
-	}
-
-	clock := s.clock.ReadFrame()
-	reset := s.reset.ReadFrame()
-	for l, layer := range s.pitches {
-		for i := range layer {
-			s.pitches[l][i].ReadFrame()
-		}
-	}
-	for i := 0; i < s.stepCount; i++ {
-		s.enables[i].ReadFrame()
-	}
-
-	for i := range out {
-		if s.lastStep >= 0 && s.lastClock < 0 && clock[i] > 0 {
-			s.step = (s.step + 1) % s.stepCount
-		}
-		if s.lastReset < 0 && reset[i] > 0 {
-			s.step = 0
-		}
-		if s.enables[s.step].LastFrame()[i] <= 0 {
-			s.step = 0
-		}
-
-		s.fillPitches(i)
-		s.fillGates(i, clock[i])
-
-		s.lastClock = clock[i]
-		s.lastReset = reset[i]
-		s.lastStep = s.step
-	}
-	s.readTracker.incr()
 }
 
 func (s *stepSequence) fillPitches(i int) {

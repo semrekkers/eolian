@@ -34,8 +34,7 @@ const (
 )
 
 type stageSequence struct {
-	IO
-	readTracker manyReadTracker
+	multiOutIO
 
 	clock, transpose, reset, glide, mode *In
 	stages                               []stage
@@ -75,7 +74,6 @@ func newStageSequence(stages int) (*stageSequence, error) {
 		syncOut:     make(Frame, FrameSize),
 		endStageOut: make(Frame, FrameSize),
 	}
-	m.readTracker = manyReadTracker{counter: m}
 
 	inputs := []*In{m.clock, m.transpose, m.reset, m.glide, m.mode}
 
@@ -114,87 +112,78 @@ func newStageSequence(stages int) (*stageSequence, error) {
 		"StageSequence",
 		inputs,
 		[]*Out{
-			{Name: "gate", Provider: m.out(&m.gateOut)},
-			{Name: "pitch", Provider: m.out(&m.pitchOut)},
-			{Name: "velocity", Provider: m.out(&m.velocityOut)},
-			{Name: "endstage", Provider: m.out(&m.endStageOut)},
-			{Name: "sync", Provider: m.out(&m.syncOut)},
+			{Name: "gate", Provider: provideCopyOut(m, &m.gateOut)},
+			{Name: "pitch", Provider: provideCopyOut(m, &m.pitchOut)},
+			{Name: "velocity", Provider: provideCopyOut(m, &m.velocityOut)},
+			{Name: "endstage", Provider: provideCopyOut(m, &m.endStageOut)},
+			{Name: "sync", Provider: provideCopyOut(m, &m.syncOut)},
 		},
 	)
 }
 
-func (s *stageSequence) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: s, cache: cache}
-	})
-}
+func (s *stageSequence) Read(out Frame) {
+	s.incrRead(func() {
 
-func (s *stageSequence) readMany(out Frame) {
-	if s.readTracker.count() > 0 {
-		s.readTracker.incr()
-		return
-	}
+		clock := s.clock.ReadFrame()
+		reset := s.reset.ReadFrame()
+		mode := s.mode.ReadFrame()
+		transpose := s.transpose.ReadFrame()
+		glide := s.glide.ReadFrame()
 
-	clock := s.clock.ReadFrame()
-	reset := s.reset.ReadFrame()
-	mode := s.mode.ReadFrame()
-	transpose := s.transpose.ReadFrame()
-	glide := s.glide.ReadFrame()
+		for _, stg := range s.stages {
+			stg.pitch.ReadFrame()
+			stg.pulses.ReadFrame()
+			stg.gateMode.ReadFrame()
+			stg.glide.ReadFrame()
+			stg.velocity.ReadFrame()
+		}
 
-	for _, stg := range s.stages {
-		stg.pitch.ReadFrame()
-		stg.pulses.ReadFrame()
-		stg.gateMode.ReadFrame()
-		stg.glide.ReadFrame()
-		stg.velocity.ReadFrame()
-	}
+		for i := range out {
+			if s.lastClock < 0 && clock[i] > 0 {
+				pulses := s.stages[s.stage].pulses.LastFrame()[i]
+				lastPulse := s.pulse
+				s.pulse = (s.pulse + 1) % int(pulses)
 
-	for i := range out {
-		if s.lastClock < 0 && clock[i] > 0 {
-			pulses := s.stages[s.stage].pulses.LastFrame()[i]
-			lastPulse := s.pulse
-			s.pulse = (s.pulse + 1) % int(pulses)
+				if lastPulse >= 0 && s.pulse == 0 {
+					s.lastStage = s.stage
+					switch mapPatternMode(mode[i]) {
+					case patternModeSequential:
+						s.stage = (s.stage + 1) % len(s.stages)
+						s.pong = false
+					case patternModePingPong:
+						var inc = 1
+						if s.pong {
+							inc = -1
+						}
+						s.stage += inc
 
-			if lastPulse >= 0 && s.pulse == 0 {
-				s.lastStage = s.stage
-				switch mapPatternMode(mode[i]) {
-				case patternModeSequential:
-					s.stage = (s.stage + 1) % len(s.stages)
-					s.pong = false
-				case patternModePingPong:
-					var inc = 1
-					if s.pong {
-						inc = -1
-					}
-					s.stage += inc
-
-					if s.stage == len(s.stages)-1 {
-						s.stage = len(s.stages) - 1
-						s.pong = true
-					} else if s.stage == 0 {
-						s.stage = 0
+						if s.stage == len(s.stages)-1 {
+							s.stage = len(s.stages) - 1
+							s.pong = true
+						} else if s.stage == 0 {
+							s.stage = 0
+							s.pong = false
+						}
+					case patternModeRandom:
+						s.stage = rand.Intn(len(s.stages))
 						s.pong = false
 					}
-				case patternModeRandom:
-					s.stage = rand.Intn(len(s.stages))
-					s.pong = false
 				}
 			}
-		}
-		if s.lastReset < 0 && reset[0] > 0 {
-			s.pulse = 0
-			s.stage = 0
-		}
+			if s.lastReset < 0 && reset[0] > 0 {
+				s.pulse = 0
+				s.stage = 0
+			}
 
-		s.fillGate(i, clock[i])
-		s.fillPitch(i, transpose[i], glide[i])
-		s.fillEndOfStage(i)
-		s.fillVelocity(i)
+			s.fillGate(i, clock[i])
+			s.fillPitch(i, transpose[i], glide[i])
+			s.fillEndOfStage(i)
+			s.fillVelocity(i)
 
-		s.lastClock = clock[i]
-		s.lastReset = reset[i]
-	}
-	s.readTracker.incr()
+			s.lastClock = clock[i]
+			s.lastReset = reset[i]
+		}
+	})
 }
 
 func (s *stageSequence) fillGate(i int, clock Value) {

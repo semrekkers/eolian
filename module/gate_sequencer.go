@@ -22,12 +22,11 @@ func init() {
 }
 
 type gateSequence struct {
-	IO
+	multiOutIO
 	clock, reset         *In
 	steps                []*In
 	size                 int
 	step, lastStep       int
-	readTracker          manyReadTracker
 	lastClock, lastReset Value
 
 	onBeatOut, offBeatOut Frame
@@ -46,8 +45,6 @@ func newGateSequence(steps int) (*gateSequence, error) {
 		lastStep:   -1,
 	}
 
-	m.readTracker = manyReadTracker{counter: m}
-
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < steps; i++ {
 		m.steps[i] = &In{Name: fmt.Sprintf("%d/mode", i), Source: NewBuffer(zero)}
@@ -55,57 +52,48 @@ func newGateSequence(steps int) (*gateSequence, error) {
 	}
 
 	outputs := []*Out{
-		&Out{Name: "on", Provider: m.out(&m.onBeatOut)},
-		&Out{Name: "off", Provider: m.out(&m.offBeatOut)},
+		&Out{Name: "on", Provider: provideCopyOut(m, &m.onBeatOut)},
+		&Out{Name: "off", Provider: provideCopyOut(m, &m.offBeatOut)},
 	}
 
 	return m, m.Expose("GateSequence", inputs, outputs)
 }
 
-func (s *gateSequence) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: s, cache: cache}
-	})
-}
-
-func (s *gateSequence) readMany(out Frame) {
-	if s.readTracker.count() > 0 {
-		s.readTracker.incr()
-		return
-	}
-	clock := s.clock.ReadFrame()
-	reset := s.reset.ReadFrame()
-	for _, s := range s.steps {
-		s.ReadFrame()
-	}
-	for i := range out {
-		if s.lastClock <= 0 && clock[i] > 0 {
-			s.step = (s.step + 1) % s.size
+func (s *gateSequence) Read(out Frame) {
+	s.incrRead(func() {
+		clock := s.clock.ReadFrame()
+		reset := s.reset.ReadFrame()
+		for _, s := range s.steps {
+			s.ReadFrame()
 		}
-		if s.lastReset <= 0 && reset[i] > 0 {
-			s.step = 0
-		}
-
-		mode := s.steps[s.step].LastFrame()[i]
-		if s.step != s.lastStep {
-			s.onBeatOut[i] = -1
-			s.offBeatOut[i] = -1
-		} else {
-			if mode > 0 {
-				s.onBeatOut[i] = 1
-				s.offBeatOut[i] = -1
-			} else if mode <= 0 {
-				s.onBeatOut[i] = -1
-				s.offBeatOut[i] = 1
-			} else {
-				s.onBeatOut[i] = -1
-				s.offBeatOut[i] = -1
+		for i := range out {
+			if s.lastClock <= 0 && clock[i] > 0 {
+				s.step = (s.step + 1) % s.size
 			}
-		}
+			if s.lastReset <= 0 && reset[i] > 0 {
+				s.step = 0
+			}
 
-		s.lastClock = clock[i]
-		s.lastReset = reset[i]
-		s.lastStep = s.step
-	}
-	s.readTracker.incr()
+			mode := s.steps[s.step].LastFrame()[i]
+			if s.step != s.lastStep {
+				s.onBeatOut[i] = -1
+				s.offBeatOut[i] = -1
+			} else {
+				if mode > 0 {
+					s.onBeatOut[i] = 1
+					s.offBeatOut[i] = -1
+				} else if mode <= 0 {
+					s.onBeatOut[i] = -1
+					s.offBeatOut[i] = 1
+				} else {
+					s.onBeatOut[i] = -1
+					s.offBeatOut[i] = -1
+				}
+			}
+
+			s.lastClock = clock[i]
+			s.lastReset = reset[i]
+			s.lastStep = s.step
+		}
+	})
 }

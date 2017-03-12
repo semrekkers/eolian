@@ -123,13 +123,12 @@ func (m *clockMultiply) Read(out Frame) {
 }
 
 type rcd struct {
-	IO
+	multiOutIO
 	in, rotate, reset     *In
 	rotation, maxRotation int
 	ticks                 []int
 
 	lastIn, lastRotate, lastReset Value
-	readTracker                   manyReadTracker
 	outs                          []Frame
 }
 
@@ -146,14 +145,12 @@ func newRCD(size int) (*rcd, error) {
 		lastRotate:  -1,
 	}
 
-	m.readTracker = manyReadTracker{counter: m}
-
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
 		m.outs[i] = make(Frame, FrameSize)
 		outputs = append(outputs, &Out{
 			Name:     strconv.Itoa(i + 1),
-			Provider: m.out(&m.outs[i])})
+			Provider: provideCopyOut(m, &m.outs[i])})
 	}
 
 	return m, m.Expose(
@@ -163,51 +160,40 @@ func newRCD(size int) (*rcd, error) {
 	)
 }
 
-func (d *rcd) out(cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
-		return &manyOut{reader: d, cache: cache}
+func (d *rcd) Read(out Frame) {
+	d.incrRead(func() {
+		var (
+			in     = d.in.ReadFrame()
+			rotate = d.rotate.ReadFrame()
+			reset  = d.reset.ReadFrame()
+		)
+
+		for i := range out {
+			if d.lastRotate < 0 && rotate[i] > 0 {
+				d.rotation = (d.rotation + 1) % d.maxRotation
+			}
+			if d.lastReset < 0 && reset[i] > 0 {
+				d.rotation = 0
+			}
+
+			for j := 0; j < len(d.outs); j++ {
+				count := j - d.rotation
+				if count < 0 {
+					count = d.maxRotation + count
+				}
+				if d.lastIn < 0 && in[i] > 0 {
+					d.ticks[j] = (d.ticks[j] + 1) % (count + 1)
+				}
+				if d.ticks[j] == 0 {
+					d.outs[j][i] = 1
+				} else {
+					d.outs[j][i] = -1
+				}
+			}
+
+			d.lastIn = in[i]
+			d.lastReset = reset[i]
+			d.lastRotate = rotate[i]
+		}
 	})
-}
-
-func (d *rcd) readMany(out Frame) {
-	if d.readTracker.count() > 0 {
-		d.readTracker.incr()
-		return
-	}
-
-	var (
-		in     = d.in.ReadFrame()
-		rotate = d.rotate.ReadFrame()
-		reset  = d.reset.ReadFrame()
-	)
-
-	for i := range out {
-		if d.lastRotate < 0 && rotate[i] > 0 {
-			d.rotation = (d.rotation + 1) % d.maxRotation
-		}
-		if d.lastReset < 0 && reset[i] > 0 {
-			d.rotation = 0
-		}
-
-		for j := 0; j < len(d.outs); j++ {
-			count := j - d.rotation
-			if count < 0 {
-				count = d.maxRotation + count
-			}
-			if d.lastIn < 0 && in[i] > 0 {
-				d.ticks[j] = (d.ticks[j] + 1) % (count + 1)
-			}
-			if d.ticks[j] == 0 {
-				d.outs[j][i] = 1
-			} else {
-				d.outs[j][i] = -1
-			}
-		}
-
-		d.lastIn = in[i]
-		d.lastReset = reset[i]
-		d.lastRotate = rotate[i]
-	}
-
-	d.readTracker.incr()
 }
