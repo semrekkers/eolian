@@ -111,7 +111,7 @@ func gap(p float64, k int) float64 {
 	if k%3 == 0 {
 		return 0
 	}
-	return 8 / 3 * math.Pi / float64(k) * math.Sin(2*math.Pi*float64(k)*(p+0.5))
+	return 8 / (3 * math.Pi) / float64(k) * math.Sin(2*math.Pi*float64(k)*(p+0.5))
 }
 
 const invSqrt2 = 1 / math.Sqrt2
