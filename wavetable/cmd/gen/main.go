@@ -15,8 +15,9 @@ const (
 )
 
 var tables = []table{
-	{"Sine", func(count uint) []float64 { return gen(count, sine, 0, false) }},
+	{"Gap", func(count uint) []float64 { return gen(count, gap, 0, true) }},
 	{"Saw", func(count uint) []float64 { return gen(count, saw, 0.5, true) }},
+	{"Sine", func(count uint) []float64 { return gen(count, sine, 0, false) }},
 	{"Square", func(count uint) []float64 { return gen(count, square, 0, true) }},
 	{"Triangle", func(count uint) []float64 { return gen(count, triangle, 0, true) }},
 }
@@ -76,7 +77,7 @@ var Breakpoints = []float64{%s}
 
 var Tables = map[string][]float64{%s}`
 
-type seriesFunc func(a float64, b int) float64
+type seriesFunc func(p float64, k int) float64
 
 func triangle(p float64, k int) float64 {
 	if k%2 != 0 {
@@ -104,6 +105,13 @@ func square(p float64, k int) float64 {
 		return -4 / math.Pi / float64(k) * math.Sin(2*math.Pi*p*float64(k))
 	}
 	return 0
+}
+
+func gap(p float64, k int) float64 {
+	if k%3 == 0 {
+		return 0
+	}
+	return 8 / 3 * math.Pi / float64(k) * math.Sin(2*math.Pi*float64(k)*(p+0.5))
 }
 
 const invSqrt2 = 1 / math.Sqrt2
