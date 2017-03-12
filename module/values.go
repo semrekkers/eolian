@@ -8,14 +8,13 @@ import (
 )
 
 const (
-	// FrameSize is the number of samples computed during every callback
-	FrameSize = 256
-
 	// SampleRate is the numebr of samples computed every second
 	SampleRate = 44100.0
-
-	zero = Value(0)
+	zero       = Value(0)
 )
+
+// FrameSize is the number of samples computed during every callback
+var FrameSize = 256
 
 // Value is a real value sinked to the sound card
 type Value float64

@@ -13,7 +13,7 @@ import (
 
 	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/lua"
-	_ "github.com/brettbuddin/eolian/module"      // Register standard modules
+	"github.com/brettbuddin/eolian/module"        // Register standard modules
 	_ "github.com/brettbuddin/eolian/module/midi" // Register MIDI modules
 	_ "github.com/brettbuddin/eolian/module/osc"  // Register OSC modules
 )
@@ -24,15 +24,19 @@ func Run(args []string) error {
 		device     int
 		seed       int64
 		writeTrace bool
+		frameSize  int
 	)
 
 	set := flag.NewFlagSet("eolian", flag.ContinueOnError)
 	set.IntVar(&device, "output", 1, "output device")
 	set.Int64Var(&seed, "seed", 0, "random seed")
+	set.IntVar(&frameSize, "framesize", 256, "frame size")
 	set.BoolVar(&writeTrace, "trace", false, "dump go trace tool information to trace.out")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
+
+	module.FrameSize = frameSize
 
 	if writeTrace {
 		f, err := os.OpenFile("trace.out", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
