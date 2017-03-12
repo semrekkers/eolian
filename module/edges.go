@@ -6,23 +6,23 @@ func init() {
 
 type edges struct {
 	multiOutIO
-	in                    *In
-	endOfRise, endOfCycle Frame
-	lastIn                Value
+	in                *In
+	endRise, endCycle Frame
+	lastIn            Value
 }
 
 func newEdges() (*edges, error) {
 	m := &edges{
-		in:         &In{Name: "input", Source: NewBuffer(zero)},
-		endOfRise:  make(Frame, FrameSize),
-		endOfCycle: make(Frame, FrameSize),
+		in:       &In{Name: "input", Source: NewBuffer(zero)},
+		endRise:  make(Frame, FrameSize),
+		endCycle: make(Frame, FrameSize),
 	}
 	return m, m.Expose(
 		"Edges",
 		[]*In{m.in},
 		[]*Out{
-			{Name: "endRise", Provider: provideCopyOut(m, &m.endOfRise)},
-			{Name: "endCycle", Provider: provideCopyOut(m, &m.endOfCycle)},
+			{Name: "endRise", Provider: provideCopyOut(m, &m.endRise)},
+			{Name: "endCycle", Provider: provideCopyOut(m, &m.endCycle)},
 		},
 	)
 }
@@ -33,15 +33,15 @@ func (e *edges) Read(out Frame) {
 
 		for i := range out {
 			if e.lastIn < 0 && out[i] > 0 {
-				e.endOfRise[i] = 1
-				e.endOfCycle[i] = -1
+				e.endRise[i] = 1
+				e.endCycle[i] = -1
 			}
 			if e.lastIn > 0 && out[i] < 0 {
-				e.endOfCycle[i] = 1
-				e.endOfRise[i] = -1
+				e.endCycle[i] = 1
+				e.endRise[i] = -1
 			} else {
-				e.endOfCycle[i] = -1
-				e.endOfRise[i] = -1
+				e.endCycle[i] = -1
+				e.endRise[i] = -1
 			}
 
 			e.lastIn = out[i]

@@ -64,7 +64,7 @@ func (e *adsr) Read(out Frame) {
 			e.stateFunc = e.stateFunc(e.state)
 			e.mainOut[i] = e.state.value
 
-			if e.state.endOfCycle {
+			if e.state.endCycle {
 				e.endCycleOut[i] = 1
 			} else {
 				e.endCycleOut[i] = -1
@@ -79,13 +79,13 @@ type adsrState struct {
 	ratio            Value
 	base, multiplier Value
 	lastGate         Value
-	endOfCycle       bool
+	endCycle         bool
 }
 
 type adsrStateFunc func(*adsrState) adsrStateFunc
 
 func adsrIdle(s *adsrState) adsrStateFunc {
-	s.endOfCycle = false
+	s.endCycle = false
 	if s.lastGate <= 0 && s.gate > 0 {
 		s.value = 0
 		return prepAttack(s)
@@ -130,7 +130,7 @@ func adsrSustain(s *adsrState) adsrStateFunc {
 
 func adsrRelease(s *adsrState) adsrStateFunc {
 	if s.disableSustain == 1 {
-		s.endOfCycle = true
+		s.endCycle = true
 		if s.lastGate <= 0 && s.gate > 0 {
 			return prepAttack(s)
 		}
@@ -148,7 +148,7 @@ func adsrRelease(s *adsrState) adsrStateFunc {
 }
 
 func prepAttack(s *adsrState) adsrStateFunc {
-	s.endOfCycle = false
+	s.endCycle = false
 	s.multiplier = expRatio(s.ratio, s.attack)
 	s.base = (1.0 + s.ratio) * (1.0 - s.multiplier)
 	return adsrAttack

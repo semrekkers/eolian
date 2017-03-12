@@ -177,7 +177,7 @@ func (s *stageSequence) Read(out Frame) {
 
 			s.fillGate(i, clock[i])
 			s.fillPitch(i, transpose[i], glide[i])
-			s.fillEndOfStage(i)
+			s.fillEndStage(i)
 			s.fillVelocity(i)
 
 			s.lastClock = clock[i]
@@ -220,7 +220,7 @@ func (s *stageSequence) fillPitch(i int, transpose, glideAmount Value) {
 	}
 }
 
-func (s *stageSequence) fillEndOfStage(i int) {
+func (s *stageSequence) fillEndStage(i int) {
 	if s.lastStage != s.stage {
 		s.endStageOut[i] = 1
 	} else {
