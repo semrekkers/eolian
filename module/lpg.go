@@ -46,8 +46,6 @@ func (l *lpg) Read(out Frame) {
 	)
 
 	for i := range out {
-		// ctrlV := clampValue(ctrl[i], 0, 1)
-
 		switch mapLPGMode(mode[i]) {
 		case lpgModeLowPass:
 			out[i] = l.applyFilter(out[i], ctrl[i], cutoff[i], res[i])
