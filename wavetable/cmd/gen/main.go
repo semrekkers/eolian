@@ -126,7 +126,7 @@ func gen(count uint, series seriesFunc, phase float64, sigma bool) []float64 {
 		i     uint
 	)
 	for ; i < count; i++ {
-		harmonics := 1 << i
+		harmonics := (1 << i) + 1
 
 		var j uint
 		for ; j < length; j++ {
