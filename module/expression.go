@@ -43,11 +43,17 @@ func newExpression(exp string) (*expression, error) {
 	}
 
 	inputs := []*In{m.in}
+
+	seen := map[string]struct{}{}
 	for _, v := range parsed.Vars() {
+		if _, ok := seen[v]; ok {
+			continue
+		}
 		in := &In{Name: v, Source: NewBuffer(zero)}
 		inputs = append(inputs, in)
 		m.vars = append(m.vars, in)
 		m.params[in.Name] = 0
+		seen[v] = struct{}{}
 	}
 
 	return m, m.Expose(
