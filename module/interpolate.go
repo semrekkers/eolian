@@ -22,7 +22,8 @@ type interpolateConfig struct {
 
 type interpolate struct {
 	IO
-	in, max, min *In
+	in       *In
+	min, max Value
 
 	smooth  bool
 	rolling Value
@@ -31,29 +32,26 @@ type interpolate struct {
 func newInterpolate(config interpolateConfig) (*interpolate, error) {
 	m := &interpolate{
 		in:     &In{Name: "input", Source: zero},
-		max:    &In{Name: "max", Source: NewBuffer(config.Max)},
-		min:    &In{Name: "min", Source: NewBuffer(config.Min)},
+		max:    Value(config.Max),
+		min:    Value(config.Min),
 		smooth: config.Smooth,
 	}
 	err := m.Expose(
 		"Interpolate",
-		[]*In{m.in, m.max, m.min},
+		[]*In{m.in},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
 }
 
-func (interp *interpolate) Read(out Frame) {
-	interp.in.Read(out)
-	max := interp.max.ReadFrame()
-	min := interp.min.ReadFrame()
-
+func (m *interpolate) Read(out Frame) {
+	m.in.Read(out)
 	for i := range out {
-		out[i] = out[i]*(max[i]-min[i]) + min[i]
-		if interp.smooth {
-			interp.rolling -= interp.rolling / averageVelocitySamples
-			interp.rolling += out[i] / averageVelocitySamples
-			out[i] = interp.rolling
+		out[i] = out[i]*(m.max-m.min) + m.min
+		if m.smooth {
+			m.rolling -= m.rolling / averageVelocitySamples
+			m.rolling += out[i] / averageVelocitySamples
+			out[i] = m.rolling
 		}
 	}
 }
