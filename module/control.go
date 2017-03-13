@@ -17,22 +17,22 @@ func init() {
 
 type ctrl struct {
 	IO
-	ctrl, mod     *In
-	min, max, avg Value
-	smooth        bool
+	ctrl, mod, min, max *In
+	avg                 Value
+	smooth              bool
 }
 
 func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 	m := &ctrl{
 		ctrl:   &In{Name: "control", Source: NewBuffer(zero)},
 		mod:    &In{Name: "mod", Source: NewBuffer(Value(1))},
-		min:    Value(min),
-		max:    Value(max),
+		min:    &In{Name: "min", Source: NewBuffer(Value(0))},
+		max:    &In{Name: "max", Source: NewBuffer(Value(1))},
 		smooth: smooth,
 	}
 	err := m.Expose(
 		"Control",
-		[]*In{m.ctrl, m.mod},
+		[]*In{m.ctrl, m.mod, m.min, m.max},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
@@ -41,6 +41,7 @@ func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 func (c *ctrl) Read(out Frame) {
 	var (
 		ctrl, mod = c.ctrl.ReadFrame(), c.mod.ReadFrame()
+		min, max  = c.min.ReadFrame(), c.max.ReadFrame()
 		_, static = c.mod.Source.(*Buffer).Reader.(Valuer)
 		in        Value
 	)
@@ -56,10 +57,6 @@ func (c *ctrl) Read(out Frame) {
 		if !static {
 			in *= mod[i]
 		}
-		if c.max == 0 && c.min == 0 {
-			out[i] = in
-		} else {
-			out[i] = in*(c.max-c.min) + c.min
-		}
+		out[i] = in*(max[i]-min[i]) + min[i]
 	}
 }
