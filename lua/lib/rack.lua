@@ -80,7 +80,7 @@ end
 local originalPath = package.path
 
 function Rack.load(path)
-    package.path = originalPath .. ';' .. filepath.dir(path) .. '/?.lua'
+    package.path = filepath.dir(path) .. '/?.lua;' .. originalPath
 
     Rack.env.filepath  = path
     Rack.env.path      = filepath.dir(path)
