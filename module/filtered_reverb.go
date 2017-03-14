@@ -24,7 +24,7 @@ func init() {
 
 type filteredReverb struct {
 	IO
-	in, feedback, cutoff, gain *In
+	in, feedback, cutoff, gain, bias *In
 
 	fbs       []*filteredFBComb
 	allpasses []*allpass
@@ -43,6 +43,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 		feedback:  &In{Name: "feedback", Source: inputs.feedback.in},
 		cutoff:    &In{Name: "cutoff", Source: inputs.cutoff.in},
 		gain:      &In{Name: "gain", Source: inputs.gain.in},
+		bias:      &In{Name: "bias", Source: inputs.crossfade.bias},
 		fbs:       make([]*filteredFBComb, feedbacks),
 		allpasses: make([]*allpass, allpasses),
 	}
@@ -59,7 +60,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 
 	return m, m.Expose(
 		"FilteredReverb",
-		[]*In{m.in, m.feedback, m.cutoff, m.gain},
+		[]*In{m.in, m.feedback, m.cutoff, m.gain, m.bias},
 		[]*Out{{Name: "output", Provider: Provide(inputs.crossfade)}},
 	)
 }
