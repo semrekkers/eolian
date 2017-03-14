@@ -51,7 +51,7 @@ func (s *variableRandomSeries) Read(out Frame) {
 			size := clampValue(size[i], 1, randomSeriesMax)
 
 			if s.lastClock < 0 && clock[i] > 0 {
-				if randValue() > random[i] {
+				if r := random[i]; r != 0 && (r == 1 || randValue() > r) {
 					scale := randValue()
 					s.memory[s.idx] = scale*(max[i]-min[i]) + min[i]
 					if scale > 0.5 {
