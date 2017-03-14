@@ -77,7 +77,11 @@ function Rack.patch()
     end
 end
 
+local originalPath = package.path
+
 function Rack.load(path)
+    package.path = originalPath .. ';' .. filepath.dir(path) .. '/?.lua'
+
     Rack.env.filepath  = path
     Rack.env.path      = filepath.dir(path)
     local build, patch = dofile(path)(Rack.env)
