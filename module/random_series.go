@@ -10,12 +10,12 @@ const randomSeriesMax = 32
 
 type randomSeries struct {
 	multiOutIO
-	clock, size, trigger, min, max   *In
-	idx                              int
-	memory, gateMemory               []Value
-	lastSize, lastTrigger, lastClock Value
+	clock, size, trigger, min, max *In
+	idx                            int
+	memory, gateMemory             []Value
+	lastTrigger, lastClock         Value
 
-	valuesOut, gateOut Frame
+	valueOut, gateOut Frame
 }
 
 func newRandomSeries() (*randomSeries, error) {
@@ -27,7 +27,7 @@ func newRandomSeries() (*randomSeries, error) {
 		max:         &In{Name: "max", Source: NewBuffer(Value(1))},
 		memory:      make([]Value, randomSeriesMax),
 		gateMemory:  make([]Value, randomSeriesMax),
-		valuesOut:   make(Frame, FrameSize),
+		valueOut:    make(Frame, FrameSize),
 		gateOut:     make(Frame, FrameSize),
 		lastTrigger: -1,
 		lastClock:   -1,
@@ -37,7 +37,7 @@ func newRandomSeries() (*randomSeries, error) {
 		"RandomSeries",
 		[]*In{m.size, m.trigger, m.clock, m.min, m.max},
 		[]*Out{
-			{Name: "values", Provider: provideCopyOut(m, &m.valuesOut)},
+			{Name: "value", Provider: provideCopyOut(m, &m.valueOut)},
 			{Name: "gate", Provider: provideCopyOut(m, &m.gateOut)},
 		},
 	)
@@ -72,14 +72,13 @@ func (s *randomSeries) Read(out Frame) {
 				}
 			}
 
-			s.valuesOut[i] = s.memory[s.idx]
+			s.valueOut[i] = s.memory[s.idx]
 			if s.gateMemory[s.idx] > 0 {
 				s.gateOut[i] = clock[i]
 			} else {
 				s.gateOut[i] = -1
 			}
 
-			s.lastSize = size
 			s.lastTrigger = trigger[i]
 			s.lastClock = clock[i]
 		}
