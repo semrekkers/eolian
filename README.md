@@ -34,23 +34,28 @@ $ make install
 ## Usage
 
 ```
-$ eolian racks/circles.lua
-> -- Reload the file, rebuild the Rack and remount it
-> Rack.build()
-> -- Reload the file and only repatch it
-> Rack.patch()
-> -- Set inputs or repatch modules
-> Rack.modules.low.filter
-cutoff          <--     3000.00Hz
-input           <--     low.mix/output
-resonance       <--     1
-output          -->     mix/1/input
-> Rack.modules.low.filter:set('cutoff', hz(2000))
-cutoff          <--     2000.00Hz
-input           <--     low.mix/output
-resonance       <--     1
-output          -->     mix/1/input
-...
+$ eolian examples/random.lua
+> Rack.modules
+clock   table: 0xc420273680
+random  table: 0xc420273980
+voice   table: 0xc420273d40
+delay   table: 0xc4202e2300
+filter  (module)
+mix     (module)
+> Rack.modules.filter
+cutoff          <--     7000.00Hz
+input           <--     delay.delay/output
+resonance       <--     10.00
+bandpass        -->     (none)
+highpass        -->     (none)
+lowpass         -->     mix/0/input
+> Rack.modules.filter:set { cutoff = hz(1000) }
+cutoff          <--     1000.00Hz
+input           <--     delay.delay/output
+resonance       <--     10.00
+bandpass        -->     (none)
+highpass        -->     (none)
+lowpass         -->     mix/0/input
 ```
 
 ### Building a Rack
