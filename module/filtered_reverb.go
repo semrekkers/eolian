@@ -66,18 +66,21 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 }
 
 func (m *filteredReverb) patchWetDry(inputs *frInputs) error {
-	wet, err := inputs.input.Output("1")
-	if err != nil {
-		return err
-	}
-	if err := inputs.wetIn.Patch("input", wet); err != nil {
-		return err
-	}
+	inputs.crossfade.forcedActiveOutputs = 1
+
 	dryOut, err := inputs.input.Output("0")
 	if err != nil {
 		return err
 	}
 	if err := inputs.crossfade.Patch("a", dryOut); err != nil {
+		return err
+	}
+
+	wet, err := inputs.input.Output("1")
+	if err != nil {
+		return err
+	}
+	if err := inputs.wetIn.Patch("input", wet); err != nil {
 		return err
 	}
 	wetOut, err := m.allpasses[len(m.allpasses)-1].Output("output")

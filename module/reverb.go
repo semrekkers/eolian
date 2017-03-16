@@ -61,6 +61,8 @@ func newReverb(c reverbConfig) (*reverb, error) {
 		return m, err
 	}
 
+	m.allpasses[len(m.allpasses)-1].forcedActiveOutputs = 1
+
 	return m, m.Expose(
 		"Reverb",
 		[]*In{m.in, m.feedback, m.gain},

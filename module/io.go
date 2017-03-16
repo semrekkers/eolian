@@ -28,6 +28,8 @@ type IO struct {
 	id   string
 	ins  map[string]*In
 	outs map[string]*Out
+
+	forcedActiveOutputs int
 }
 
 // ID returns the module's unique identifier
@@ -168,6 +170,11 @@ func (io *IO) Output(name string) (*Out, error) {
 // OutputsActive returns the total count of actively patched outputs
 func (io *IO) OutputsActive(sinking bool) int {
 	io.lazyInit()
+
+	if io.forcedActiveOutputs != 0 {
+		return io.forcedActiveOutputs
+	}
+
 	var i int
 	for _, out := range io.outs {
 		if sinking {
