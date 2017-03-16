@@ -35,6 +35,13 @@ $ make install
 
 ```
 $ eolian examples/random.lua
+> -- Reload the file, rebuild the Rack and remount it
+> Rack.build()
+>
+> -- Reload the file and only repatch it
+> Rack.patch()
+> 
+> -- Set inputs or repatch modules
 > Rack.modules
 clock   table: 0xc420273680
 random  table: 0xc420273980
