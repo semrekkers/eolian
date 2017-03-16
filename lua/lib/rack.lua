@@ -26,7 +26,13 @@ Rack = {
     env = {
         filepath = '',
         path     = '',
-        require  = function(self, path)
+
+        -- Will be removed soon...
+        require = function(self, path)
+            return dofile(self.path .. '/' .. path)
+        end,
+
+        dofile = function(self, path)
             return dofile(self.path .. '/' .. path)
         end
     },
