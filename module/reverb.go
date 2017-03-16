@@ -32,6 +32,7 @@ type reverb struct {
 
 	fbs       []*fbComb
 	allpasses []*allpass
+	inputs    *rInputs
 }
 
 func newReverb(c reverbConfig) (*reverb, error) {
@@ -48,6 +49,7 @@ func newReverb(c reverbConfig) (*reverb, error) {
 		gain:      &In{Name: "gain", Source: inputs.gain.in},
 		fbs:       make([]*fbComb, feedbacks),
 		allpasses: make([]*allpass, allpasses),
+		inputs:    inputs,
 	}
 
 	mixer, err := newMix(feedbacks)
@@ -60,6 +62,9 @@ func newReverb(c reverbConfig) (*reverb, error) {
 	if err := m.patchAllpasses(mixer, inputs, c.Allpass); err != nil {
 		return m, err
 	}
+	if err := m.setDefaults(); err != nil {
+		return m, err
+	}
 
 	m.allpasses[len(m.allpasses)-1].forcedActiveOutputs = 1
 
@@ -68,6 +73,20 @@ func newReverb(c reverbConfig) (*reverb, error) {
 		[]*In{m.in, m.feedback, m.gain},
 		[]*Out{{Name: "output", Provider: Provide(m.allpasses[len(m.allpasses)-1])}},
 	)
+}
+
+func (m *reverb) Reset() error {
+	if err := m.IO.Reset(); err != nil {
+		return err
+	}
+	return m.setDefaults()
+}
+
+func (m *reverb) setDefaults() error {
+	if err := m.inputs.feedback.Patch("input", defaultReverbFeedback); err != nil {
+		return err
+	}
+	return m.inputs.gain.Patch("input", defaultReverbGain)
 }
 
 func (m *reverb) patchFeedbacks(mixer *mix, inputs *rInputs, sizes []int) error {
@@ -91,7 +110,7 @@ func (m *reverb) patchFeedbacks(mixer *mix, inputs *rInputs, sizes []int) error 
 			return err
 		}
 	}
-	return inputs.gain.Patch("input", Value(0.8))
+	return nil
 }
 
 func (m *reverb) patchAllpasses(mixer *mix, inputs *rInputs, sizes []int) error {
@@ -117,7 +136,7 @@ func (m *reverb) patchAllpasses(mixer *mix, inputs *rInputs, sizes []int) error 
 			return err
 		}
 	}
-	return inputs.gain.Patch("input", Value(0.7))
+	return nil
 }
 
 type rInputs struct {

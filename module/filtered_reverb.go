@@ -6,6 +6,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+const (
+	defaultReverbFeedback = Value(0.84)
+	defaultReverbGain     = Value(0.5)
+)
+
 func init() {
 	Register("FilteredReverb", func(c Config) (Patcher, error) {
 		var config reverbConfig
@@ -28,6 +33,7 @@ type filteredReverb struct {
 
 	fbs       []*filteredFBComb
 	allpasses []*allpass
+	inputs    *frInputs
 }
 
 func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
@@ -46,6 +52,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 		bias:      &In{Name: "bias", Source: inputs.crossfade.bias},
 		fbs:       make([]*filteredFBComb, feedbacks),
 		allpasses: make([]*allpass, allpasses),
+		inputs:    inputs,
 	}
 
 	if err := m.patchFeedbacks(inputs, c.Feedback); err != nil {
@@ -57,12 +64,29 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 	if err := m.patchWetDry(inputs); err != nil {
 		return m, err
 	}
+	if err := m.setDefaults(); err != nil {
+		return m, err
+	}
 
 	return m, m.Expose(
 		"FilteredReverb",
 		[]*In{m.in, m.feedback, m.cutoff, m.gain, m.bias},
 		[]*Out{{Name: "output", Provider: Provide(inputs.crossfade)}},
 	)
+}
+
+func (m *filteredReverb) Reset() error {
+	if err := m.IO.Reset(); err != nil {
+		return err
+	}
+	return m.setDefaults()
+}
+
+func (m *filteredReverb) setDefaults() error {
+	if err := m.inputs.feedback.Patch("input", defaultReverbFeedback); err != nil {
+		return err
+	}
+	return m.inputs.gain.Patch("input", defaultReverbGain)
 }
 
 func (m *filteredReverb) patchWetDry(inputs *frInputs) error {
@@ -114,7 +138,7 @@ func (m *filteredReverb) patchFeedbacks(inputs *frInputs, sizes []int) error {
 			return err
 		}
 	}
-	return inputs.feedback.Patch("input", Value(0.84))
+	return nil
 }
 
 func (m *filteredReverb) patchAllpasses(inputs *frInputs, sizes []int) error {
@@ -140,7 +164,7 @@ func (m *filteredReverb) patchAllpasses(inputs *frInputs, sizes []int) error {
 			return err
 		}
 	}
-	return inputs.gain.Patch("input", Value(0.5))
+	return nil
 }
 
 type frInputs struct {

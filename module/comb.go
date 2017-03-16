@@ -1,6 +1,8 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
 	setup := func(f func(s MS, c Config) (Patcher, error)) func(Config) (Patcher, error) {
