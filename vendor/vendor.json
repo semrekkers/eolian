@@ -21,6 +21,24 @@
 			"revisionTime": "2016-10-06T04:35:07Z"
 		},
 		{
+			"checksumSHA1": "GEOcEfTErKBV6xEvZGjYy2LV0PI=",
+			"path": "github.com/google/gops/agent",
+			"revision": "b0c5c02b30c5a0eab10869d14a3238be15a7f4a5",
+			"revisionTime": "2017-03-09T05:06:37Z"
+		},
+		{
+			"checksumSHA1": "JReTqQzncYSyvJbrmfBWZHMZfQU=",
+			"path": "github.com/google/gops/internal",
+			"revision": "b0c5c02b30c5a0eab10869d14a3238be15a7f4a5",
+			"revisionTime": "2017-03-09T05:06:37Z"
+		},
+		{
+			"checksumSHA1": "OPlS4cJsOSpZ/FrUOJtfJXikjII=",
+			"path": "github.com/google/gops/signal",
+			"revision": "b0c5c02b30c5a0eab10869d14a3238be15a7f4a5",
+			"revisionTime": "2017-03-09T05:06:37Z"
+		},
+		{
 			"checksumSHA1": "OFB3spI9K2CJz9cyDzi/5Fgkom0=",
 			"path": "github.com/gordonklaus/portaudio",
 			"revision": "ee87a127ce8f364049c62b5ae0bef46cc87dae3d",
@@ -31,6 +49,12 @@
 			"path": "github.com/hypebeast/go-osc/osc",
 			"revision": "14110159f516cd8d55bdd8b322644d36c3d24345",
 			"revisionTime": "2016-10-06T20:55:19Z"
+		},
+		{
+			"checksumSHA1": "eWtEV0iBNTL6DRJVqEeniS+thHA=",
+			"path": "github.com/kardianos/osext",
+			"revision": "9d302b58e975387d0b4d9be876622c86cefe64be",
+			"revisionTime": "2017-03-09T17:28:38Z"
 		},
 		{
 			"checksumSHA1": "UuXgD2dDojfS8AViUEe15gLIWZE=",

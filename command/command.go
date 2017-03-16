@@ -11,6 +11,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/gops/agent"
+
 	"github.com/brettbuddin/eolian/engine"
 	"github.com/brettbuddin/eolian/lua"
 	"github.com/brettbuddin/eolian/module"        // Register standard modules
@@ -33,6 +35,10 @@ func Run(args []string) error {
 	set.IntVar(&frameSize, "framesize", 256, "frame size")
 	set.BoolVar(&writeTrace, "trace", false, "dump go trace tool information to trace.out")
 	if err := set.Parse(args); err != nil {
+		return err
+	}
+
+	if err := agent.Listen(nil); err != nil {
 		return err
 	}
 
