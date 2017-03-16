@@ -156,13 +156,9 @@ function execLine(line)
         return
     end
 
-    local success, results = collectResults(pcall(f))
-    if success then
-        for _,v in ipairs(results) do
-            inspect(v)
-        end
-    else
-        debug.trackback()
+    local _, results = collectResults(pcall(f))
+    for _,v in ipairs(results) do
+        inspect(v)
     end
 end
 
