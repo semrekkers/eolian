@@ -1,7 +1,5 @@
 package module
 
-import "fmt"
-
 func init() {
 	Register("VariableRandomSeries", func(Config) (Patcher, error) { return newVariableRandomSeries() })
 }
@@ -54,7 +52,6 @@ func (s *variableRandomSeries) Read(out Frame) {
 
 			if s.lastClock < 0 && clock[i] > 0 {
 				if r := random[i]; r != 0 && (r == 1 || randValue() > 1-r) {
-					fmt.Println("new")
 					scale := randValue()
 					s.memory[s.idx] = scale*(max[i]-min[i]) + min[i]
 					if scale > 0.5 {
