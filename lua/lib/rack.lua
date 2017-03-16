@@ -68,16 +68,19 @@ function Rack.patch()
     local status, err, result = xpcall(function()
         _, patch = dofile(Rack.env.filepath)(Rack.env)
     end, debug.traceback)
-    if not result then
+    if not(result) and err ~= nil then
         print(err)
         return
     end
 
-    print(xpcall(function()
+    local status, err, result = xpcall(function()
         reset(Rack.modules)
         Engine.reset()
         Engine:set { input = patch(Rack.modules) }
-    end, debug.traceback))
+    end, debug.traceback)
+    if not(result) and err ~= nil then
+        print(err)
+    end
 end
 
 local originalPath = package.path
