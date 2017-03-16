@@ -65,22 +65,19 @@ function Rack.patch()
     assert(Rack.modules ~= nil, 'no rackfile loaded.')
 
     local patch
-    local result, err = pcall(function()
+    local status, err, result = xpcall(function()
         _, patch = dofile(Rack.env.filepath)(Rack.env)
-    end)
+    end, debug.traceback)
     if not result then
         print(err)
         return
     end
 
-    local result, err = pcall(function()
+    print(xpcall(function()
         reset(Rack.modules)
         Engine.reset()
         Engine:set { input = patch(Rack.modules) }
-    end)
-    if not result then
-        print(err)
-    end
+    end, debug.traceback))
 end
 
 local originalPath = package.path

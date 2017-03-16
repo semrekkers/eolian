@@ -21,8 +21,12 @@ return function(source, output)
             input  = arg[1]
             module = arg[2]
             output = arg[3]
-        else
+        elseif #arg > 3 then
             error('too many arguments')
+        end
+
+        if module == nil then
+            error('nil value provided as module')
         end
 
         if lastModule ~= nil then
