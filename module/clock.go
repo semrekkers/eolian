@@ -69,7 +69,7 @@ func (t *clock) Read(out Frame) {
 				t.tick = 0
 				t.second = true
 			}
-		} else if t.tick >= int(duty+(duty*float64(shuffle[i]))) {
+		} else if t.tick >= int(duty+(duty*float64(clampValue(shuffle[i], -0.5, 0.5)))) {
 			t.tick = 0
 			t.second = false
 		}
