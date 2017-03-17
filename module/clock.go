@@ -1,12 +1,14 @@
 package module
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
+	Register("Clock", func(Config) (Patcher, error) { return newClock() })
 	Register("RotatingClockDivide", func(Config) (Patcher, error) { return newRCD(8) })
 	Register("ClockDivide", func(c Config) (Patcher, error) {
 		var config struct {
@@ -32,6 +34,53 @@ func init() {
 		}
 		return newClockMultiply(config.Multiplier)
 	})
+}
+
+type clock struct {
+	IO
+	tempo, width, shuffle *In
+	tick                  int
+	second                bool
+}
+
+func newClock() (*clock, error) {
+	m := &clock{
+		tempo:   &In{Name: "tempo", Source: NewBuffer(BPM(120))},
+		width:   &In{Name: "pulseWidth", Source: NewBuffer(Value(0.9))},
+		shuffle: &In{Name: "shuffle", Source: NewBuffer(Value(0))},
+	}
+	return m, m.Expose(
+		"Clock",
+		[]*In{m.tempo, m.width, m.shuffle},
+		[]*Out{{Name: "output", Provider: Provide(m)}},
+	)
+}
+
+func (t *clock) Read(out Frame) {
+	tempo := t.tempo.ReadFrame()
+	width := t.width.ReadFrame()
+	shuffle := t.shuffle.ReadFrame()
+
+	for i := range out {
+		duty := math.Floor(float64(60/(tempo[i]*60*SampleRate)*SampleRate) + 0.5)
+
+		if !t.second {
+			if t.tick >= int(duty) {
+				t.tick = 0
+				t.second = true
+			}
+		} else if t.tick >= int(duty+(duty*float64(shuffle[i]))) {
+			t.tick = 0
+			t.second = false
+		}
+
+		if Value(t.tick) <= width[i]*Value(duty) {
+			out[i] = 1
+		} else {
+			out[i] = -1
+		}
+		t.tick++
+	}
 }
 
 type clockDivide struct {
