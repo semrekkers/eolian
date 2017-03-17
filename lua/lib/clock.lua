@@ -1,21 +1,21 @@
 return function(size)
     local synth = require('eolian.synth')
     local proxy = require('eolian.synth.proxy')
-    local osc   = synth.Oscillator { algorithm = 'simple' }
+    local clock = synth.Clock()
     local mult  = synth.Multiple { size = size }
 
-    set(mult, 'input', out(osc, 'pulse'))
+    mult:set('input', clock:out())
 
     return {
         id = function()
-            return string.format("Clock[%s, %s]", osc.id(), mult.id())
+            return string.format("Clock[%s, %s]", clock.id(), mult.id())
         end,
 		members = function()
-			return { osc.id(), mult.id() }
+			return { clock.id(), mult.id() }
 		end,
-        inputs  = osc.inputs,
+        inputs  = clock.inputs,
         outputs = mult.outputs,
-        set     = proxy.inputs(osc),
+        set     = proxy.inputs(clock),
         out     = proxy.outputs(mult),
     }
 end
