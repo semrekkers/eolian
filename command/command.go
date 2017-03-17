@@ -21,10 +21,10 @@ import (
 // Run is the main entrypoint for the eolian command
 func Run(args []string) error {
 	var (
-		device     int
-		seed       int64
-		writeTrace bool
-		frameSize  int
+		device             int
+		seed               int64
+		writeTrace, norepl bool
+		frameSize          int
 	)
 
 	set := flag.NewFlagSet("eolian", flag.ContinueOnError)
@@ -32,6 +32,7 @@ func Run(args []string) error {
 	set.Int64Var(&seed, "seed", 0, "random seed")
 	set.IntVar(&frameSize, "framesize", 256, "frame size")
 	set.BoolVar(&writeTrace, "trace", false, "dump go trace tool information to trace.out")
+	set.BoolVar(&norepl, "no-repl", false, "run without the REPL")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -93,5 +94,23 @@ func Run(args []string) error {
 		}
 	}()
 
-	return vm.REPL()
+	if norepl {
+		waitForSignal()
+	} else {
+		if err := vm.REPL(); err != nil {
+			return err
+		}
+	}
+	return e.Close()
+}
+
+func waitForSignal() {
+	sig := make(chan os.Signal)
+	done := make(chan struct{})
+	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sig
+		done <- struct{}{}
+	}()
+	<-done
 }
