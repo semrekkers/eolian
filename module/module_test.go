@@ -72,6 +72,7 @@ var allModules = []struct {
 	{"RotatingClockDivide", nil, []string{"input", "rotate", "reset"},
 		[]string{"1", "2", "3", "4", "5", "6", "7", "8"}},
 	{"SampleHold", nil, []string{"input", "trigger"}, defaultOutput},
+	{"Shape", nil, []string{"gate", "trigger", "rise", "fall", "ratio", "cycle"}, []string{"output", "endCycle"}},
 	{"SoftClip", nil, []string{"input", "gain"}, defaultOutput},
 	{"StageSequence", Config{"stages": 2}, []string{
 		"clock",
