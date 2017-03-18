@@ -1,5 +1,5 @@
 PKG?=$(shell go list ./... | grep -v /vendor/)
-PROJECT := github.com/brettbuddin/eolian
+PROJECT := buddin.us/eolian
 BINPATH := bin
 
 default: test
