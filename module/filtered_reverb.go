@@ -29,10 +29,11 @@ func init() {
 
 type filteredReverb struct {
 	IO
-	in, feedback, cutoff, gain, bias *In
+	in, feedback, fbCutoff, gain, bias, cutoff *In
 
 	fbs       []*filteredFBComb
 	allpasses []*allpass
+	filter    *svFilter
 	inputs    *frInputs
 }
 
@@ -44,14 +45,21 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 		return nil, err
 	}
 
+	filter, err := newSVFilter(4)
+	if err != nil {
+		return nil, err
+	}
+
 	m := &filteredReverb{
 		in:        &In{Name: "input", Source: inputs.input.in},
 		feedback:  &In{Name: "feedback", Source: inputs.feedback.in},
-		cutoff:    &In{Name: "cutoff", Source: inputs.cutoff.in},
+		fbCutoff:  &In{Name: "fbCutoff", Source: inputs.fbCutoff.in},
 		gain:      &In{Name: "gain", Source: inputs.gain.in},
 		bias:      &In{Name: "bias", Source: inputs.crossfade.bias},
+		cutoff:    &In{Name: "cutoff", Source: filter.cutoff},
 		fbs:       make([]*filteredFBComb, feedbacks),
 		allpasses: make([]*allpass, allpasses),
+		filter:    filter,
 		inputs:    inputs,
 	}
 
@@ -70,7 +78,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 
 	return m, m.Expose(
 		"FilteredReverb",
-		[]*In{m.in, m.feedback, m.cutoff, m.gain, m.bias},
+		[]*In{m.in, m.feedback, m.fbCutoff, m.gain, m.bias, m.cutoff},
 		[]*Out{{Name: "output", Provider: Provide(inputs.crossfade)}},
 	)
 }
@@ -83,6 +91,9 @@ func (m *filteredReverb) Reset() error {
 }
 
 func (m *filteredReverb) setDefaults() error {
+	if err := m.filter.Patch("cutoff", Frequency(20000)); err != nil {
+		return err
+	}
 	if err := m.inputs.feedback.Patch("input", defaultReverbFeedback); err != nil {
 		return err
 	}
@@ -111,7 +122,14 @@ func (m *filteredReverb) patchWetDry(inputs *frInputs) error {
 	if err != nil {
 		return err
 	}
-	return inputs.crossfade.Patch("b", wetOut)
+	if err := m.filter.Patch("input", wetOut); err != nil {
+		return err
+	}
+	filteredOut, err := m.filter.Output("lowpass")
+	if err != nil {
+		return err
+	}
+	return inputs.crossfade.Patch("b", filteredOut)
 }
 
 func (m *filteredReverb) patchFeedbacks(inputs *frInputs, sizes []int) error {
@@ -131,7 +149,7 @@ func (m *filteredReverb) patchFeedbacks(inputs *frInputs, sizes []int) error {
 		if err := m.fbs[i].Patch("gain", Port{inputs.feedback, name}); err != nil {
 			return err
 		}
-		if err := m.fbs[i].Patch("cutoff", Port{inputs.cutoff, name}); err != nil {
+		if err := m.fbs[i].Patch("cutoff", Port{inputs.fbCutoff, name}); err != nil {
 			return err
 		}
 		if err := inputs.mixer.Patch(name+".input", Port{m.fbs[i], "output"}); err != nil {
@@ -168,9 +186,9 @@ func (m *filteredReverb) patchAllpasses(inputs *frInputs, sizes []int) error {
 }
 
 type frInputs struct {
-	input, wetIn, feedback, cutoff, gain *multiple
-	mixer                                *mix
-	crossfade                            *crossfade
+	input, wetIn, feedback, fbCutoff, gain *multiple
+	mixer                                  *mix
+	crossfade                              *crossfade
 }
 
 func newFRInputs(feedbacks, allpasses int) (*frInputs, error) {
@@ -188,7 +206,7 @@ func newFRInputs(feedbacks, allpasses int) (*frInputs, error) {
 	if modules.feedback, err = newMultiple(feedbacks); err != nil {
 		return nil, err
 	}
-	if modules.cutoff, err = newMultiple(feedbacks); err != nil {
+	if modules.fbCutoff, err = newMultiple(feedbacks); err != nil {
 		return nil, err
 	}
 	if modules.gain, err = newMultiple(allpasses); err != nil {
