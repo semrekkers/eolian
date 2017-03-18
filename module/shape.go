@@ -104,7 +104,7 @@ func shapeRise(s *shapeState) shapeStateFunc {
 }
 
 func shapeFall(s *shapeState) shapeStateFunc {
-	if s.gate > 0 || s.trigger > 0 {
+	if (s.lastGate <= 0 && s.gate > 0) || (s.lastTrigger <= 0 && s.trigger > 0) {
 		return prepRise(s)
 	}
 	s.out = s.base + s.out*s.multiplier
