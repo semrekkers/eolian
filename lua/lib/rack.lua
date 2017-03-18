@@ -49,8 +49,15 @@ function Rack.build()
     Rack.clear()
     close(Rack.modules)
 
-    local build, patch = dofile(Rack.env.filepath)(Rack.env)
-    local modules = build()
+    local build, patch, modules
+    local status, err, result = xpcall(function()
+        build, patch = dofile(Rack.env.filepath)(Rack.env)
+        modules = build()
+    end, debug.traceback)
+    if not(result) and err ~= nil then
+        print(err)
+        return
+    end
 
     Rack.modules = modules
     local result, err = pcall(function()
