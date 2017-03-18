@@ -34,7 +34,7 @@ var synthConsts = map[string]lua.LValue{
 	"MODE_PINGPONG":   lua.LNumber(1),
 	"MODE_RANDOM":     lua.LNumber(2),
 
-	// Gate sequencer modes
+	// Toggle modes
 	"MODE_OFF": lua.LNumber(0),
 	"MODE_ON":  lua.LNumber(1),
 
