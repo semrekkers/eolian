@@ -98,6 +98,7 @@ var allModules = []struct {
 		[]string{"a/pitch", "0/gate", "1/gate"}},
 	{"Sum", nil, []string{"a", "b"}, defaultOutput},
 	{"Switch", nil, []string{"clock", "reset"}, defaultOutput},
+	{"Tap", nil, []string{"input"}, []string{"output", "tap"}},
 	{"Tape", nil, []string{"input", "play", "record", "reset", "bias", "organize", "splice", "unsplice", "zoom", "slide"},
 		[]string{"output", "endsplice"}},
 	{"TempoDetect", nil, []string{"tap"}, defaultOutput},
