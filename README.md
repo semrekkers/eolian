@@ -26,8 +26,8 @@ On macOS you can install these dependencies with: `brew install go portaudio por
 ## Installing
 
 ```
-$ git clone https://github.com/brettbuddin/eolian.git $GOPATH/src/github.com/brettbuddin/eolian
-$ cd $GOPATH/src/github.com/brettbuddin/eolian
+$ go get https://buddin.us/eolian
+$ cd $GOPATH/src/buddin.us/eolian
 $ make install
 ```
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/mitchellh/mapstructure"
 )

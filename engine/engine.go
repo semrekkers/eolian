@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 	"github.com/gordonklaus/portaudio"
 )
 

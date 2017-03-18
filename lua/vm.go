@@ -12,7 +12,7 @@ import (
 	"github.com/chzyer/readline"
 	lua "github.com/yuin/gopher-lua"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 )
 
 const (

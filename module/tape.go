@@ -1,7 +1,7 @@
 package module
 
 import (
-	"github.com/brettbuddin/eolian/wav"
+	"buddin.us/eolian/wav"
 	"github.com/mitchellh/mapstructure"
 )
 

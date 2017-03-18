@@ -1,7 +1,7 @@
 package lua
 
 import (
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 	"github.com/brettbuddin/musictheory"
 	lua "github.com/yuin/gopher-lua"
 )

@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/brettbuddin/eolian/engine"
-	"github.com/brettbuddin/eolian/lua"
-	"github.com/brettbuddin/eolian/module"        // Register standard modules
-	_ "github.com/brettbuddin/eolian/module/midi" // Register MIDI modules
-	_ "github.com/brettbuddin/eolian/module/osc"  // Register OSC modules
+	"buddin.us/eolian/engine"
+	"buddin.us/eolian/lua"
+	"buddin.us/eolian/module"        // Register standard modules
+	_ "buddin.us/eolian/module/midi" // Register MIDI modules
+	_ "buddin.us/eolian/module/osc"  // Register OSC modules
 )
 
 // Run is the main entrypoint for the eolian command

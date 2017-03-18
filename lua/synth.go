@@ -10,8 +10,8 @@ import (
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
-	"github.com/brettbuddin/eolian/engine"
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/engine"
+	"buddin.us/eolian/module"
 )
 
 var mapperOpts = gluamapper.Option{

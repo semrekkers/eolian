@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 
 	assert "gopkg.in/go-playground/assert.v1"
 )

@@ -3,7 +3,7 @@ package module
 import (
 	"fmt"
 
-	lookup "github.com/brettbuddin/eolian/wavetable"
+	lookup "buddin.us/eolian/wavetable"
 	"github.com/mitchellh/mapstructure"
 )
 

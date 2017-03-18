@@ -3,7 +3,7 @@ package lua
 import (
 	lua "github.com/yuin/gopher-lua"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 )
 
 var valueFuncs = map[string]lua.LGFunction{

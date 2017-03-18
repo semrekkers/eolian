@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/brettbuddin/eolian/module"
+	"buddin.us/eolian/module"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rakyll/portmidi"
 )

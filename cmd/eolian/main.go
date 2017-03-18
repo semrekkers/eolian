@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/brettbuddin/eolian/command"
+	"buddin.us/eolian/command"
 	"github.com/google/gops/agent"
 )
 
