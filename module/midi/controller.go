@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"buddin.us/eolian/module"
-	"github.com/brettbuddin/musictheory"
+	"buddin.us/musictheory"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rakyll/portmidi"
 )

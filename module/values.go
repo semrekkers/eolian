@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/brettbuddin/musictheory"
+	"buddin.us/musictheory"
 )
 
 const (

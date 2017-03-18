@@ -2,7 +2,8 @@ package lua
 
 import (
 	"buddin.us/eolian/module"
-	"github.com/brettbuddin/musictheory"
+	"buddin.us/musictheory"
+	"buddin.us/musictheory/intervals"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -32,41 +33,41 @@ func newScale(state *lua.LState) int {
 		state.RaiseError(err.Error())
 	}
 	var (
-		name      = state.CheckString(2)
-		intervals []musictheory.Interval
+		name   = state.CheckString(2)
+		series []musictheory.Interval
 	)
 	switch name {
 	case "chromatic":
-		intervals = musictheory.ChromaticIntervals
+		series = intervals.Chromatic
 	case "major":
-		intervals = musictheory.MajorIntervals
+		series = intervals.Major
 	case "minor":
-		intervals = musictheory.MinorIntervals
+		series = intervals.Minor
 	case "majorPentatonic":
-		intervals = musictheory.MajorPentatonicIntervals
+		series = intervals.MajorPentatonic
 	case "minorPentatonic":
-		intervals = musictheory.MinorPentatonicIntervals
+		series = intervals.MinorPentatonic
 	case "ionion":
-		intervals = musictheory.IonianIntervals
+		series = intervals.Ionian
 	case "dorian":
-		intervals = musictheory.DorianIntervals
+		series = intervals.Dorian
 	case "phrygian":
-		intervals = musictheory.PhrygianIntervals
+		series = intervals.Phrygian
 	case "aeolian":
-		intervals = musictheory.AeolianIntervals
+		series = intervals.Aeolian
 	case "lydian":
-		intervals = musictheory.LydianIntervals
+		series = intervals.Lydian
 	case "mixolydian":
-		intervals = musictheory.MixolydianIntervals
+		series = intervals.Mixolydian
 	case "locrian":
-		intervals = musictheory.LocrianIntervals
+		series = intervals.Locrian
 	default:
 		state.RaiseError("unknown scale intervals %s", name)
 	}
 	octaves := state.CheckInt(3)
 
 	var (
-		scale = musictheory.NewScale(root, intervals, octaves)
+		scale = musictheory.NewScale(root, series, octaves)
 		t     = state.NewTable()
 	)
 	for i, v := range scale {

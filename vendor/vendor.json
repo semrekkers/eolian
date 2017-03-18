@@ -3,16 +3,22 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "q1aLuX/d3Z1GvcHO5UqpxvpjieE=",
+			"path": "buddin.us/musictheory",
+			"revision": "fc830c4e9d56d418b148fae4aacba8220584c67a",
+			"revisionTime": "2017-03-18T17:18:05Z"
+		},
+		{
+			"checksumSHA1": "eym21rBDGlmtJTST5PpGGAr34sA=",
+			"path": "buddin.us/musictheory/intervals",
+			"revision": "fc830c4e9d56d418b148fae4aacba8220584c67a",
+			"revisionTime": "2017-03-18T17:18:05Z"
+		},
+		{
 			"checksumSHA1": "xHpVLBIHQygN44KOw7a66VzVxiY=",
 			"path": "github.com/Knetic/govaluate",
 			"revision": "5598166b6fc09f038e53f628eec79f0c004a4299",
 			"revisionTime": "2017-01-30T16:31:17Z"
-		},
-		{
-			"checksumSHA1": "bi71f6HRAL9OzwrNUf5HjSt1THc=",
-			"path": "github.com/brettbuddin/musictheory",
-			"revision": "31bb916c66fbd4f6b180bca9c133a951770c0959",
-			"revisionTime": "2017-01-22T19:56:17Z"
 		},
 		{
 			"checksumSHA1": "JZzGZSKv+oXaWoAHavL0lzumB+c=",
@@ -105,5 +111,5 @@
 			"revisionTime": "2016-02-05T15:04:13Z"
 		}
 	],
-	"rootPath": "github.com/brettbuddin/eolian"
+	"rootPath": "buddin.us/eolian"
 }
