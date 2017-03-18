@@ -86,8 +86,8 @@ type adsrStateFunc func(*adsrState) adsrStateFunc
 
 func adsrIdle(s *adsrState) adsrStateFunc {
 	s.endCycle = false
+	s.value = 0
 	if s.lastGate <= 0 && s.gate > 0 {
-		s.value = 0
 		return prepAttack(s)
 	}
 	return adsrIdle

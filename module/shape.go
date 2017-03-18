@@ -78,12 +78,11 @@ type shapeStateFunc func(*shapeState) shapeStateFunc
 
 func shapeIdle(s *shapeState) shapeStateFunc {
 	s.endCycle = false
+	s.out = 0
 	if s.lastGate <= 0 && s.gate > 0 {
-		s.out = 0
 		return prepRise(s)
 	}
 	if s.lastTrigger <= 0 && s.trigger > 0 {
-		s.out = 0
 		return prepRise(s)
 	}
 	return shapeIdle
