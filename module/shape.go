@@ -50,6 +50,8 @@ func (s *shape) Read(out Frame) {
 			ratio   = s.ratio.ReadFrame()
 		)
 		for i := range out {
+			s.state.lastGate = s.state.gate
+			s.state.lastTrigger = s.state.trigger
 			s.state.gate = gate[i]
 			s.state.trigger = trigger[i]
 			s.state.rise = rise[i]
