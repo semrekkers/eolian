@@ -12,6 +12,8 @@ addons:
       - portaudio19-dev
       - libportmidi-dev
 
+go_import_path: buddin.us/eolian
+
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install portmidi portaudio; fi
