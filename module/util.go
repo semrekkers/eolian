@@ -35,6 +35,10 @@ func floorValue(v Value) Value {
 	return Value(math.Floor(float64(v)))
 }
 
+func ceilValue(v Value) Value {
+	return Value(math.Ceil(float64(v)))
+}
+
 func maxValue(v1, v2 Value) Value {
 	return Value(math.Max(float64(v1), float64(v2)))
 }
