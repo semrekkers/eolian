@@ -116,6 +116,71 @@ func lock(m lockingModuleMethod, mtx sync.Locker, p module.Patcher) lua.LGFuncti
 	}
 }
 
+type methodExposer interface {
+	LuaMethods() map[string]module.LuaMethod
+}
+
+func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGFunction {
+	var (
+		luaMethods = map[string]lua.LGFunction{}
+		methods    map[string]module.LuaMethod
+	)
+
+	if e, ok := p.(methodExposer); ok {
+		methods = e.LuaMethods()
+	}
+	if methods == nil {
+		return luaMethods
+	}
+
+	for k, v := range methods {
+		switch fn := v.Func.(type) {
+		case func(string):
+			func(k string, lock bool, fn func(string)) {
+				luaMethods[k] = func(state *lua.LState) int {
+					if lock {
+						mtx.Lock()
+					}
+					fn(state.CheckString(2))
+					if lock {
+						mtx.Unlock()
+					}
+					return 0
+				}
+			}(k, v.Lock, fn)
+		case func() string:
+			func(k string, lock bool, fn func() string) {
+				luaMethods[k] = func(state *lua.LState) int {
+					if lock {
+						mtx.Lock()
+					}
+					r := fn()
+					if lock {
+						mtx.Unlock()
+					}
+					state.Push(lua.LString(r))
+					return 1
+				}
+			}(k, v.Lock, fn)
+		case func() float64:
+			func(k string, lock bool, fn func() float64) {
+				luaMethods[k] = func(state *lua.LState) int {
+					if lock {
+						mtx.Lock()
+					}
+					r := fn()
+					if lock {
+						mtx.Unlock()
+					}
+					state.Push(lua.LNumber(r))
+					return 1
+				}
+			}(k, v.Lock, fn)
+		}
+	}
+	return luaMethods
+}
+
 func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		fns := map[string]lua.LGFunction{
@@ -133,6 +198,13 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.
 			"ns":    moduleScopedOutput(p),
 			"out":   moduleOutput(p),
 			"outFn": moduleOutputFunc(p),
+		}
+
+		for k, v := range moduleSpecificMethods(p, mtx) {
+			if _, ok := fns[k]; ok {
+				continue
+			}
+			fns[k] = v
 		}
 
 		if e, ok := p.(*engine.Engine); ok {

@@ -363,3 +363,8 @@ type Port struct {
 func canonicalPort(v string) string {
 	return strings.Replace(v, ".", "/", -1)
 }
+
+type LuaMethod struct {
+	Lock bool
+	Func interface{}
+}

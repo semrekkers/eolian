@@ -61,6 +61,20 @@ func New(deviceIndex int) (*Engine, error) {
 	return m, err
 }
 
+func (e *Engine) LuaMethods() map[string]module.LuaMethod {
+	return map[string]module.LuaMethod{
+		"elapsed": module.LuaMethod{Func: func() string {
+			return e.TotalElapsed().String()
+		}},
+		"latency": module.LuaMethod{Func: func() string {
+			return e.Latency().String()
+		}},
+		"load": module.LuaMethod{Func: func() string {
+			return fmt.Sprintf("%.2f%%", e.Load()*100)
+		}},
+	}
+}
+
 // TotalElapsed returns the current wallclock duration of the session
 func (e *Engine) TotalElapsed() time.Duration {
 	r := make(chan metrics)
