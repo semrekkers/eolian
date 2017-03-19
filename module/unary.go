@@ -34,6 +34,11 @@ func (u *unary) Read(out Frame) {
 	}
 }
 
-func round(in Value) Value { return floorValue(in + 0.5) }
+func round(in Value) Value {
+	if in < 0 {
+		return ceilValue(in - 0.5)
+	}
+	return floorValue(in + 0.5)
+}
 func floor(in Value) Value { return floorValue(in) }
 func ceil(in Value) Value  { return ceilValue(in) }
