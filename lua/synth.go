@@ -140,11 +140,9 @@ func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGF
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
+						defer mtx.Unlock()
 					}
 					fn(state.CheckString(2))
-					if lock {
-						mtx.Unlock()
-					}
 					return 0
 				}
 			}(k, v.Lock, fn)
@@ -153,12 +151,9 @@ func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGF
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
+						defer mtx.Unlock()
 					}
-					r := fn()
-					if lock {
-						mtx.Unlock()
-					}
-					state.Push(lua.LString(r))
+					state.Push(lua.LString(fn()))
 					return 1
 				}
 			}(k, v.Lock, fn)
@@ -167,12 +162,9 @@ func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGF
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
+						defer mtx.Unlock()
 					}
-					r := fn()
-					if lock {
-						mtx.Unlock()
-					}
-					state.Push(lua.LNumber(r))
+					state.Push(lua.LNumber(fn()))
 					return 1
 				}
 			}(k, v.Lock, fn)
