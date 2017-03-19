@@ -61,6 +61,7 @@ func New(deviceIndex int) (*Engine, error) {
 	return m, err
 }
 
+// LuaMethods exposes methods on the module at the Lua layer
 func (e *Engine) LuaMethods() map[string]module.LuaMethod {
 	return map[string]module.LuaMethod{
 		"elapsed": module.LuaMethod{Func: func() string {
