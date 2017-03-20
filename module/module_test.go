@@ -62,6 +62,7 @@ var allModules = []struct {
 	{"Multiple", nil, []string{"input"}, []string{"0", "1", "2", "3"}},
 	{"Multiply", nil, []string{"a", "b"}, defaultOutput},
 	{"Noise", nil, []string{"input", "max"}, defaultOutput},
+	{"NoteQuantize", nil, []string{"input", "octave"}, defaultOutput},
 	{"OR", nil, []string{"a", "b"}, defaultOutput},
 	{"Osc", nil, []string{"pitch", "pitchMod", "pitchModAmount", "amp", "detune", "offset", "sync", "pulseWidth"},
 		[]string{"sine", "saw", "pulse", "triangle", "sub"}},
