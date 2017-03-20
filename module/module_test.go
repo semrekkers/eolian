@@ -20,6 +20,7 @@ var allModules = []struct {
 	{"AND", nil, []string{"a", "b"}, defaultOutput},
 	{"Allpass", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"Ceil", nil, []string{"input"}, defaultOutput},
+	{"ChanceGate", nil, []string{"input", "bias"}, []string{"a", "b"}},
 	{"Clip", nil, []string{"input", "level"}, defaultOutput},
 	{"Clock", nil, []string{"tempo", "pulseWidth", "shuffle"}, defaultOutput},
 	{"ClockMultiply", nil, []string{"input", "multiplier"}, defaultOutput},
