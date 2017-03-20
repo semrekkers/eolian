@@ -9,9 +9,7 @@ import (
 
 func init() {
 	Register("Quantize", func(c Config) (Patcher, error) {
-		var config struct {
-			Size int
-		}
+		var config struct{ Size int }
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
@@ -50,7 +48,7 @@ func newQuantize(size int) (*quantize, error) {
 	}
 
 	return m, m.Expose(
-		"Quantize",
+		"FixedQuantize",
 		inputs,
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
