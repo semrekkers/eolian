@@ -48,7 +48,7 @@ func (d *debug) Read(out Frame) {
 	d.in.Read(out)
 	for i := range out {
 		if d.tick == 0 {
-			fmt.Fprintf(d.output, "%v\n", out[i])
+			fmt.Fprintf(d.output, "%v\n", float64(out[i]))
 		}
 		d.tick = (d.tick + 1) % d.rate
 	}

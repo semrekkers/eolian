@@ -21,18 +21,16 @@ func newTabWriter(state *lua.LState) int {
 	minwidth := state.CheckInt(1)
 	tabwidth := state.CheckInt(2)
 	padwidth := state.CheckInt(3)
-	del := state.CheckString(4)
+	pad := state.CheckString(4)
 	align := state.CheckString(5)
 
 	var flags uint
 	if align == "alignRight" {
 		flags = tabwriter.AlignRight
-	} else {
-		flags = 0
 	}
 
 	buf := bytes.NewBuffer(nil)
-	w := tabwriter.NewWriter(buf, minwidth, tabwidth, padwidth, del[0], flags)
+	w := tabwriter.NewWriter(buf, minwidth, tabwidth, padwidth, pad[0], flags)
 
 	t := state.NewTable()
 	state.SetFuncs(t, map[string]lua.LGFunction{

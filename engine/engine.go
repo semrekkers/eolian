@@ -64,14 +64,14 @@ func New(deviceIndex int) (*Engine, error) {
 // LuaMethods exposes methods on the module at the Lua layer
 func (e *Engine) LuaMethods() map[string]module.LuaMethod {
 	return map[string]module.LuaMethod{
-		"elapsed": module.LuaMethod{Func: func() string {
-			return e.TotalElapsed().String()
+		"elapsed": module.LuaMethod{Func: func() (string, error) {
+			return e.TotalElapsed().String(), nil
 		}},
-		"latency": module.LuaMethod{Func: func() string {
-			return e.Latency().String()
+		"latency": module.LuaMethod{Func: func() (string, error) {
+			return e.Latency().String(), nil
 		}},
-		"load": module.LuaMethod{Func: func() string {
-			return fmt.Sprintf("%.2f%%", e.Load()*100)
+		"load": module.LuaMethod{Func: func() (string, error) {
+			return fmt.Sprintf("%.2f%%", e.Load()*100), nil
 		}},
 	}
 }

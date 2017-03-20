@@ -135,36 +135,47 @@ func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGF
 
 	for k, v := range methods {
 		switch fn := v.Func.(type) {
-		case func(string):
-			func(k string, lock bool, fn func(string)) {
+		case func(string) error:
+			func(k string, lock bool, fn func(string) error) {
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
 						defer mtx.Unlock()
 					}
-					fn(state.CheckString(2))
+					err := fn(state.CheckString(2))
+					if err != nil {
+						state.RaiseError(err.Error())
+					}
 					return 0
 				}
 			}(k, v.Lock, fn)
-		case func() string:
-			func(k string, lock bool, fn func() string) {
+		case func() (string, error):
+			func(k string, lock bool, fn func() (string, error)) {
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
 						defer mtx.Unlock()
 					}
-					state.Push(lua.LString(fn()))
+					r, err := fn()
+					if err != nil {
+						state.RaiseError(err.Error())
+					}
+					state.Push(lua.LString(r))
 					return 1
 				}
 			}(k, v.Lock, fn)
-		case func() float64:
-			func(k string, lock bool, fn func() float64) {
+		case func() (float64, error):
+			func(k string, lock bool, fn func() (float64, error)) {
 				luaMethods[k] = func(state *lua.LState) int {
 					if lock {
 						mtx.Lock()
 						defer mtx.Unlock()
 					}
-					state.Push(lua.LNumber(fn()))
+					r, err := fn()
+					if err != nil {
+						state.RaiseError(err.Error())
+					}
+					state.Push(lua.LNumber(r))
 					return 1
 				}
 			}(k, v.Lock, fn)
@@ -184,6 +195,7 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.
 			"id":        lock(moduleID, mtx, p),
 			"inputs":    lock(moduleInputs, mtx, p),
 			"outputs":   lock(moduleOutputs, mtx, p),
+			"state":     lock(moduleState, mtx, p),
 
 			// Methods that don't need to lock the graph
 			"scope": moduleScopedOutput(p),
@@ -250,6 +262,21 @@ func moduleOutputs(state *lua.LState, p module.Patcher) int {
 	t := state.NewTable()
 	for k, v := range l.Outputs() {
 		t.RawSet(lua.LString(k), lua.LString(v.DestinationName()))
+	}
+	state.Push(t)
+	return 1
+}
+
+type stateExposer interface {
+	LuaState() map[string]interface{}
+}
+
+func moduleState(state *lua.LState, p module.Patcher) int {
+	t := state.NewTable()
+	if l, ok := p.(stateExposer); ok {
+		for k, v := range l.LuaState() {
+			t.RawSet(lua.LString(k), lua.LString(fmt.Sprintf("%v", v)))
+		}
 	}
 	state.Push(t)
 	return 1
