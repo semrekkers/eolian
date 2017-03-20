@@ -76,7 +76,7 @@ func (q *noteQuantize) fillPitches(tonic musictheory.Pitch) {
 func (q *noteQuantize) LuaState() map[string]interface{} {
 	keyName := q.key.Name(musictheory.AscNames)
 	return map[string]interface{}{
-		"key":       keyName[:len(keyName)],
+		"key":       keyName[:len(keyName)-1],
 		"intervals": q.intervalsName,
 	}
 }
