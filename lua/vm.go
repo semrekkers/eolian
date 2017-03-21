@@ -49,10 +49,10 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
-	if err := loadRack(state); err != nil {
+	if err := loadLibFile(state, "lua/lib/rack.lua"); err != nil {
 		return nil, err
 	}
-	if err := loadUtils(state); err != nil {
+	if err := loadLibFile(state, "lua/lib/utils.lua"); err != nil {
 		return nil, err
 	}
 	return &VM{state}, nil
@@ -151,20 +151,4 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 		candidates = append(candidates, []rune(c))
 	})
 	return candidates
-}
-
-func loadRack(state *lua.LState) error {
-	content, err := Asset("lua/lib/rack.lua")
-	if err != nil {
-		return err
-	}
-	return state.DoString(string(content))
-}
-
-func loadUtils(state *lua.LState) error {
-	content, err := Asset("lua/lib/utils.lua")
-	if err != nil {
-		return err
-	}
-	return state.DoString(string(content))
 }

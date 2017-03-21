@@ -14,3 +14,11 @@ func preloadLibFile(path string) func(*lua.LState) int {
 		return 1
 	}
 }
+
+func loadLibFile(state *lua.LState, path string) error {
+	content, err := Asset(path)
+	if err != nil {
+		return err
+	}
+	return state.DoString(string(content))
+}
