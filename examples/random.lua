@@ -28,6 +28,7 @@ return function(env)
             mix    = synth.Mix(),
             panLFO = synth.Oscillator { algorithm = 'simple' },
             pan    = synth.Pan(),
+            crossfeed = synth.Crossfeed(),
         }
     end
 
@@ -112,8 +113,9 @@ return function(env)
 
         rack.panLFO:set { pitch = hz(0.5) }
         rack.pan:set { input = rack.mix:out(), bias = rack.panLFO:out('sine') }
+        rack.crossfeed:set { a = rack.pan:out('a'), b = rack.pan:out('b'), amount = 0.5 }
 
-        return rack.pan:out('a'), rack.pan:out('b')
+        return rack.crossfeed:out('a'), rack.crossfeed:out('b')
     end
 
     return build, patch
