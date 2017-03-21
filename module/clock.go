@@ -225,7 +225,8 @@ func (d *rcd) Read(out Frame) {
 				d.rotation = 0
 			}
 
-			for j := 0; j < len(d.outs); j++ {
+			d.outs[0][i] = in[i]
+			for j := 1; j < len(d.outs); j++ {
 				count := j - d.rotation
 				if count < 0 {
 					count = d.maxRotation + count
