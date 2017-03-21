@@ -135,20 +135,52 @@ func mapIntervals(v string) ([]musictheory.Interval, error) {
 	switch v {
 	case "major":
 		return intervals.Major, nil
+	case "majorseventh":
+		return intervals.MajorSeventh, nil
+	case "majorsixth":
+		return intervals.MajorSixth, nil
+	case "majorpentatonic":
+		return intervals.MajorPentatonic, nil
 	case "minor":
 		return intervals.Minor, nil
+	case "minorpentatonic":
+		return intervals.MinorPentatonic, nil
+	case "minortriad":
+		return intervals.MinorTriad, nil
+	case "minorsixth":
+		return intervals.MinorSixth, nil
+	case "minorseventh":
+		return intervals.MinorSeventh, nil
+	case "minormajorseventh":
+		return intervals.MinorMajorSeventh, nil
 	case "dorian":
 		return intervals.Dorian, nil
 	case "lydian":
 		return intervals.Lydian, nil
 	case "mixolydian":
 		return intervals.Mixolydian, nil
-	case "minorpentatonic":
-		return intervals.MinorPentatonic, nil
-	case "majorpentatonic":
-		return intervals.MajorPentatonic, nil
+	case "locrian":
+		return intervals.Locrian, nil
 	case "aeolian":
 		return intervals.Aeolian, nil
+	case "phrygian":
+		return intervals.Phrygian, nil
+	case "chromatic":
+		return intervals.Chromatic, nil
+	case "augmentedtriad":
+		return intervals.AugmentedTriad, nil
+	case "augmentedseventh":
+		return intervals.AugmentedSeventh, nil
+	case "augmentedsixth":
+		return intervals.AugmentedSixth, nil
+	case "augmentedmajorseventh":
+		return intervals.AugmentedMajorSeventh, nil
+	case "diminishedtriad":
+		return intervals.DiminishedTriad, nil
+	case "diminishedseventh":
+		return intervals.DiminishedSeventh, nil
+	case "diminishedmajorseventh":
+		return intervals.DiminishedMajorSeventh, nil
 	}
 	return nil, fmt.Errorf("unknown interaval set %q", v)
 }
