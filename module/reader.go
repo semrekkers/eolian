@@ -34,14 +34,6 @@ func NewBuffer(r Reader) *Buffer {
 	}
 }
 
-// NewStereoBuffer returns a new Buffer
-func NewStereoBuffer(r Reader) *Buffer {
-	return &Buffer{
-		Reader: r,
-		Frame:  make(Frame, FrameSize*2),
-	}
-}
-
 // SetSource establishes the Reader that is called when the Buffer is read
 func (b *Buffer) SetSource(r Reader) {
 	switch v := b.Reader.(type) {
