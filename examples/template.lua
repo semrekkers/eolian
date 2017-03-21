@@ -5,12 +5,12 @@ return function(env)
 
     local function build()
         return {
-            sink = synth.Multiple { size = 2 },
+            mono = synth.Multiple { size = 2 },
         }
     end
 
     local function patch(modules)
-        return modules.sink:out(0), modules.sink:out(1)
+        return modules.mono:out(0), modules.mono:out(1)
     end
 
     return build, patch
