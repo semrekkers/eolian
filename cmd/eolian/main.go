@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 
 	"buddin.us/eolian/command"
@@ -10,9 +10,11 @@ import (
 
 func main() {
 	if err := agent.Listen(nil); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
 	}
 	if err := command.Run(os.Args[1:]); err != nil {
-		log.Println(err)
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
 	}
 }

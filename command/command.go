@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"runtime/trace"
 	"syscall"
 	"time"
@@ -76,7 +77,18 @@ func Run(args []string) error {
 	}
 
 	if len(set.Args()) > 0 {
-		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", set.Arg(0))); err != nil {
+		path := set.Arg(0)
+		f, err := os.Stat(path)
+		if err != nil {
+			return err
+		}
+
+		switch mode := f.Mode(); {
+		case mode.IsDir():
+			path = filepath.Join(path, "init.lua")
+		}
+
+		if err := vm.DoString(fmt.Sprintf("Rack.load('%s')", path)); err != nil {
 			return err
 		}
 	}
