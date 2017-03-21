@@ -16,7 +16,7 @@ Rothfuss](http://patrickrothfuss.com).
 
 ## Dependencies
 
-- [Go 1.7](http://golang.org)+
+- [Go 1.8](http://golang.org)+
 - [PortAudio](http://www.portaudio.com/)
 - [PortMIDI](http://portmedia.sourceforge.net/portmidi/)
 - [govendor](https://github.com/kardianos/govendor) (development only)

@@ -14,7 +14,9 @@ type markers struct {
 
 func (b *markers) Create(i int) {
 	b.indexes = append(b.indexes, i)
-	sort.Sort(&indexSorter{b.indexes})
+	sort.Slice(b.indexes, func(i, j int) bool {
+		return b.indexes[i] < b.indexes[j]
+	})
 }
 
 func (b *markers) Count() int {
@@ -41,14 +43,4 @@ func (b *markers) GetRange(organize Value) (int, int) {
 	start := minInt(size-2, int(float64(organize)/zoneSize))
 	end := minInt(size-1, start+1)
 	return start, end
-}
-
-type indexSorter struct {
-	indexes []int
-}
-
-func (s *indexSorter) Len() int           { return len(s.indexes) }
-func (s *indexSorter) Less(i, j int) bool { return s.indexes[i] < s.indexes[j] }
-func (s *indexSorter) Swap(i, j int) {
-	s.indexes[i], s.indexes[j] = s.indexes[j], s.indexes[i]
 }

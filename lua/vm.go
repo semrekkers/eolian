@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 
@@ -149,6 +150,9 @@ func (vm *VM) completion(line [][]rune, pos int) [][]rune {
 			}
 		}
 		candidates = append(candidates, []rune(c))
+	})
+	sort.Slice(candidates, func(i, j int) bool {
+		return string(candidates[i]) < string(candidates[j])
 	})
 	return candidates
 }
