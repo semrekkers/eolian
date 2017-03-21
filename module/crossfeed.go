@@ -37,13 +37,8 @@ func (p *crossfeed) Read(out Frame) {
 
 		for i := range out {
 			amt := clampValue(amount[i], 0, 1)
-			if amt == 0 {
-				p.aOut[i] = a[i]
-				p.bOut[i] = b[i]
-			} else {
-				p.aOut[i] = a[i] + (amt * b[i])
-				p.bOut[i] = b[i] + (amt * a[i])
-			}
+			p.aOut[i] = a[i] + (amt * b[i])
+			p.bOut[i] = b[i] + (amt * a[i])
 		}
 	})
 }
