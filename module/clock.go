@@ -233,7 +233,9 @@ func (d *rcd) Read(out Frame) {
 				if d.lastIn < 0 && in[i] > 0 {
 					d.ticks[j] = (d.ticks[j] + 1) % (count + 1)
 				}
-				if d.ticks[j] == 0 {
+				if d.ticks[j] == 0 && count == 0 {
+					d.outs[j][i] = in[i]
+				} else if d.ticks[j] == 0 {
 					d.outs[j][i] = 1
 				} else {
 					d.outs[j][i] = -1
