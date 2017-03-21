@@ -26,7 +26,8 @@ return function(env)
             },
             filter = synth.Filter(),
             mix    = synth.Mix(),
-            sink   = synth.Multiple { size = 2 },
+            panLFO = synth.Oscillator { algorithm = 'simple' },
+            pan    = synth.Pan(),
         }
     end
 
@@ -109,9 +110,10 @@ return function(env)
             { input = rack.filter:out('lowpass') }
         }
 
-        rack.sink:set { input = rack.mix:out() }
+        rack.panLFO:set { pitch = hz(0.5) }
+        rack.pan:set { input = rack.mix:out(), bias = rack.panLFO:out('sine') }
 
-        return rack.sink:out(0), rack.sink:out(1)
+        return rack.pan:out('a'), rack.pan:out('b')
     end
 
     return build, patch
