@@ -19,7 +19,7 @@ func newCrossfeed() (*crossfeed, error) {
 		bOut:   make(Frame, FrameSize),
 	}
 	err := m.Expose(
-		"crossfeed",
+		"Crossfeed",
 		[]*In{m.aIn, m.bIn, m.amount},
 		[]*Out{
 			{Name: "a", Provider: provideCopyOut(m, &m.aOut)},
