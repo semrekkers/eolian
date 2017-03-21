@@ -16,6 +16,7 @@ return function(env)
                 filter = synth.Filter(),
             },
             compress = synth.Compress(),
+            sink = synth.Multiple { size = 2 },
         }
     end
 
@@ -62,8 +63,9 @@ return function(env)
             { input = out(modules.ks.filter, 'lowpass') },
         })
         set(modules.compress, { input = out(modules.mix) })
+        set(modules.sink, { input = out(modules.compress) })
 
-        return out(modules.compress)
+        return out(modules.sink, 0), out(modules.sink, 1)
     end
 
     return build, patch

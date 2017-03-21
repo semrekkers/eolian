@@ -61,6 +61,7 @@ return function(env)
             delay    = synth.FBComb(),
             compress = synth.Compress(),
             clip     = synth.Clip(),
+            sink     = synth.Multiple { size = 2 },
         }
     end
 
@@ -76,7 +77,9 @@ return function(env)
             m.clip:set     { input = m.compress:out(), level = 3 }
         end)
 
-        return modules.clip:out()
+        modules.sink:set { input = modules.clip:out() }
+
+        return modules.sink:out(0), modules.sink:out(1)
     end
 
     return build, patch

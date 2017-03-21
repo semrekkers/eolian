@@ -4,11 +4,13 @@ return function(env)
     local synth = require('eolian.synth')
 
     local function build()
-        return {}
+        return {
+            sink = synth.Multiple { size = 2 },
+        }
     end
 
     local function patch(modules)
-        return 0
+        return modules.sink:out(0), modules.sink:out(1)
     end
 
     return build, patch

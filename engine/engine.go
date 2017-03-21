@@ -14,7 +14,7 @@ import (
 type Engine struct {
 	sync.Mutex
 	module.IO
-	in *module.In
+	left, right *module.In
 
 	device         *portaudio.DeviceInfo
 	errors         chan error
@@ -47,7 +47,8 @@ func New(deviceIndex int) (*Engine, error) {
 	fmt.Println("Latency:", dev.DefaultLowOutputLatency)
 
 	m := &Engine{
-		in:             &module.In{Name: "input", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
+		left:           &module.In{Name: "left", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
+		right:          &module.In{Name: "right", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
 		errors:         make(chan error),
 		stop:           make(chan error),
 		timings:        make(chan metrics),
@@ -57,7 +58,7 @@ func New(deviceIndex int) (*Engine, error) {
 
 	go collectTimings(m.timings, m.timingRequests)
 
-	err = m.Expose("Engine", []*module.In{m.in}, nil)
+	err = m.Expose("Engine", []*module.In{m.left, m.right}, nil)
 	return m, err
 }
 
@@ -105,7 +106,7 @@ func (e *Engine) Errors() chan error {
 
 func (e *Engine) params() portaudio.StreamParameters {
 	params := portaudio.LowLatencyParameters(nil, e.device)
-	params.Output.Channels = 1
+	params.Output.Channels = 2
 	params.SampleRate = module.SampleRate
 	params.FramesPerBuffer = module.FrameSize
 	return params
@@ -144,13 +145,19 @@ func (e *Engine) Stop() error {
 	return err
 }
 
-func (e *Engine) portAudioCallback(_, out []float32) {
+func (e *Engine) portAudioCallback(_, out [][]float32) {
 	e.Lock()
 	e.stream.Time()
 	now := time.Now()
-	frame := e.in.ReadFrame()
+	left, right := e.left.ReadFrame(), e.right.ReadFrame()
 	for i := range out {
-		out[i] = float32(frame[i])
+		for j := 0; j < len(out[i]); j++ {
+			if i%2 == 0 {
+				out[i][j] = float32(left[j])
+			} else {
+				out[i][j] = float32(right[j])
+			}
+		}
 	}
 	e.timings <- metrics{
 		Callback:     time.Since(now),

@@ -51,6 +51,7 @@ return function(env)
             }),
             amp    = synth.Multiply(),
             delay  = synth.FBComb(),
+            sink   = synth.Multiple { size = 2 },
         }
     end
 
@@ -125,7 +126,9 @@ return function(env)
         set(m.amp, { a = out(m.mix), b = out(m.adsr) })
         set(m.delay, { input = out(m.amp), gain = 0.4, duration = ms(100) })
         set(m.filter, { input = out(m.delay), cutoff = cc(27) })
-        return out(m.filter, 'lowpass')
+        set(m.sink, { input = out(m.filter, 'lowpass') })
+
+        return out(m.sink, 0), out(m.sink, 1)
     end
 
     return build, patch

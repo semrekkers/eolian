@@ -44,6 +44,8 @@ return function(env)
                 cutoff    = { min = hz(1000), max = hz(5000) },
                 resonance = { min = 1, max = 50 },
             }),
+
+            sink = synth.Multiple { size = 2 }
         }
     end
 
@@ -114,7 +116,9 @@ return function(env)
         })
         set(modules.filter, { input = out(modules.tape), cutoff = cc(41), resonance = cc(42) })
 
-        return out(modules.filter, 'lowpass')
+        set(modules.sink, { input = out(modules.filter, 'lowpass') })
+
+        return modules.sink:out(0), modules.sink:out(1)
     end
 
     return build, patch

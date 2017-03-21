@@ -40,7 +40,7 @@ Rack = {
 }
 
 function Rack.clear()
-    Engine:set { input = 0 }
+    Engine:set { left = 0, right = 0 }
 end
 
 function Rack.build()
@@ -61,7 +61,8 @@ function Rack.build()
 
     Rack.modules = modules
     local result, err = pcall(function()
-        Engine:set { input = patch(Rack.modules) }
+        local left, right = patch(Rack.modules)
+        Engine:set { left = left, right = right }
     end)
     if not result then
         print(err)
@@ -83,7 +84,8 @@ function Rack.patch()
     local status, err, result = xpcall(function()
         reset(Rack.modules)
         Engine.reset()
-        Engine:set { input = patch(Rack.modules) }
+        local left, right = patch(Rack.modules)
+        Engine:set { left = left, right = right }
     end, debug.traceback)
     if not(result) and err ~= nil then
         print(err)
@@ -99,5 +101,7 @@ function Rack.load(path)
     Rack.env.path      = filepath.dir(path)
     local build, patch = dofile(path)(Rack.env)
     Rack.modules       = build(Rack.env)
-    Engine:set { input = patch(Rack.modules) }
+
+    local left, right  = patch(Rack.modules)
+    Engine:set { left = left, right = right }
 end

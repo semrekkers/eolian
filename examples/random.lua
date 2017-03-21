@@ -26,6 +26,7 @@ return function(env)
             },
             filter = synth.Filter(),
             mix    = synth.Mix(),
+            sink   = synth.Multiple { size = 2 },
         }
     end
 
@@ -108,7 +109,9 @@ return function(env)
             { input = rack.filter:out('lowpass') }
         }
 
-        return rack.mix:out()
+        rack.sink:set { input = rack.mix:out() }
+
+        return rack.sink:out(0), rack.sink:out(1)
     end
 
     return build, patch
