@@ -41,10 +41,9 @@ func New(deviceIndex int) (*Engine, error) {
 	}
 
 	dev := devices[deviceIndex]
-	fmt.Println("Output:", dev.Name)
+	fmt.Printf("Device: %s (%s)\n", dev.Name, dev.DefaultLowOutputLatency)
 	fmt.Println("Sample Rate:", module.SampleRate)
 	fmt.Println("Frame Size:", module.FrameSize)
-	fmt.Println("Latency:", dev.DefaultLowOutputLatency)
 
 	m := &Engine{
 		left:           &module.In{Name: "left", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
