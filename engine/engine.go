@@ -147,7 +147,6 @@ func (e *Engine) Stop() error {
 
 func (e *Engine) portAudioCallback(_, out [][]float32) {
 	e.Lock()
-	e.stream.Time()
 	now := time.Now()
 	left, right := e.left.ReadFrame(), e.right.ReadFrame()
 	for i := range out {
