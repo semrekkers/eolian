@@ -12,7 +12,7 @@ return function(env)
                 noise  = synth.Noise(),
                 adsr   = synth.ADSR(),
                 amp    = synth.Multiply(),
-                delay  = synth.FilteredFBComb(),
+                delay  = synth.FilteredFBDelay(),
                 filter = synth.Filter(),
             },
             compress = synth.Compress(),

@@ -35,7 +35,7 @@ return function(env)
                 reset    = { min = -1, max = 1 },
                 organize = { max = 1 },
             }),
-            delay = ctrl(synth.FilteredFBComb(), {
+            delay = ctrl(synth.FilteredFBDelay(), {
                 cutoff   = { min = hz(50), max = hz(3000) },
                 duration = { min = ms(10), max = ms(1000) },
                 gain     = { max = 1 },

@@ -22,7 +22,7 @@ return function(env)
             delay = {
                 gain   = synth.Oscillator { algorithm = 'simple' },
                 filter = synth.Filter(),
-                delay  = synth.FBLoopComb(),
+                delay  = synth.FBLoopDelay(),
             },
             filter = synth.Filter(),
             mix    = synth.Mix(),

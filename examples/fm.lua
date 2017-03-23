@@ -50,7 +50,7 @@ return function(env)
                 release = { min = ms(1), max = ms(500) },
             }),
             amp    = synth.Multiply(),
-            delay  = synth.FBComb(),
+            delay  = synth.FBDelay(),
             sink   = synth.Multiple { size = 2 },
         }
     end

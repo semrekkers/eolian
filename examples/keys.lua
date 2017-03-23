@@ -58,7 +58,7 @@ return function(env)
             voices   = voices,
             mix      = synth.Mix { size = polyphony },
             filter   = synth.Filter(),
-            delay    = synth.FBComb(),
+            delay    = synth.FBDelay(),
             compress = synth.Compress(),
             clip     = synth.Clip(),
             sink     = synth.Multiple { size = 2 },
