@@ -71,7 +71,7 @@ var allModules = []struct {
 	{"Oscillator", nil, []string{"pitch", "pitchMod", "pitchModAmount", "amp", "detune", "offset", "sync", "pulseWidth"},
 		[]string{"sine", "saw", "pulse", "triangle", "sub"}},
 	{"Pan", nil, []string{"input", "bias"}, []string{"a", "b"}},
-	{"PingPongDelay", nil, []string{"input", "duration"}, []string{"a", "b"}},
+	{"PingPongDelay", nil, []string{"a", "b", "duration", "gain"}, []string{"a", "b"}},
 	{"Quantize", Config{"size": 2}, []string{"input", "0.pitch", "1.pitch", "transpose"}, defaultOutput},
 	{"RandomSeries", nil, []string{"clock", "max", "min", "size", "trigger"}, []string{"gate", "value"}},
 	{"Reverb", nil, []string{"input", "gain", "feedback"}, defaultOutput},
