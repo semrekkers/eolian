@@ -3,7 +3,7 @@ package module
 import "github.com/mitchellh/mapstructure"
 
 func init() {
-	Register("PingPongDelay", func(c Config) (Patcher, error) {
+	Register("FBPingPongDelay", func(c Config) (Patcher, error) {
 		var config struct{ Size int }
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err

@@ -30,7 +30,7 @@ type reverb struct {
 	IO
 	in, feedback, gain *In
 
-	fbs       []*fbComb
+	fbs       []*fbDelay
 	allpasses []*allpass
 	inputs    *rInputs
 }
@@ -47,7 +47,7 @@ func newReverb(c reverbConfig) (*reverb, error) {
 		in:        &In{Name: "input", Source: inputs.input.in},
 		feedback:  &In{Name: "feedback", Source: inputs.feedback.in},
 		gain:      &In{Name: "gain", Source: inputs.gain.in},
-		fbs:       make([]*fbComb, feedbacks),
+		fbs:       make([]*fbDelay, feedbacks),
 		allpasses: make([]*allpass, allpasses),
 		inputs:    inputs,
 	}
@@ -93,7 +93,7 @@ func (m *reverb) patchFeedbacks(mixer *mix, inputs *rInputs, sizes []int) error 
 	for i, s := range sizes {
 		name := fmt.Sprintf("%d", i)
 		var err error
-		m.fbs[i], err = newFBComb(DurationInt(s))
+		m.fbs[i], err = newFBDelay(DurationInt(s))
 		if err != nil {
 			return err
 		}

@@ -31,7 +31,7 @@ type filteredReverb struct {
 	IO
 	in, feedback, fbCutoff, gain, bias, cutoff *In
 
-	fbs       []*filteredFBComb
+	fbs       []*filteredFBDelay
 	allpasses []*allpass
 	filter    *svFilter
 	inputs    *frInputs
@@ -57,7 +57,7 @@ func newFilteredReverb(c reverbConfig) (*filteredReverb, error) {
 		gain:      &In{Name: "gain", Source: inputs.gain.in},
 		bias:      &In{Name: "bias", Source: inputs.crossfade.bias},
 		cutoff:    &In{Name: "cutoff", Source: filter.cutoff},
-		fbs:       make([]*filteredFBComb, feedbacks),
+		fbs:       make([]*filteredFBDelay, feedbacks),
 		allpasses: make([]*allpass, allpasses),
 		filter:    filter,
 		inputs:    inputs,
@@ -136,7 +136,7 @@ func (m *filteredReverb) patchFeedbacks(inputs *frInputs, sizes []int) error {
 	for i, s := range sizes {
 		name := strconv.Itoa(i)
 		var err error
-		m.fbs[i], err = newFilteredFBComb(DurationInt(s))
+		m.fbs[i], err = newFilteredFBDelay(DurationInt(s))
 		if err != nil {
 			return err
 		}
