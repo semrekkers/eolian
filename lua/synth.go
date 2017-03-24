@@ -198,6 +198,7 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.
 			"state":     lock(moduleState, mtx, p),
 
 			// Methods that don't need to lock the graph
+			"type":  moduleType(p),
 			"scope": moduleScopedOutput(p),
 			"ns":    moduleScopedOutput(p),
 			"out":   moduleOutput(p),
@@ -387,6 +388,13 @@ func moduleClose(state *lua.LState, p module.Patcher) int {
 		}
 	}
 	return 0
+}
+
+func moduleType(p module.Patcher) lua.LGFunction {
+	return func(state *lua.LState) int {
+		state.Push(lua.LString(p.Type()))
+		return 1
+	}
 }
 
 func moduleScopedOutput(p module.Patcher) lua.LGFunction {

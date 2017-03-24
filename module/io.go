@@ -14,6 +14,7 @@ var moduleSequence uint64
 // Patcher is the patching behavior of a module
 type Patcher interface {
 	ID() string
+	Type() string
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
 	Reset() error
@@ -26,6 +27,7 @@ type Patcher interface {
 // inside other structs that represent a module.
 type IO struct {
 	id   string
+	typ  string
 	ins  map[string]*In
 	outs map[string]*Out
 
@@ -37,9 +39,15 @@ func (io *IO) ID() string {
 	return io.id
 }
 
+// Type returns the module's type
+func (io *IO) Type() string {
+	return io.typ
+}
+
 // Expose registers inputs and outputs of the module so that they can be used in patching
-func (io *IO) Expose(name string, ins []*In, outs []*Out) error {
-	io.id = fmt.Sprintf("%s:%d", name, atomic.LoadUint64(&moduleSequence))
+func (io *IO) Expose(typ string, ins []*In, outs []*Out) error {
+	io.typ = typ
+	io.id = fmt.Sprintf("%s:%d", typ, atomic.LoadUint64(&moduleSequence))
 	atomic.AddUint64(&moduleSequence, 1)
 
 	io.lazyInit()

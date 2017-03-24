@@ -139,7 +139,11 @@ function inspect(o, prefix)
         for k, v in pairs(o) do
             if k ~= '__namespace' then
                 if actsLikeModule(v) then
-                    v = '(module)'
+                    if v.type == nil then
+                        v = '(module)'
+                    else
+                        v = v.type()
+                    end
                 end
                 w.write(string.format("%s\t%s\n", k, v))
             end
