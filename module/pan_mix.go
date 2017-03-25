@@ -79,7 +79,7 @@ func (m *panMix) Read(out Frame) {
 					bSum += signal
 				} else if bias < 0 {
 					aSum += signal
-					bSum += (1 - bias) * signal
+					bSum += (1 + bias) * signal
 				} else {
 					aSum += signal
 					bSum += signal
