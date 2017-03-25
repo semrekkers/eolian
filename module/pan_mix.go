@@ -85,8 +85,8 @@ func (m *panMix) Read(out Frame) {
 					bSum += signal
 				}
 			}
-			aSum *= master[i]
-			bSum *= master[i]
+			m.a[i] = aSum * master[i]
+			m.b[i] = bSum * master[i]
 		}
 	})
 }
