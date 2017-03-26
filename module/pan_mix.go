@@ -53,7 +53,7 @@ func newPanMix(size int) (*panMix, error) {
 		m.pans = append(m.pans, pan)
 		inputs = append(inputs, in, level, pan)
 	}
-	return m, m.Expose("panMix", inputs, []*Out{
+	return m, m.Expose("PanMix", inputs, []*Out{
 		{Name: "a", Provider: provideCopyOut(m, &m.a)},
 		{Name: "b", Provider: provideCopyOut(m, &m.b)},
 	})
