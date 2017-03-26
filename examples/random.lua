@@ -76,8 +76,8 @@ return function(env)
                 { input = v.osc:out('sub'), level = 0.5 },
             }
             v.amp:set {
-                input = v.mix:out(),
-                ctrl  = v.adsr:out(),
+                input   = v.mix:out(),
+                control = v.adsr:out(),
             }
         end)
 
