@@ -11,52 +11,52 @@ func init() {
 		if err := mapstructure.Decode(c, &config); err != nil {
 			return nil, err
 		}
+		if config.Max == 0 {
+			config.Max = 1
+		}
 		return newCtrl(config.Min, config.Max, config.Smooth)
 	})
 }
 
 type ctrl struct {
 	IO
-	ctrl, mod, min, max *In
-	avg                 Value
-	smooth              bool
+	in, mod, min, max *In
+	avg               Value
+	smooth            bool
 }
 
 func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 	m := &ctrl{
-		ctrl:   &In{Name: "control", Source: NewBuffer(zero)},
+		in:     &In{Name: "input", Source: zero},
 		mod:    &In{Name: "mod", Source: NewBuffer(Value(1))},
-		min:    &In{Name: "min", Source: NewBuffer(Value(0))},
-		max:    &In{Name: "max", Source: NewBuffer(Value(1))},
+		min:    &In{Name: "min", Source: NewBuffer(Value(min))},
+		max:    &In{Name: "max", Source: NewBuffer(Value(max))},
 		smooth: smooth,
 	}
 	err := m.Expose(
 		"Control",
-		[]*In{m.ctrl, m.mod, m.min, m.max},
+		[]*In{m.in, m.mod, m.min, m.max},
 		[]*Out{{Name: "output", Provider: Provide(m)}},
 	)
 	return m, err
 }
 
 func (c *ctrl) Read(out Frame) {
+	c.in.Read(out)
+
 	var (
-		ctrl, mod = c.ctrl.ReadFrame(), c.mod.ReadFrame()
-		min, max  = c.min.ReadFrame(), c.max.ReadFrame()
-		_, static = c.mod.Source.(*Buffer).Reader.(Valuer)
-		in        Value
+		mod      = c.mod.ReadFrame()
+		min, max = c.min.ReadFrame(), c.max.ReadFrame()
 	)
 
 	for i := range out {
+		m := clampValue(mod[i], -1, 1)
+
 		if c.smooth {
 			c.avg -= c.avg / averageVelocitySamples
-			c.avg += ctrl[i] / averageVelocitySamples
-			in = c.avg
-		} else {
-			in = ctrl[i]
+			c.avg += out[i] / averageVelocitySamples
+			out[i] = c.avg
 		}
-		if !static {
-			in *= mod[i]
-		}
-		out[i] = in*(max[i]-min[i]) + min[i]
+		out[i] = (out[i]*(max[i]-min[i]) + min[i]) * m
 	}
 }

@@ -29,7 +29,7 @@ var allModules = []struct {
 	{"Crossfade", nil, []string{"a", "b", "bias"}, defaultOutput},
 	{"Crossfeed", nil, []string{"a", "b", "amount"}, []string{"a", "b"}},
 	{"Concurrent", nil, []string{"input"}, defaultOutput},
-	{"Control", nil, []string{"control", "mod", "min", "max"}, defaultOutput},
+	{"Control", nil, []string{"input", "mod", "min", "max"}, defaultOutput},
 	{"Count", nil, []string{"trigger", "limit", "step", "reset"}, defaultOutput},
 	{"Debug", Config{"output": ioutil.Discard}, []string{"input"}, defaultOutput},
 	{"Delay", nil, []string{"input", "duration"}, defaultOutput},
