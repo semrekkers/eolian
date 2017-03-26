@@ -1,5 +1,5 @@
 // Package osc provides Open Sound Control (OSC) input handling
-package osc
+package osc // import "buddin.us/eolian/module/osc"
 
 import (
 	"fmt"

@@ -1,4 +1,4 @@
-package main
+package main // import "buddin.us/eolian/wavetable/cmd/gen"
 
 import (
 	"fmt"

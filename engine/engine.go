@@ -1,5 +1,5 @@
 // Package engine provides output through PortAudio
-package engine
+package engine // import "buddin.us/eolian/engine"
 
 import (
 	"fmt"

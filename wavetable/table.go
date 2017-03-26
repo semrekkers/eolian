@@ -1,4 +1,4 @@
-package wavetable
+package wavetable // import "buddin.us/eolian/wavetable"
 
 //go:generate go run cmd/gen/main.go
 
