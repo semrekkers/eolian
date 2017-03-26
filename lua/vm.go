@@ -1,5 +1,5 @@
 // Package lua provides a Lua scripting layer
-package lua // import "buddin.us/eolian/lua"
+package lua
 
 import (
 	"fmt"

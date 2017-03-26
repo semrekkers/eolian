@@ -1,5 +1,5 @@
 // Package midi provides MIDI input handling
-package midi // import "buddin.us/eolian/module/midi"
+package midi
 
 import (
 	"fmt"

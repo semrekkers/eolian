@@ -1,5 +1,5 @@
 // Package command provides the functionality of the executable
-package command // import "buddin.us/eolian/command"
+package command
 
 import (
 	"flag"

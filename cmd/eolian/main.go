@@ -1,4 +1,4 @@
-package main // import "buddin.us/eolian/cmd/eolian"
+package main
 
 import (
 	"fmt"

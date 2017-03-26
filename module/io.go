@@ -1,5 +1,5 @@
 // Package module provides built-in modules
-package module // import "buddin.us/eolian/module"
+package module
 
 import (
 	"fmt"

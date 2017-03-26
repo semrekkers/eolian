@@ -1,4 +1,4 @@
-package wav // import "buddin.us/eolian/wav"
+package wav
 
 import (
 	"bytes"
