@@ -23,7 +23,7 @@ type lpg struct {
 func newLPG() (*lpg, error) {
 	m := &lpg{
 		in:        &In{Name: "input", Source: zero},
-		ctrl:      &In{Name: "ctrl", Source: NewBuffer(Value(1))},
+		ctrl:      &In{Name: "control", Source: NewBuffer(Value(1))},
 		mode:      &In{Name: "mode", Source: NewBuffer(Value(1))},
 		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(20000))},
 		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},

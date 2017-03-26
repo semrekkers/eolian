@@ -54,7 +54,7 @@ var allModules = []struct {
 	{"Interpolate", nil, []string{"input"}, defaultOutput},
 	{"Invert", nil, []string{"input"}, defaultOutput},
 	{"Filter", nil, []string{"input", "cutoff", "resonance"}, []string{"lowpass", "bandpass", "highpass"}},
-	{"LPGate", nil, []string{"input", "cutoff", "resonance", "ctrl", "mode"}, defaultOutput},
+	{"LPGate", nil, []string{"input", "cutoff", "resonance", "control", "mode"}, defaultOutput},
 	{"MathExp", Config{"expression": "x + y * 2"}, []string{"x", "y"}, defaultOutput},
 	{"Max", nil, []string{"a", "b"}, defaultOutput},
 	{"Min", nil, []string{"a", "b"}, defaultOutput},
