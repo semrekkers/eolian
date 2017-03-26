@@ -139,6 +139,14 @@ func (m *reverb) patchAllpasses(mixer *mix, inputs *rInputs, sizes []int) error 
 	return nil
 }
 
+func (r *reverb) LuaMembers() []string {
+	return []string{
+		r.inputs.feedback.ID(),
+		r.inputs.gain.ID(),
+		r.inputs.input.ID(),
+	}
+}
+
 type rInputs struct {
 	input, feedback, gain *multiple
 }
