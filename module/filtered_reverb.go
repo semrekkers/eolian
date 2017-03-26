@@ -185,6 +185,18 @@ func (m *filteredReverb) patchAllpasses(inputs *frInputs, sizes []int) error {
 	return nil
 }
 
+func (r *filteredReverb) LuaMembers() []string {
+	return []string{
+		r.inputs.gain.ID(),
+		r.inputs.input.ID(),
+		r.inputs.wetIn.ID(),
+		r.inputs.crossfade.ID(),
+		r.inputs.fbCutoff.ID(),
+		r.inputs.feedback.ID(),
+		r.filter.ID(),
+	}
+}
+
 type frInputs struct {
 	input, wetIn, feedback, fbCutoff, gain *multiple
 	mixer                                  *mix

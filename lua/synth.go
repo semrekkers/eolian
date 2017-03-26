@@ -196,6 +196,7 @@ func decoratePatcher(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.
 			"inputs":    lock(moduleInputs, mtx, p),
 			"outputs":   lock(moduleOutputs, mtx, p),
 			"state":     lock(moduleState, mtx, p),
+			"members":   lock(moduleMembers, mtx, p),
 
 			// Methods that don't need to lock the graph
 			"type":  moduleType(p),
@@ -277,6 +278,21 @@ func moduleState(state *lua.LState, p module.Patcher) int {
 	if l, ok := p.(stateExposer); ok {
 		for k, v := range l.LuaState() {
 			t.RawSet(lua.LString(k), lua.LString(fmt.Sprintf("%v", v)))
+		}
+	}
+	state.Push(t)
+	return 1
+}
+
+type memberExposer interface {
+	LuaMembers() []string
+}
+
+func moduleMembers(state *lua.LState, p module.Patcher) int {
+	t := state.NewTable()
+	if l, ok := p.(memberExposer); ok {
+		for i, v := range l.LuaMembers() {
+			t.Insert(i+1, lua.LString(v))
 		}
 	}
 	state.Push(t)

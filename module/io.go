@@ -268,10 +268,16 @@ func (i *In) SourceName() string {
 	if i.Source == nil {
 		return "(none)"
 	}
+	if in, ok := i.Source.(*In); ok {
+		return fmt.Sprintf("%s", in.Source)
+	}
 	return fmt.Sprintf("%s", i.Source)
 }
 
 func (i *In) String() string {
+	if in, ok := i.Source.(*In); ok {
+		return fmt.Sprintf("%s/%s", in.owner.ID(), i.Name)
+	}
 	return fmt.Sprintf("%s/%s", i.owner.ID(), i.Name)
 }
 
