@@ -22,7 +22,7 @@ func newTabWriter(state *lua.LState) int {
 	tabwidth := state.CheckInt(2)
 	padwidth := state.CheckInt(3)
 	pad := state.CheckString(4)
-	align := state.CheckString(5)
+	align := state.OptString(5, "")
 
 	var flags uint
 	if align == "alignRight" {

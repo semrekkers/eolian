@@ -82,7 +82,7 @@ function inspect(o, prefix)
         inputNames = sort.strings(inputNames)
         outputNames = sort.strings(outputNames)
 
-        local w = tabwriter.new(5, 0, 1, " ", "alignRight")
+        local w = tabwriter.new(5, 0, 1, " ")
         if o['state'] ~= nil then
             local stateNames = {}
             local state = o.state()
@@ -93,7 +93,7 @@ function inspect(o, prefix)
             stateNames = sort.strings(stateNames)
 
             for _,k in ipairs(stateNames) do
-                w.write(string.format("%s ==\t%s\t\n", k, state[k]))
+                w.write(string.format("%s\t==\t%s\t\n", k, state[k]))
             end
         end
 
@@ -110,7 +110,7 @@ function inspect(o, prefix)
                 name = string.format("%s/%s", path, join(rest, '/'))
             end
 
-            w.write(string.format("%s <-\t%s\t\n", k, name))
+            w.write(string.format("%s\t<-\t%s\t\n", k, name))
         end
 
         for _,k in ipairs(outputNames) do
@@ -126,7 +126,7 @@ function inspect(o, prefix)
                 name = string.format("%s/%s", path, join(rest, '/'))
             end
 
-            w.write(string.format("%s ->\t%s\t\n", k, name))
+            w.write(string.format("%s\t->\t%s\t\n", k, name))
         end
 
         local s, count = string.gsub(w.flush(), "\n$", "")
