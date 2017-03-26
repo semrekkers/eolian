@@ -1,6 +1,6 @@
 return function(m, options, defaultInput)
     options = options or {}
-    defaultInput = defaultInput or 'control'
+    defaultInput = defaultInput or 'input'
 
     if type(m) == 'function' then
         m = m()
@@ -33,7 +33,7 @@ return function(m, options, defaultInput)
             local t = {}
             for k,v in pairs(m.inputs()) do
                 if controls[k] ~= nil then
-                    t[k] = controls[k].inputs()["control"]
+                    t[k] = controls[k].inputs()[defaultInput]
                 else
                     t[k] = v
                 end
