@@ -378,6 +378,8 @@ func canonicalPort(v string) string {
 	return strings.Replace(v, ".", "/", -1)
 }
 
+// LuaMethod is a function exposed to the Lua layer. If Lock is true, the synthesizer module graph will be locked when
+// it is called to prevent race conditions.
 type LuaMethod struct {
 	Lock bool
 	Func interface{}
