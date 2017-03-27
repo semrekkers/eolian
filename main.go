@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//		eolian [-device device_number] [-framesize buffer_size] [rack_file.lua]
+//   eolian [-device device_number] [-framesize buffer_size] [rack_file.lua]
 //
 package main
 
