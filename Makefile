@@ -11,7 +11,7 @@ lua-scripts: $(GOPATH)/bin/go-bindata
 
 build: lua-scripts
 	@mkdir -p $(BINPATH)
-	go build -o $(BINPATH)/eolian -v $(PROJECT)/cmd/eolian
+	go build -o $(BINPATH)/eolian -v $(PROJECT)
 
 test: lua-scripts
 	go test -cover $(TESTARGS) $(PKG)
