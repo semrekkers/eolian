@@ -1,6 +1,7 @@
 # Eolian
 
 [![Build Status](https://travis-ci.org/brettbuddin/eolian.svg?branch=master)](https://travis-ci.org/brettbuddin/eolian)
+[![GoDoc](https://godoc.org/buddin.us/eolian?status.svg)](https://godoc.org/buddin.us/eolian)
 
 **Eolian** is a modular synthesizer. It provides a [variety of different
 modules](https://github.com/brettbuddin/eolian/wiki/eolian.synth) and [music theory
