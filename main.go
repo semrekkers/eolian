@@ -1,3 +1,9 @@
+// Eolian is a modular synthesizer.
+//
+// Usage:
+//
+//		eolian [-device device_number] [-framesize buffer_size] [rack_file.lua]
+//
 package main
 
 import (
