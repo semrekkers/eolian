@@ -47,8 +47,8 @@ var synthConsts = map[string]lua.LValue{
 func preloadSynth(mtx sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		fns := map[string]lua.LGFunction{}
-		for name, t := range module.Registry {
-			fns[name] = buildConstructor(name, t, mtx)
+		for _, name := range module.RegisteredTypes() {
+			fns[name] = buildConstructor(name, mtx)
 		}
 		mod := state.NewTable()
 		for k, v := range synthConsts {
@@ -60,7 +60,7 @@ func preloadSynth(mtx sync.Locker) lua.LGFunction {
 	}
 }
 
-func buildConstructor(name string, init module.InitFunc, mtx sync.Locker) func(state *lua.LState) int {
+func buildConstructor(name string, mtx sync.Locker) func(state *lua.LState) int {
 	return func(state *lua.LState) int {
 		config := module.Config{}
 
@@ -82,6 +82,10 @@ func buildConstructor(name string, init module.InitFunc, mtx sync.Locker) func(s
 			}
 		}
 
+		init, err := module.Lookup(name)
+		if err != nil {
+			state.RaiseError("%s", err.Error())
+		}
 		p, err := init(config)
 		if err != nil {
 			state.RaiseError("%s", err.Error())

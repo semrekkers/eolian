@@ -5,8 +5,7 @@ import (
 	"sort"
 )
 
-// Registry contains initializers for all known synthesizer modules
-var Registry = map[string]InitFunc{}
+var registry = map[string]InitFunc{}
 
 // Config is the conduit for providing initialization information to a module
 type Config map[string]interface{}
@@ -16,25 +15,26 @@ type InitFunc func(Config) (Patcher, error)
 
 // Lookup retrieves a module's initialization function from the Registry
 func Lookup(name string) (InitFunc, error) {
-	c, ok := Registry[name]
+	c, ok := registry[name]
 	if !ok {
 		return nil, fmt.Errorf("module type not registered: %s", name)
 	}
 	return c, nil
 }
 
-// Register registers an input under a specified name
+// Register registers a module under a specified name. This is then exposed as a constructor in the `eolian.synth`
+// package at the Lua layer.
 func Register(name string, fn func(Config) (Patcher, error)) {
-	if _, ok := Registry[name]; ok {
+	if _, ok := registry[name]; ok {
 		panic(fmt.Sprintf("%s already registered as a module", name))
 	}
-	Registry[name] = fn
+	registry[name] = fn
 }
 
 // RegisteredTypes returns a list of all registered module types
 func RegisteredTypes() []string {
 	types := []string{}
-	for k := range Registry {
+	for k := range registry {
 		types = append(types, k)
 	}
 	sort.Strings(types)
