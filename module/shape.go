@@ -120,13 +120,11 @@ func shapeFall(s *shapeState) shapeStateFunc {
 }
 
 func prepRise(s *shapeState) shapeStateFunc {
-	s.multiplier = expRatio(s.ratio, s.rise)
-	s.base = (1.0 + s.ratio) * (1.0 - s.multiplier)
+	s.base, s.multiplier = shapeCoeffs(s.ratio, s.rise, 1, logCurve)
 	return shapeRise
 }
 
 func prepFall(s *shapeState) shapeStateFunc {
-	s.multiplier = expRatio(s.ratio, s.fall)
-	s.base = -s.ratio * (1.0 - s.multiplier)
+	s.base, s.multiplier = shapeCoeffs(s.ratio, s.fall, 0, expCurve)
 	return shapeFall
 }

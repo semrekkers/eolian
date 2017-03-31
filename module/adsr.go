@@ -149,19 +149,30 @@ func adsrRelease(s *adsrState) adsrStateFunc {
 
 func prepAttack(s *adsrState) adsrStateFunc {
 	s.endCycle = false
-	s.multiplier = expRatio(s.ratio, s.attack)
-	s.base = (1.0 + s.ratio) * (1.0 - s.multiplier)
+	s.base, s.multiplier = shapeCoeffs(s.ratio, s.attack, 1, logCurve)
 	return adsrAttack
 }
 
 func prepDecay(s *adsrState) adsrStateFunc {
-	s.multiplier = expRatio(s.ratio, s.decay)
-	s.base = (s.sustain - s.ratio) * (1.0 - s.multiplier)
+	s.base, s.multiplier = shapeCoeffs(s.ratio, s.decay, s.sustain, expCurve)
 	return adsrDecay
 }
 
 func prepRelease(s *adsrState) adsrStateFunc {
-	s.multiplier = expRatio(s.ratio, s.release)
-	s.base = -s.ratio * (1.0 - s.multiplier)
+	s.base, s.multiplier = shapeCoeffs(s.ratio, s.release, 0, expCurve)
 	return adsrRelease
+}
+
+const (
+	expCurve int = iota
+	logCurve
+)
+
+func shapeCoeffs(ratio, duration, target Value, curve int) (base, multiplier Value) {
+	multiplier = expRatio(ratio, duration)
+	if curve == expCurve {
+		ratio = -ratio
+	}
+	base = target + ratio*(1.0-multiplier)
+	return
 }

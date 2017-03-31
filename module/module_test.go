@@ -31,6 +31,7 @@ var allModules = []struct {
 	{"Concurrent", nil, []string{"input"}, defaultOutput},
 	{"Control", nil, []string{"input", "mod", "min", "max"}, defaultOutput},
 	{"Count", nil, []string{"trigger", "limit", "step", "reset"}, defaultOutput},
+	{"Coupler", nil, []string{"input", "toggle", "duration"}, defaultOutput},
 	{"Debug", Config{"output": ioutil.Discard}, []string{"input"}, defaultOutput},
 	{"Delay", nil, []string{"input", "duration"}, defaultOutput},
 	{"Demux", nil, []string{"input", "selection"}, []string{"0", "1"}},
