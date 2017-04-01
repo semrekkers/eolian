@@ -173,6 +173,6 @@ func shapeCoeffs(ratio, duration, target Value, curve int) (base, multiplier Val
 	if curve == expCurve {
 		ratio = -ratio
 	}
-	base = target + ratio*(1.0-multiplier)
+	base = (target + ratio) * (1.0 - multiplier)
 	return
 }
