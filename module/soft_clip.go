@@ -1,6 +1,7 @@
 package module
 
 import (
+	"buddin.us/eolian/dsp"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -21,20 +22,20 @@ type softClip struct {
 
 func newSoftClip() (*softClip, error) {
 	m := &softClip{
-		in:   &In{Name: "input", Source: zero},
-		gain: &In{Name: "gain", Source: NewBuffer(Value(1))},
+		in:   NewIn("input", dsp.Float64(0)),
+		gain: NewInBuffer("gain", dsp.Float64(1)),
 	}
 	return m, m.Expose(
 		"SoftClip",
 		[]*In{m.in, m.gain},
-		[]*Out{{Name: "output", Provider: Provide(m)}})
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (m *softClip) Read(out Frame) {
-	m.in.Read(out)
-	gain := m.gain.ReadFrame()
+func (m *softClip) Process(out dsp.Frame) {
+	m.in.Process(out)
+	gain := m.gain.ProcessFrame()
 	for i := range out {
-		abs := absValue(out[i])
+		abs := dsp.Abs(out[i])
 		if abs <= 0.5 {
 			continue
 		}

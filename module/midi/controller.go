@@ -3,6 +3,7 @@ package midi
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/module"
 	"buddin.us/musictheory"
 	"github.com/mitchellh/mapstructure"
@@ -10,13 +11,13 @@ import (
 )
 
 var (
-	pitches = map[int]module.Value{}
+	pitches = map[int]dsp.Float64{}
 )
 
 func init() {
 	p := musictheory.NewPitch(musictheory.C, musictheory.Natural, 0)
 	for i := 12; i < 127; i++ {
-		pitches[i] = module.Frequency(p.Freq()).Value()
+		pitches[i] = dsp.Frequency(p.Freq()).Value()
 		p = p.Transpose(musictheory.Minor(2)).(musictheory.Pitch)
 	}
 
@@ -66,7 +67,7 @@ func newController(config controllerConfig) (*controller, error) {
 	if err != nil {
 		return nil, err
 	}
-	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
+	stream, err := portmidi.NewInputStream(id, int64(dsp.FrameSize))
 	if err != nil {
 		return nil, err
 	}
@@ -80,23 +81,23 @@ func newController(config controllerConfig) (*controller, error) {
 		stopStreamEvents: stop,
 		deviceID:         id,
 		frameRate:        config.FrameRate,
-		events:           make([]portmidi.Event, module.FrameSize),
+		events:           make([]portmidi.Event, dsp.FrameSize),
 	}
 	outs := []*module.Out{}
 
 	outs = append(outs, polyphonicOutputs(m, config.Polyphony)...)
 
 	outs = append(outs,
-		&module.Out{Name: "sync", Provider: module.Provide(&ctrlSync{controller: m})},
-		&module.Out{Name: "reset", Provider: module.Provide(&ctrlReset{controller: m})},
-		&module.Out{Name: "pitchBend", Provider: module.Provide(&ctrlPitchBend{controller: m})})
+		&module.Out{Name: "sync", Provider: dsp.Provide(&ctrlSync{controller: m})},
+		&module.Out{Name: "reset", Provider: dsp.Provide(&ctrlReset{controller: m})},
+		&module.Out{Name: "pitchBend", Provider: dsp.Provide(&ctrlPitchBend{controller: m})})
 
 	for _, c := range config.CCChannels {
 		for n := 0; n < 128; n++ {
 			func(c, n int) {
 				outs = append(outs, &module.Out{
 					Name: fmt.Sprintf("cc/%d/%d", c, n),
-					Provider: module.Provide(&ctrlCC{
+					Provider: dsp.Provide(&ctrlCC{
 						controller: m,
 						status:     176 + (c - 1),
 						number:     n,
@@ -109,7 +110,7 @@ func newController(config controllerConfig) (*controller, error) {
 	return m, m.Expose("MIDIController", nil, outs)
 }
 
-func (c *controller) read(out module.Frame) {
+func (c *controller) read(out dsp.Frame) {
 	if c.reads == 0 && c.stream != nil {
 		for i := range out {
 			select {
@@ -127,7 +128,7 @@ func (c *controller) read(out module.Frame) {
 func (c *controller) Output(name string) (*module.Out, error) {
 	if c.stream == nil {
 		var err error
-		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(module.FrameSize))
+		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(dsp.FrameSize))
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +154,7 @@ type ctrlGate struct {
 	state         *gateState
 }
 
-func (reader *ctrlGate) Read(out module.Frame) {
+func (reader *ctrlGate) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		reader.state.event = reader.controller.events[i]
@@ -166,7 +167,7 @@ func (reader *ctrlGate) Read(out module.Frame) {
 type gateState struct {
 	event                portmidi.Event
 	which, channelOffset int
-	value                module.Value
+	value                dsp.Float64
 }
 
 func gateRolling(s *gateState) gateStateFunc {
@@ -215,10 +216,10 @@ type gateStateFunc func(*gateState) gateStateFunc
 type ctrlVelocity struct {
 	controller    *controller
 	channelOffset int
-	lastVelocity  module.Value
+	lastVelocity  dsp.Float64
 }
 
-func (reader *ctrlVelocity) Read(out module.Frame) {
+func (reader *ctrlVelocity) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
@@ -226,7 +227,7 @@ func (reader *ctrlVelocity) Read(out module.Frame) {
 			if data2 == 0 {
 				out[i] = reader.lastVelocity
 			} else {
-				out[i] = module.Value(data2) / 127
+				out[i] = dsp.Float64(data2) / 127
 				reader.lastVelocity = out[i]
 			}
 		} else {
@@ -240,7 +241,7 @@ type ctrlSync struct {
 	tick       int
 }
 
-func (reader *ctrlSync) Read(out module.Frame) {
+func (reader *ctrlSync) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		if reader.controller.events[i].Status == 248 || reader.controller.events[i].Status == 250 {
@@ -259,10 +260,10 @@ func (reader *ctrlSync) Read(out module.Frame) {
 type ctrlPitch struct {
 	controller    *controller
 	channelOffset int
-	pitch         module.Value
+	pitch         dsp.Float64
 }
 
-func (reader *ctrlPitch) Read(out module.Frame) {
+func (reader *ctrlPitch) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
@@ -286,7 +287,7 @@ type ctrlReset struct {
 	controller *controller
 }
 
-func (reader ctrlReset) Read(out module.Frame) {
+func (reader ctrlReset) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		if reader.controller.events[i].Status == 250 {
@@ -301,7 +302,7 @@ type ctrlPitchBend struct {
 	controller *controller
 }
 
-func (reader *ctrlPitchBend) Read(out module.Frame) {
+func (reader *ctrlPitchBend) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		e := reader.controller.events[i]
@@ -314,7 +315,7 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 			case 0:
 				out[i] = -1
 			default:
-				out[i] = module.Value((float64(e.Data2) - 64) / 64)
+				out[i] = dsp.Float64((float64(e.Data2) - 64) / 64)
 			}
 		}
 	}
@@ -323,15 +324,15 @@ func (reader *ctrlPitchBend) Read(out module.Frame) {
 type ctrlCC struct {
 	controller     *controller
 	status, number int
-	value          module.Value
+	value          dsp.Float64
 }
 
-func (reader *ctrlCC) Read(out module.Frame) {
+func (reader *ctrlCC) Process(out dsp.Frame) {
 	reader.controller.read(out)
 	for i := range out {
 		e := reader.controller.events[i]
 		if int(e.Status) == reader.status && int(e.Data1) == reader.number {
-			reader.value = module.Value(float64(e.Data2) / 127)
+			reader.value = dsp.Float64(float64(e.Data2) / 127)
 		}
 		out[i] = reader.value
 	}
@@ -343,27 +344,27 @@ func polyphonicOutputs(m *controller, count int) []*module.Out {
 	if count == 0 {
 		outs = append(outs, &module.Out{
 			Name: "gate",
-			Provider: module.Provide(&ctrlGate{
+			Provider: dsp.Provide(&ctrlGate{
 				controller: m,
 				stateFunc:  gateUp,
 				state:      &gateState{which: -1},
 			}),
 		},
-			&module.Out{Name: "pitch", Provider: module.Provide(&ctrlPitch{controller: m})},
-			&module.Out{Name: "velocity", Provider: module.Provide(&ctrlVelocity{controller: m})})
+			&module.Out{Name: "pitch", Provider: dsp.Provide(&ctrlPitch{controller: m})},
+			&module.Out{Name: "velocity", Provider: dsp.Provide(&ctrlVelocity{controller: m})})
 	} else {
 		for i := 0; i < count; i++ {
 			outs = append(outs, &module.Out{
 				Name: fmt.Sprintf("%d/gate", i),
-				Provider: module.Provide(&ctrlGate{
+				Provider: dsp.Provide(&ctrlGate{
 					controller:    m,
 					stateFunc:     gateUp,
 					state:         &gateState{which: -1},
 					channelOffset: i,
 				}),
 			},
-				&module.Out{Name: fmt.Sprintf("%d/pitch", i), Provider: module.Provide(&ctrlPitch{controller: m, channelOffset: i})},
-				&module.Out{Name: fmt.Sprintf("%d/velocity", i), Provider: module.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
+				&module.Out{Name: fmt.Sprintf("%d/pitch", i), Provider: dsp.Provide(&ctrlPitch{controller: m, channelOffset: i})},
+				&module.Out{Name: fmt.Sprintf("%d/velocity", i), Provider: dsp.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
 		}
 	}
 

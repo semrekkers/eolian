@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -37,27 +39,24 @@ type mux struct {
 
 func newMux(size int) (*mux, error) {
 	m := &mux{
-		selection: &In{Name: "selection", Source: NewBuffer(zero)},
+		selection: NewInBuffer("selection", dsp.Float64(0)),
 	}
 	inputs := []*In{m.selection}
 	for i := 0; i < size; i++ {
-		in := &In{
-			Name:   fmt.Sprintf("%d/input", i),
-			Source: NewBuffer(zero),
-		}
+		in := NewInBuffer(fmt.Sprintf("%d/input", i), dsp.Float64(0))
 		m.sources = append(m.sources, in)
 		inputs = append(inputs, in)
 	}
-	return m, m.Expose("Mux", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("Mux", inputs, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (m *mux) Read(out Frame) {
-	selection := m.selection.ReadFrame()
+func (m *mux) Process(out dsp.Frame) {
+	selection := m.selection.ProcessFrame()
 	for i := 0; i < len(m.sources); i++ {
-		m.sources[i].ReadFrame()
+		m.sources[i].ProcessFrame()
 	}
 	for i := range out {
-		s := int(clampValue(selection[i], 0, Value(len(m.sources)-1)))
+		s := int(dsp.Clamp(selection[i], 0, dsp.Float64(len(m.sources)-1)))
 		out[i] = m.sources[s].LastFrame()[i]
 	}
 }
@@ -65,19 +64,19 @@ func (m *mux) Read(out Frame) {
 type demux struct {
 	multiOutIO
 	in, selection *In
-	outs          []Frame
+	outs          []dsp.Frame
 }
 
 func newDemux(size int) (*demux, error) {
 	m := &demux{
-		in:        &In{Name: "input", Source: zero},
-		selection: &In{Name: "selection", Source: NewBuffer(zero)},
-		outs:      make([]Frame, size),
+		in:        NewIn("input", dsp.Float64(0)),
+		selection: NewInBuffer("selection", dsp.Float64(0)),
+		outs:      make([]dsp.Frame, size),
 	}
 	inputs := []*In{m.in, m.selection}
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
-		m.outs[i] = make(Frame, FrameSize)
+		m.outs[i] = dsp.NewFrame()
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%d", i),
 			Provider: provideCopyOut(m, &m.outs[i]),
@@ -86,12 +85,12 @@ func newDemux(size int) (*demux, error) {
 	return m, m.Expose("Demux", inputs, outputs)
 }
 
-func (m *demux) Read(out Frame) {
+func (m *demux) Process(out dsp.Frame) {
 	m.incrRead(func() {
-		m.in.Read(out)
-		selection := m.selection.ReadFrame()
+		m.in.Process(out)
+		selection := m.selection.ProcessFrame()
 		for i := range out {
-			s := int(clampValue(selection[i], 0, Value(len(m.outs)-1)))
+			s := int(dsp.Clamp(selection[i], 0, dsp.Float64(len(m.outs)-1)))
 			for j := 0; j < len(m.outs); j++ {
 				if j == s {
 					m.outs[j][i] = out[i]

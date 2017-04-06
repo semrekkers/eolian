@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Shape", func(Config) (Patcher, error) { return newShape() })
 }
@@ -10,24 +12,24 @@ type shape struct {
 
 	state          *shapeState
 	stateFunc      shapeStateFunc
-	main, endCycle Frame
+	main, endCycle dsp.Frame
 }
 
 func newShape() (*shape, error) {
 	m := &shape{
-		gate:    &In{Name: "gate", Source: NewBuffer(zero)},
-		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
-		rise:    &In{Name: "rise", Source: NewBuffer(Duration(1))},
-		fall:    &In{Name: "fall", Source: NewBuffer(Duration(1))},
-		cycle:   &In{Name: "cycle", Source: NewBuffer(zero)},
-		ratio:   &In{Name: "ratio", Source: NewBuffer(Value(0.01))},
+		gate:    NewInBuffer("gate", dsp.Float64(0)),
+		trigger: NewInBuffer("trigger", dsp.Float64(0)),
+		rise:    NewInBuffer("rise", dsp.Duration(1)),
+		fall:    NewInBuffer("fall", dsp.Duration(1)),
+		cycle:   NewInBuffer("cycle", dsp.Float64(0)),
+		ratio:   NewInBuffer("ratio", dsp.Float64(0.01)),
 		state: &shapeState{
 			lastGate:    -1,
 			lastTrigger: -1,
 		},
 		stateFunc: shapeIdle,
-		main:      make(Frame, FrameSize),
-		endCycle:  make(Frame, FrameSize),
+		main:      dsp.NewFrame(),
+		endCycle:  dsp.NewFrame(),
 	}
 	return m, m.Expose(
 		"Shape",
@@ -39,15 +41,15 @@ func newShape() (*shape, error) {
 	)
 }
 
-func (s *shape) Read(out Frame) {
+func (s *shape) Process(out dsp.Frame) {
 	s.incrRead(func() {
 		var (
-			gate    = s.gate.ReadFrame()
-			trigger = s.trigger.ReadFrame()
-			rise    = s.rise.ReadFrame()
-			fall    = s.fall.ReadFrame()
-			cycle   = s.cycle.ReadFrame()
-			ratio   = s.ratio.ReadFrame()
+			gate    = s.gate.ProcessFrame()
+			trigger = s.trigger.ProcessFrame()
+			rise    = s.rise.ProcessFrame()
+			fall    = s.fall.ProcessFrame()
+			cycle   = s.cycle.ProcessFrame()
+			ratio   = s.ratio.ProcessFrame()
 		)
 		for i := range out {
 			s.state.lastGate = s.state.gate
@@ -71,8 +73,8 @@ func (s *shape) Read(out Frame) {
 }
 
 type shapeState struct {
-	out, gate, trigger, rise, fall, cycle, ratio Value
-	base, multiplier, lastGate, lastTrigger      Value
+	out, gate, trigger, rise, fall, cycle, ratio dsp.Float64
+	base, multiplier, lastGate, lastTrigger      dsp.Float64
 	endCycle                                     bool
 }
 
@@ -108,7 +110,7 @@ func shapeFall(s *shapeState) shapeStateFunc {
 		return prepRise(s)
 	}
 	s.out = s.base + s.out*s.multiplier
-	if float64(s.out) <= epsilon {
+	if float64(s.out) <= dsp.Epsilon {
 		s.endCycle = true
 		s.out = 0
 		if s.cycle > 0 {

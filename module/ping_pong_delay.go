@@ -1,6 +1,9 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"buddin.us/eolian/dsp"
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
 	Register("FBPingPongDelay", func(c Config) (Patcher, error) {
@@ -11,29 +14,29 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 10000
 		}
-		return newPingPongDelay(DurationInt(config.Size))
+		return newPingPongDelay(dsp.DurationInt(config.Size))
 	})
 }
 
 type pingPongDelay struct {
 	multiOutIO
 	a, b, duration, gain *In
-	aDelay, bDelay       *delayline
-	aOut, bOut           Frame
-	aLast, bLast         Value
-	size                 MS
+	aDelay, bDelay       *dsp.DelayLine
+	aOut, bOut           dsp.Frame
+	aLast, bLast         dsp.Float64
+	size                 dsp.MS
 }
 
-func newPingPongDelay(size MS) (*pingPongDelay, error) {
+func newPingPongDelay(size dsp.MS) (*pingPongDelay, error) {
 	m := &pingPongDelay{
-		a:        &In{Name: "a", Source: NewBuffer(zero)},
-		b:        &In{Name: "b", Source: NewBuffer(zero)},
-		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
-		gain:     &In{Name: "gain", Source: NewBuffer(Value(0.5))},
-		aDelay:   newDelayLine(size),
-		bDelay:   newDelayLine(size),
-		aOut:     make(Frame, FrameSize),
-		bOut:     make(Frame, FrameSize),
+		a:        NewInBuffer("a", dsp.Float64(0)),
+		b:        NewInBuffer("b", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		gain:     NewInBuffer("gain", dsp.Float64(0.5)),
+		aDelay:   dsp.NewDelayLine(size),
+		bDelay:   dsp.NewDelayLine(size),
+		aOut:     dsp.NewFrame(),
+		bOut:     dsp.NewFrame(),
 		size:     size,
 	}
 
@@ -43,13 +46,13 @@ func newPingPongDelay(size MS) (*pingPongDelay, error) {
 	})
 }
 
-func (p *pingPongDelay) Read(out Frame) {
+func (p *pingPongDelay) Process(out dsp.Frame) {
 	p.incrRead(func() {
-		a, b := p.a.ReadFrame(), p.b.ReadFrame()
-		duration := p.duration.ReadFrame()
-		gain := p.gain.ReadFrame()
+		a, b := p.a.ProcessFrame(), p.b.ProcessFrame()
+		duration := p.duration.ProcessFrame()
+		gain := p.gain.ProcessFrame()
 		for i := range out {
-			d := clampValue(duration[i], 0, p.size.Value())
+			d := dsp.Clamp(duration[i], 0, p.size.Value())
 
 			p.aOut[i] = a[i] + p.bLast
 			p.bOut[i] = b[i] + p.aLast

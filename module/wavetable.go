@@ -3,6 +3,7 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
 	lookup "buddin.us/eolian/wavetable"
 	"github.com/mitchellh/mapstructure"
 )
@@ -24,7 +25,7 @@ type wavetable struct {
 	IO
 	lut                *lookup.Table
 	pitch, amp, offset *In
-	lastPitch          Value
+	lastPitch          dsp.Float64
 }
 
 func newWavetable(tableName string) (*wavetable, error) {
@@ -34,27 +35,27 @@ func newWavetable(tableName string) (*wavetable, error) {
 	}
 
 	m := &wavetable{
-		pitch:  &In{Name: "pitch", Source: NewBuffer(zero)},
-		amp:    &In{Name: "amp", Source: NewBuffer(Value(1))},
-		offset: &In{Name: "offset", Source: NewBuffer(zero)},
-		lut:    lookup.NewTable(t, len(t)/len(lookup.Breakpoints), SampleRate),
+		pitch:  NewInBuffer("pitch", dsp.Float64(0)),
+		amp:    NewInBuffer("amp", dsp.Float64(1)),
+		offset: NewInBuffer("offset", dsp.Float64(0)),
+		lut:    lookup.NewTable(t, len(t)/len(lookup.Breakpoints), dsp.SampleRate),
 	}
 	return m, m.Expose(
 		"Wavetable",
 		[]*In{m.pitch, m.amp, m.offset},
-		[]*Out{{Name: "output", Provider: Provide(m)}})
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (t *wavetable) Read(out Frame) {
-	pitch := t.pitch.ReadFrame()
-	amp := t.amp.ReadFrame()
-	offset := t.offset.ReadFrame()
+func (t *wavetable) Process(out dsp.Frame) {
+	pitch := t.pitch.ProcessFrame()
+	amp := t.amp.ProcessFrame()
+	offset := t.offset.ProcessFrame()
 
 	for i := range out {
 		if t.lastPitch != pitch[i] {
 			t.lut.SetDelta(float64(pitch[i]))
 		}
-		out[i] = Value(t.lut.Step())*amp[i] + offset[i]
+		out[i] = dsp.Float64(t.lut.Step())*amp[i] + offset[i]
 		t.lastPitch = pitch[i]
 	}
 }

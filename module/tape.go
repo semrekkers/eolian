@@ -1,6 +1,7 @@
 package module
 
 import (
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/wav"
 	"github.com/mitchellh/mapstructure"
 )
@@ -23,7 +24,7 @@ func init() {
 
 const tapeOversample = 20
 
-var minSpliceSize = int(Duration(10).Value())
+var minSpliceSize = int(dsp.Duration(10).Value())
 
 type tape struct {
 	multiOutIO
@@ -33,7 +34,7 @@ type tape struct {
 
 	state                 *tapeState
 	stateFunc             tapeStateFunc
-	mainOut, endSpliceOut Frame
+	mainOut, endSpliceOut dsp.Frame
 }
 
 func newTape(max int, file string) (*tape, error) {
@@ -48,20 +49,20 @@ func newTape(max int, file string) (*tape, error) {
 	}
 
 	m := &tape{
-		in:           &In{Name: "input", Source: zero},
-		speed:        &In{Name: "speed", Source: NewBuffer(Value(1))},
-		play:         &In{Name: "play", Source: NewBuffer(Value(1))},
-		record:       &In{Name: "record", Source: NewBuffer(zero)},
-		reset:        &In{Name: "reset", Source: NewBuffer(zero)},
-		bias:         &In{Name: "bias", Source: NewBuffer(zero)},
-		organize:     &In{Name: "organize", Source: NewBuffer(zero)},
-		splice:       &In{Name: "splice", Source: NewBuffer(zero)},
-		unsplice:     &In{Name: "unsplice", Source: NewBuffer(zero)},
-		zoom:         &In{Name: "zoom", Source: NewBuffer(zero)},
-		slide:        &In{Name: "slide", Source: NewBuffer(zero)},
+		in:           NewIn("input", dsp.Float64(0)),
+		speed:        NewInBuffer("speed", dsp.Float64(1)),
+		play:         NewInBuffer("play", dsp.Float64(1)),
+		record:       NewInBuffer("record", dsp.Float64(0)),
+		reset:        NewInBuffer("reset", dsp.Float64(0)),
+		bias:         NewInBuffer("bias", dsp.Float64(0)),
+		organize:     NewInBuffer("organize", dsp.Float64(0)),
+		splice:       NewInBuffer("splice", dsp.Float64(0)),
+		unsplice:     NewInBuffer("unsplice", dsp.Float64(0)),
+		zoom:         NewInBuffer("zoom", dsp.Float64(0)),
+		slide:        NewInBuffer("slide", dsp.Float64(0)),
 		stateFunc:    tapeIdle,
-		mainOut:      make(Frame, FrameSize),
-		endSpliceOut: make(Frame, FrameSize),
+		mainOut:      dsp.NewFrame(),
+		endSpliceOut: dsp.NewFrame(),
 	}
 
 	if w != nil {
@@ -69,20 +70,20 @@ func newTape(max int, file string) (*tape, error) {
 		if err != nil {
 			return nil, err
 		}
-		ratio := int(SampleRate / float64(w.SampleRate))
+		ratio := int(dsp.SampleRate / float64(w.SampleRate))
 		size := len(samples) * tapeOversample * ratio
 		if size > max {
 			max = size
 		}
 		m.state = newTapeState(max)
 		for _, s := range samples {
-			m.state.writeToMemory(Value(s), tapeOversample*ratio-1)
+			m.state.writeToMemory(dsp.Float64(s), tapeOversample*ratio-1)
 		}
 		m.state.createFirstMarker()
 		m.state.spliceStart = 0
 		m.stateFunc = tapePlay
 	} else {
-		m.state = newTapeState(max * SampleRate * tapeOversample)
+		m.state = newTapeState(max * dsp.SampleRate * tapeOversample)
 	}
 
 	return m, m.Expose(
@@ -95,22 +96,22 @@ func newTape(max int, file string) (*tape, error) {
 	)
 }
 
-func (t *tape) Read(out Frame) {
+func (t *tape) Process(out dsp.Frame) {
 	t.incrRead(func() {
 
-		t.in.Read(out)
+		t.in.Process(out)
 
 		var (
-			speed    = t.speed.ReadFrame()
-			play     = t.play.ReadFrame()
-			record   = t.record.ReadFrame()
-			reset    = t.reset.ReadFrame()
-			organize = t.organize.ReadFrame()
-			splice   = t.splice.ReadFrame()
-			unsplice = t.unsplice.ReadFrame()
-			bias     = t.bias.ReadFrame()
-			zoom     = t.zoom.ReadFrame()
-			slide    = t.slide.ReadFrame()
+			speed    = t.speed.ProcessFrame()
+			play     = t.play.ProcessFrame()
+			record   = t.record.ProcessFrame()
+			reset    = t.reset.ProcessFrame()
+			organize = t.organize.ProcessFrame()
+			splice   = t.splice.ProcessFrame()
+			unsplice = t.unsplice.ProcessFrame()
+			bias     = t.bias.ProcessFrame()
+			zoom     = t.zoom.ProcessFrame()
+			slide    = t.slide.ProcessFrame()
 		)
 
 		for i := range out {
@@ -148,15 +149,15 @@ func (t *tape) Read(out Frame) {
 
 type tapeState struct {
 	in, out, speed, play, organize, reset,
-	record, splice, unsplice, bias Value
+	record, splice, unsplice, bias dsp.Float64
 
-	zoom, slide Value
+	zoom, slide dsp.Float64
 
 	lastPlay, lastRecord, lastReset,
-	lastSplice, lastUnsplice Value
+	lastSplice, lastUnsplice dsp.Float64
 
 	markers *markers
-	memory  []Value
+	memory  []dsp.Float64
 
 	offset, recordingEnd   int
 	unspliceHold           int
@@ -168,7 +169,7 @@ func newTapeState(size int) *tapeState {
 	return &tapeState{
 		markers:      newMarkers(),
 		spliceStart:  0,
-		memory:       make([]Value, size),
+		memory:       make([]dsp.Float64, size),
 		lastPlay:     -1,
 		lastRecord:   -1,
 		lastReset:    -1,
@@ -177,7 +178,7 @@ func newTapeState(size int) *tapeState {
 	}
 }
 
-func (s *tapeState) crossfade(live, record Value) Value {
+func (s *tapeState) crossfade(live, record dsp.Float64) dsp.Float64 {
 	if s.bias > 0 {
 		return (1-s.bias)*live + record
 	} else if s.bias < 0 {
@@ -217,7 +218,7 @@ func (s *tapeState) clearMarkers() {
 
 func (s *tapeState) clearAll() {
 	s.markers = newMarkers()
-	s.memory = make([]Value, len(s.memory))
+	s.memory = make([]dsp.Float64, len(s.memory))
 	s.offset, s.spliceStart, s.spliceEnd, s.recordingEnd = 0, 0, 0, 0
 }
 
@@ -231,8 +232,8 @@ func (s *tapeState) playheadTo(offset int) {
 	s.atSpliceEnd = true
 }
 
-func (s *tapeState) playbackSpeed() Value {
-	return Value(tapeOversample) * s.speed
+func (s *tapeState) playbackSpeed() dsp.Float64 {
+	return dsp.Float64(tapeOversample) * s.speed
 }
 
 func (s *tapeState) recordInput() {
@@ -241,7 +242,7 @@ func (s *tapeState) recordInput() {
 	s.out = in
 }
 
-func (s *tapeState) writeToMemory(in Value, oversample int) {
+func (s *tapeState) writeToMemory(in dsp.Float64, oversample int) {
 	for i := 0; i < oversample; i++ {
 		s.memory[s.offset+i] = in
 	}
@@ -259,7 +260,7 @@ func (s *tapeState) playback() {
 		var (
 			grains     = 1024 >> uint(10-(s.zoom*10))
 			size       = (end - start) / grains
-			slide      = size * int(0.9*s.slide*Value(grains))
+			slide      = size * int(0.9*s.slide*dsp.Float64(grains))
 			grainStart = start + slide
 			grainEnd   = start + slide + size
 		)
@@ -359,7 +360,7 @@ func handleReset(s *tapeState) tapeStateFunc {
 
 func handleUnsplice(s *tapeState) {
 	if s.unsplice > 0 {
-		if s.unspliceHold > 2*SampleRate {
+		if s.unspliceHold > 2*dsp.SampleRate {
 			s.unspliceHold = 0
 			s.clearMarkers()
 		}

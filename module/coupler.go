@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Coupler", func(c Config) (Patcher, error) { return newCoupler() })
 }
@@ -16,32 +18,32 @@ const (
 type coupler struct {
 	IO
 	in, duration, toggle *In
-	level                Value
+	level                dsp.Float64
 	state                int
 
-	lastToggle Value
+	lastToggle dsp.Float64
 }
 
 func newCoupler() (*coupler, error) {
 	m := &coupler{
-		in:         &In{Name: "input", Source: NewBuffer(zero)},
-		duration:   &In{Name: "duration", Source: NewBuffer(Duration(300))},
-		toggle:     &In{Name: "toggle", Source: NewBuffer(zero)},
+		in:         NewInBuffer("input", dsp.Float64(0)),
+		duration:   NewInBuffer("duration", dsp.Duration(300)),
+		toggle:     NewInBuffer("toggle", dsp.Float64(0)),
 		state:      couplerOpen,
 		lastToggle: -1,
 	}
 	return m, m.Expose(
 		"Coupler",
 		[]*In{m.in, m.duration, m.toggle},
-		[]*Out{{Name: "output", Provider: Provide(m)}})
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (h *coupler) Read(out Frame) {
-	toggle := h.toggle.ReadFrame()
+func (h *coupler) Process(out dsp.Frame) {
+	toggle := h.toggle.ProcessFrame()
 
 	switch h.state {
 	case couplerOpen:
-		in := h.in.ReadFrame()
+		in := h.in.ProcessFrame()
 		for i := range out {
 			if h.lastToggle < 0 && toggle[i] > 0 {
 				h.state = couplerFadeOut
@@ -58,8 +60,8 @@ func (h *coupler) Read(out Frame) {
 			h.lastToggle = toggle[i]
 		}
 	case couplerFadeOut:
-		in := h.in.ReadFrame()
-		duration := h.duration.ReadFrame()
+		in := h.in.ProcessFrame()
+		duration := h.duration.ProcessFrame()
 
 		for i := range out {
 			base, multiplier := shapeCoeffs(couplerRatio, duration[i], 0, expCurve)
@@ -72,8 +74,8 @@ func (h *coupler) Read(out Frame) {
 			h.lastToggle = toggle[i]
 		}
 	case couplerFadeIn:
-		in := h.in.ReadFrame()
-		duration := h.duration.ReadFrame()
+		in := h.in.ProcessFrame()
+		duration := h.duration.ProcessFrame()
 
 		for i := range out {
 			base, multiplier := shapeCoeffs(couplerRatio, duration[i], 1, logCurve)

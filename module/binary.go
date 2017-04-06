@@ -1,6 +1,10 @@
 package module
 
-import "math"
+import (
+	"math"
+
+	"buddin.us/eolian/dsp"
+)
 
 func init() {
 	Register("Multiply", func(Config) (Patcher, error) { return newBinary("Multiply", multiply, 0, 0) })
@@ -21,60 +25,60 @@ type binary struct {
 	op   binaryOp
 }
 
-func newBinary(name string, op binaryOp, a, b Value) (*binary, error) {
+func newBinary(name string, op binaryOp, a, b dsp.Float64) (*binary, error) {
 	m := &binary{
-		a:  &In{Name: "a", Source: a},
-		b:  &In{Name: "b", Source: NewBuffer(b)},
+		a:  NewIn("a", a),
+		b:  NewInBuffer("b", b),
 		op: op,
 	}
 	err := m.Expose(
 		name,
 		[]*In{m.a, m.b},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-type binaryOp func(Value, Value) Value
+type binaryOp func(dsp.Float64, dsp.Float64) dsp.Float64
 
-func (bin *binary) Read(out Frame) {
-	bin.a.Read(out)
-	b := bin.b.ReadFrame()
+func (bin *binary) Process(out dsp.Frame) {
+	bin.a.Process(out)
+	b := bin.b.ProcessFrame()
 	for i := range out {
 		out[i] = bin.op(out[i], b[i])
 	}
 }
 
-func diff(a, b Value) Value     { return a - b }
-func divide(a, b Value) Value   { return a / b }
-func mod(a, b Value) Value      { return Value(math.Mod(float64(a), float64(b))) }
-func multiply(a, b Value) Value { return a * b }
-func sum(a, b Value) Value      { return a + b }
-func max(a, b Value) Value {
+func diff(a, b dsp.Float64) dsp.Float64     { return a - b }
+func divide(a, b dsp.Float64) dsp.Float64   { return a / b }
+func mod(a, b dsp.Float64) dsp.Float64      { return dsp.Float64(math.Mod(float64(a), float64(b))) }
+func multiply(a, b dsp.Float64) dsp.Float64 { return a * b }
+func sum(a, b dsp.Float64) dsp.Float64      { return a + b }
+func max(a, b dsp.Float64) dsp.Float64 {
 	if a > b {
 		return a
 	}
 	return b
 }
-func min(a, b Value) Value {
+func min(a, b dsp.Float64) dsp.Float64 {
 	if a < b {
 		return a
 	}
 	return b
 }
-func and(a, b Value) Value {
+func and(a, b dsp.Float64) dsp.Float64 {
 	if a > 0 && b > 0 {
 		return 1
 	}
 	return -1
 }
-func or(a, b Value) Value {
+func or(a, b dsp.Float64) dsp.Float64 {
 	if a > 0 || b > 0 {
 		return 1
 	}
 	return -1
 }
-func xor(a, b Value) Value {
+func xor(a, b dsp.Float64) dsp.Float64 {
 	if (a > 0 && b <= 0) || (a <= 0 && b > 0) {
 		return 1
 	}

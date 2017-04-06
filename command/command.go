@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/engine"
-	"buddin.us/eolian/lua"
-	"buddin.us/eolian/module"        // Register standard modules
+	"buddin.us/eolian/lua"           // Register standard modules
 	_ "buddin.us/eolian/module/midi" // Register MIDI modules
 	_ "buddin.us/eolian/module/osc"  // Register OSC modules
 )
@@ -38,7 +38,7 @@ func Run(args []string) error {
 		return err
 	}
 
-	module.FrameSize = frameSize
+	dsp.FrameSize = frameSize
 
 	if writeTrace {
 		f, err := os.OpenFile("trace.out", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)

@@ -3,6 +3,8 @@ package module
 import (
 	"testing"
 
+	"buddin.us/eolian/dsp"
+
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -66,10 +68,10 @@ func TestPatchingValues(t *testing.T) {
 	err = one.Patch("input", "1.0")
 	assert.Equal(t, err, nil)
 
-	err = one.Patch("input", Duration(200))
+	err = one.Patch("input", dsp.Duration(200))
 	assert.Equal(t, err, nil)
 
-	err = one.Patch("input", Frequency(440))
+	err = one.Patch("input", dsp.Frequency(440))
 	assert.Equal(t, err, nil)
 
 	err = one.Patch("input", "C#4")
@@ -78,7 +80,7 @@ func TestPatchingValues(t *testing.T) {
 	err = one.Patch("input", "Z4")
 	assert.NotEqual(t, err, nil)
 
-	pitch, err := ParsePitch("Eb3")
+	pitch, err := dsp.ParsePitch("Eb3")
 	assert.Equal(t, err, nil)
 	err = one.Patch("input", pitch)
 	assert.Equal(t, err, nil)
@@ -89,17 +91,17 @@ func TestPatchingValues(t *testing.T) {
 
 type mockOutput struct{}
 
-func (p mockOutput) Read(Frame) {}
+func (p mockOutput) Process(dsp.Frame) {}
 
 func newModule(forceSinking bool) (*IO, error) {
 	io := &IO{}
 	if err := io.Expose(
 		"Module",
 		[]*In{
-			{Name: "input", Source: NewBuffer(zero), ForceSinking: forceSinking},
-			{Name: "level", Source: NewBuffer(zero)},
+			{Name: "input", Source: dsp.NewBuffer(zero), ForceSinking: forceSinking},
+			{Name: "level", Source: dsp.NewBuffer(zero)},
 		},
-		[]*Out{{Name: "output", Provider: Provide(mockOutput{})}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(mockOutput{})}},
 	); err != nil {
 		return nil, err
 	}

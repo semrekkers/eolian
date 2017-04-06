@@ -10,6 +10,7 @@ import (
 	"github.com/yuin/gluamapper"
 	lua "github.com/yuin/gopher-lua"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/engine"
 	"buddin.us/eolian/module"
 )
@@ -21,7 +22,7 @@ var mapperOpts = gluamapper.Option{
 }
 
 var synthConsts = map[string]lua.LValue{
-	"SAMPLE_RATE": lua.LNumber(module.SampleRate),
+	"SAMPLE_RATE": lua.LNumber(dsp.SampleRate),
 
 	// Sequencer gate modes
 	"MODE_REST":   lua.LNumber(0),
@@ -71,7 +72,7 @@ func buildConstructor(name string, mtx sync.Locker) func(state *lua.LState) int 
 				switch asserted := v.(type) {
 				case *lua.LUserData:
 					switch ud := asserted.Value.(type) {
-					case module.Valuer:
+					case dsp.Valuer:
 						config[k.(string)] = ud.Value()
 					default:
 						state.RaiseError("unconvertible userdata assigned: %T", ud)
@@ -357,7 +358,7 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 				if err := p.Patch(name, mv); err != nil {
 					state.RaiseError("%s", err.Error())
 				}
-			case module.Valuer:
+			case dsp.Valuer:
 				if err := p.Patch(name, mv); err != nil {
 					state.RaiseError("%s", err.Error())
 				}

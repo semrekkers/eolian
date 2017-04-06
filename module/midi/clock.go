@@ -1,6 +1,7 @@
 package midi
 
 import (
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/module"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rakyll/portmidi"
@@ -39,7 +40,7 @@ func newClock(device string, frameRate int) (*clock, error) {
 	if err != nil {
 		return nil, err
 	}
-	stream, err := portmidi.NewInputStream(id, int64(module.FrameSize))
+	stream, err := portmidi.NewInputStream(id, int64(dsp.FrameSize))
 	if err != nil {
 		return nil, err
 	}
@@ -52,16 +53,16 @@ func newClock(device string, frameRate int) (*clock, error) {
 		stopStreamEvents: stop,
 		deviceID:         id,
 		frameRate:        frameRate,
-		events:           make([]portmidi.Event, module.FrameSize),
+		events:           make([]portmidi.Event, dsp.FrameSize),
 	}
 	outs := []*module.Out{
-		{Name: "pulse", Provider: module.Provide(&clockPulse{m})},
-		{Name: "reset", Provider: module.Provide(&clockReset{m})},
+		{Name: "pulse", Provider: dsp.Provide(&clockPulse{m})},
+		{Name: "reset", Provider: dsp.Provide(&clockReset{m})},
 	}
 	return m, m.Expose("MIDIClock", nil, outs)
 }
 
-func (c *clock) read(out module.Frame) {
+func (c *clock) read(out dsp.Frame) {
 	if c.reads == 0 && c.stream != nil {
 		for i := range out {
 			select {
@@ -82,7 +83,7 @@ func (c *clock) read(out module.Frame) {
 func (c *clock) Output(name string) (*module.Out, error) {
 	if c.stream == nil {
 		var err error
-		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(module.FrameSize))
+		c.stream, err = portmidi.NewInputStream(c.deviceID, int64(dsp.FrameSize))
 		if err != nil {
 			return nil, err
 		}
@@ -105,7 +106,7 @@ type clockPulse struct {
 	*clock
 }
 
-func (reader *clockPulse) Read(out module.Frame) {
+func (reader *clockPulse) Process(out dsp.Frame) {
 	reader.read(out)
 	for i := range out {
 		if reader.count%reader.frameRate == 0 {
@@ -121,7 +122,7 @@ type clockReset struct {
 	*clock
 }
 
-func (reader *clockReset) Read(out module.Frame) {
+func (reader *clockReset) Process(out dsp.Frame) {
 	reader.read(out)
 	for i := range out {
 		if reader.events[i].Status == 250 {

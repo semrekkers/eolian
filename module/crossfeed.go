@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Crossfeed", func(Config) (Patcher, error) { return newCrossfeed() })
 }
@@ -7,16 +9,16 @@ func init() {
 type crossfeed struct {
 	multiOutIO
 	aIn, bIn, amount *In
-	aOut, bOut       Frame
+	aOut, bOut       dsp.Frame
 }
 
 func newCrossfeed() (*crossfeed, error) {
 	m := &crossfeed{
-		aIn:    &In{Name: "a", Source: NewBuffer(zero)},
-		bIn:    &In{Name: "b", Source: NewBuffer(zero)},
-		amount: &In{Name: "amount", Source: NewBuffer(zero)},
-		aOut:   make(Frame, FrameSize),
-		bOut:   make(Frame, FrameSize),
+		aIn:    NewInBuffer("a", dsp.Float64(zero)),
+		bIn:    NewInBuffer("b", dsp.Float64(zero)),
+		amount: NewInBuffer("amount", dsp.Float64(zero)),
+		aOut:   dsp.NewFrame(),
+		bOut:   dsp.NewFrame(),
 	}
 	err := m.Expose(
 		"Crossfeed",
@@ -29,14 +31,14 @@ func newCrossfeed() (*crossfeed, error) {
 	return m, err
 }
 
-func (p *crossfeed) Read(out Frame) {
+func (p *crossfeed) Process(out dsp.Frame) {
 	p.incrRead(func() {
-		a := p.aIn.ReadFrame()
-		b := p.bIn.ReadFrame()
-		amount := p.amount.ReadFrame()
+		a := p.aIn.ProcessFrame()
+		b := p.bIn.ProcessFrame()
+		amount := p.amount.ProcessFrame()
 
 		for i := range out {
-			amt := clampValue(amount[i], 0, 1)
+			amt := dsp.Clamp(amount[i], 0, 1)
 			p.aOut[i] = a[i] + (amt * b[i])
 			p.bOut[i] = b[i] + (amt * a[i])
 		}

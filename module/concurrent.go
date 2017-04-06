@@ -2,6 +2,8 @@ package module
 
 import (
 	"sync/atomic"
+
+	"buddin.us/eolian/dsp"
 )
 
 func init() {
@@ -11,15 +13,15 @@ func init() {
 type concurrent struct {
 	IO
 	in      *In
-	ch      chan Frame
+	ch      chan dsp.Frame
 	stop    chan struct{}
 	running atomic.Value
 }
 
 func newConcurrent() (*concurrent, error) {
 	m := &concurrent{
-		in:   &In{Name: "input", Source: NewBuffer(zero)},
-		ch:   make(chan Frame),
+		in:   NewInBuffer("input", dsp.Float64(0)),
+		ch:   make(chan dsp.Frame),
 		stop: make(chan struct{}),
 	}
 	m.running.Store(true)
@@ -28,7 +30,7 @@ func newConcurrent() (*concurrent, error) {
 		"Concurrent",
 		[]*In{m.in},
 		[]*Out{
-			&Out{Name: "output", Provider: Provide(m)},
+			&Out{Name: "output", Provider: dsp.Provide(m)},
 		})
 }
 
@@ -37,12 +39,12 @@ func (c *concurrent) readInput() {
 		select {
 		case <-c.stop:
 			return
-		case c.ch <- c.in.ReadFrame():
+		case c.ch <- c.in.ProcessFrame():
 		}
 	}
 }
 
-func (c *concurrent) Read(out Frame) {
+func (c *concurrent) Process(out dsp.Frame) {
 	frame := <-c.ch
 	for i := range out {
 		out[i] = frame[i]

@@ -5,6 +5,8 @@ import (
 	"io"
 	"os"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -37,15 +39,15 @@ type debug struct {
 
 func newDebug(w io.Writer, rate int) (*debug, error) {
 	m := &debug{
-		in:     &In{Name: "input", Source: zero},
-		rate:   SampleRate / rate,
+		in:     NewIn("input", dsp.Float64(0)),
+		rate:   dsp.SampleRate / rate,
 		output: w,
 	}
-	return m, m.Expose("Debug", []*In{m.in}, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("Debug", []*In{m.in}, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (d *debug) Read(out Frame) {
-	d.in.Read(out)
+func (d *debug) Process(out dsp.Frame) {
+	d.in.Process(out)
 	for i := range out {
 		if d.tick == 0 {
 			fmt.Fprintf(d.output, "%v\n", float64(out[i]))

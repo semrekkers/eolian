@@ -3,6 +3,8 @@ package module
 import (
 	"strconv"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -29,17 +31,14 @@ func newGateMix(size int) (*gateMix, error) {
 		sources: make([]*In, size),
 	}
 	for i := range m.sources {
-		m.sources[i] = &In{
-			Name:   strconv.Itoa(i),
-			Source: NewBuffer(zero),
-		}
+		m.sources[i] = NewInBuffer(strconv.Itoa(i), dsp.Float64(0))
 	}
-	return m, m.Expose("GateMix", m.sources, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("GateMix", m.sources, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (m *gateMix) Read(out Frame) {
+func (m *gateMix) Process(out dsp.Frame) {
 	for _, s := range m.sources {
-		s.ReadFrame()
+		s.ProcessFrame()
 	}
 
 	for i := range out {

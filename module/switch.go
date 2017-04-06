@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -27,32 +29,29 @@ type seqSwitch struct {
 	sources      []*In
 
 	step                 int
-	lastClock, lastReset Value
+	lastClock, lastReset dsp.Float64
 }
 
 func newSeqSwitch(size int) (*seqSwitch, error) {
 	m := &seqSwitch{
-		clock:     &In{Name: "clock", Source: NewBuffer(zero)},
-		reset:     &In{Name: "reset", Source: NewBuffer(zero)},
+		clock:     NewInBuffer("clock", dsp.Float64(0)),
+		reset:     NewInBuffer("reset", dsp.Float64(0)),
 		lastClock: -1,
 	}
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < size; i++ {
-		in := &In{
-			Name:   fmt.Sprintf("%d/input", i),
-			Source: NewBuffer(zero),
-		}
+		in := NewInBuffer(fmt.Sprintf("%d/input", i), dsp.Float64(0))
 		m.sources = append(m.sources, in)
 		inputs = append(inputs, in)
 	}
-	return m, m.Expose("Switch", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("Switch", inputs, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (s *seqSwitch) Read(out Frame) {
-	clock := s.clock.ReadFrame()
-	reset := s.reset.ReadFrame()
+func (s *seqSwitch) Process(out dsp.Frame) {
+	clock := s.clock.ProcessFrame()
+	reset := s.reset.ProcessFrame()
 	for i := 0; i < len(s.sources); i++ {
-		s.sources[i].ReadFrame()
+		s.sources[i].ProcessFrame()
 	}
 	for i := range out {
 		if s.lastReset < 0 && reset[i] > 0 {

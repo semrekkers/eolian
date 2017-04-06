@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Pan", func(Config) (Patcher, error) { return newPan() })
 }
@@ -7,15 +9,15 @@ func init() {
 type pan struct {
 	multiOutIO
 	in, bias *In
-	a, b     Frame
+	a, b     dsp.Frame
 }
 
 func newPan() (*pan, error) {
 	m := &pan{
-		in:   &In{Name: "input", Source: zero},
-		bias: &In{Name: "bias", Source: NewBuffer(zero)},
-		a:    make(Frame, FrameSize),
-		b:    make(Frame, FrameSize),
+		in:   NewIn("input", dsp.Float64(0)),
+		bias: NewInBuffer("bias", dsp.Float64(0)),
+		a:    dsp.NewFrame(),
+		b:    dsp.NewFrame(),
 	}
 	err := m.Expose(
 		"Pan",
@@ -28,10 +30,10 @@ func newPan() (*pan, error) {
 	return m, err
 }
 
-func (p *pan) Read(out Frame) {
+func (p *pan) Process(out dsp.Frame) {
 	p.incrRead(func() {
-		p.in.Read(out)
-		bias := p.bias.ReadFrame()
+		p.in.Process(out)
+		bias := p.bias.ProcessFrame()
 		for i := range out {
 			if bias[i] > 0 {
 				p.a[i] = (1 - bias[i]) * out[i]

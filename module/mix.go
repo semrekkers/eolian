@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -29,34 +31,28 @@ type mix struct {
 
 func newMix(size int) (*mix, error) {
 	m := &mix{
-		master: &In{Name: "master", Source: NewBuffer(Value(1))},
+		master: NewInBuffer("master", dsp.Float64(1)),
 	}
 	inputs := []*In{m.master}
 	for i := 0; i < size; i++ {
-		in := &In{
-			Name:   fmt.Sprintf("%d/input", i),
-			Source: NewBuffer(zero),
-		}
-		level := &In{
-			Name:   fmt.Sprintf("%d/level", i),
-			Source: NewBuffer(Value(1)),
-		}
+		in := NewInBuffer(fmt.Sprintf("%d/input", i), dsp.Float64(0))
+		level := NewInBuffer(fmt.Sprintf("%d/level", i), dsp.Float64(1))
 		m.sources = append(m.sources, in)
 		m.levels = append(m.levels, level)
 		inputs = append(inputs, in, level)
 	}
-	return m, m.Expose("Mix", inputs, []*Out{{Name: "output", Provider: Provide(m)}})
+	return m, m.Expose("Mix", inputs, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (m *mix) Read(out Frame) {
-	master := m.master.ReadFrame()
+func (m *mix) Process(out dsp.Frame) {
+	master := m.master.ProcessFrame()
 	for i := 0; i < len(m.sources); i++ {
-		m.sources[i].ReadFrame()
-		m.levels[i].ReadFrame()
+		m.sources[i].ProcessFrame()
+		m.levels[i].ProcessFrame()
 	}
 
 	for i := range out {
-		var sum Value
+		var sum dsp.Float64
 		for j := 0; j < len(m.sources); j++ {
 			sum += m.sources[j].LastFrame()[i] * m.levels[j].LastFrame()[i]
 		}

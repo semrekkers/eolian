@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -25,29 +27,21 @@ type panMix struct {
 	multiOutIO
 	master                *In
 	sources, levels, pans []*In
-	a, b                  Frame
+	a, b                  dsp.Frame
 }
 
 func newPanMix(size int) (*panMix, error) {
 	m := &panMix{
-		master: &In{Name: "master", Source: NewBuffer(Value(1))},
-		a:      make(Frame, FrameSize),
-		b:      make(Frame, FrameSize),
+		master: NewInBuffer("master", dsp.Float64(1)),
+		a:      dsp.NewFrame(),
+		b:      dsp.NewFrame(),
 	}
 	inputs := []*In{m.master}
 	for i := 0; i < size; i++ {
-		in := &In{
-			Name:   fmt.Sprintf("%d/input", i),
-			Source: NewBuffer(zero),
-		}
-		level := &In{
-			Name:   fmt.Sprintf("%d/level", i),
-			Source: NewBuffer(Value(1)),
-		}
-		pan := &In{
-			Name:   fmt.Sprintf("%d/pan", i),
-			Source: NewBuffer(zero),
-		}
+		in := NewInBuffer(fmt.Sprintf("%d/input", i), dsp.Float64(0))
+		level := NewInBuffer(fmt.Sprintf("%d/level", i), dsp.Float64(1))
+		pan := NewInBuffer(fmt.Sprintf("%d/pan", i), dsp.Float64(0))
+
 		m.sources = append(m.sources, in)
 		m.levels = append(m.levels, level)
 		m.pans = append(m.pans, pan)
@@ -59,17 +53,17 @@ func newPanMix(size int) (*panMix, error) {
 	})
 }
 
-func (m *panMix) Read(out Frame) {
+func (m *panMix) Process(out dsp.Frame) {
 	m.incrRead(func() {
-		master := m.master.ReadFrame()
+		master := m.master.ProcessFrame()
 		for i := 0; i < len(m.sources); i++ {
-			m.sources[i].ReadFrame()
-			m.levels[i].ReadFrame()
-			m.pans[i].ReadFrame()
+			m.sources[i].ProcessFrame()
+			m.levels[i].ProcessFrame()
+			m.pans[i].ProcessFrame()
 		}
 
 		for i := range out {
-			var aSum, bSum Value
+			var aSum, bSum dsp.Float64
 			for j := 0; j < len(m.sources); j++ {
 				signal := m.sources[j].LastFrame()[i] * m.levels[j].LastFrame()[i]
 				bias := m.pans[j].LastFrame()[i]

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -25,40 +27,37 @@ type quantize struct {
 	in, transpose *In
 	pitches       []*In
 
-	frames []Frame
+	frames []dsp.Frame
 }
 
 func newQuantize(size int) (*quantize, error) {
 	m := &quantize{
-		in:        &In{Name: "input", Source: zero},
-		transpose: &In{Name: "transpose", Source: NewBuffer(Value(1))},
+		in:        NewIn("input", dsp.Float64(0)),
+		transpose: NewInBuffer("transpose", dsp.Float64(1)),
 		pitches:   make([]*In, size),
-		frames:    make([]Frame, size),
+		frames:    make([]dsp.Frame, size),
 	}
 
 	inputs := []*In{m.in, m.transpose}
 	for i := 0; i < size; i++ {
-		in := &In{
-			Name:   fmt.Sprintf("%d/pitch", i),
-			Source: NewBuffer(zero),
-		}
+		in := NewInBuffer(fmt.Sprintf("%d/pitch", i), dsp.Float64(0))
 		m.pitches[i] = in
-		m.frames[i] = make(Frame, FrameSize)
+		m.frames[i] = dsp.NewFrame()
 		inputs = append(inputs, in)
 	}
 
 	return m, m.Expose(
 		"FixedQuantize",
 		inputs,
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (q *quantize) Read(out Frame) {
-	q.in.Read(out)
-	transpose := q.transpose.ReadFrame()
+func (q *quantize) Process(out dsp.Frame) {
+	q.in.Process(out)
+	transpose := q.transpose.ProcessFrame()
 	for i, p := range q.pitches {
-		q.frames[i] = p.ReadFrame()
+		q.frames[i] = p.ProcessFrame()
 	}
 	for i := range out {
 		n := float64(len(q.pitches))

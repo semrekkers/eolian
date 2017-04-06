@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/module"
 	"github.com/mitchellh/mapstructure"
 	"github.com/rakyll/portmidi"
@@ -33,12 +34,12 @@ type out struct {
 type midiCC struct {
 	*module.In
 	channel, number int
-	last            module.Value
+	last            dsp.Float64
 }
 
 type ccSignal struct {
 	channel, number int
-	value           module.Value
+	value           dsp.Float64
 }
 
 func newOut(device string) (*out, error) {
@@ -47,7 +48,7 @@ func newOut(device string) (*out, error) {
 	if err != nil {
 		return nil, err
 	}
-	stream, err := portmidi.NewOutputStream(id, int64(module.FrameSize), 0)
+	stream, err := portmidi.NewOutputStream(id, int64(dsp.FrameSize), 0)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,7 @@ func newOut(device string) (*out, error) {
 	}()
 
 	m := &out{
-		in:      &module.In{Name: "input", Source: module.Value(0)},
+		in:      module.NewIn("input", dsp.Float64(0)),
 		stream:  stream,
 		signals: signals,
 	}
@@ -69,7 +70,7 @@ func newOut(device string) (*out, error) {
 		"MIDIOut",
 		[]*module.In{m.in},
 		[]*module.Out{
-			&module.Out{Name: "output", Provider: module.Provide(m)},
+			&module.Out{Name: "output", Provider: dsp.Provide(m)},
 		})
 }
 
@@ -102,7 +103,7 @@ func (o *out) Patch(name string, t interface{}) error {
 
 		in := &module.In{
 			Name:   name,
-			Source: module.NewBuffer(module.Value(0)),
+			Source: dsp.NewBuffer(dsp.Float64(0)),
 		}
 		if err := o.IO.AddInput(in); err != nil {
 			return err
@@ -118,10 +119,10 @@ func (o *out) Patch(name string, t interface{}) error {
 	return nil
 }
 
-func (o *out) Read(out module.Frame) {
-	o.in.Read(out)
+func (o *out) Process(out dsp.Frame) {
+	o.in.Process(out)
 	for i, cc := range o.ccs {
-		frame := cc.ReadFrame()
+		frame := cc.ProcessFrame()
 		for j := range out {
 			if o.ccs[i].last != frame[j] {
 				o.signals <- ccSignal{cc.channel, cc.number, frame[j]}

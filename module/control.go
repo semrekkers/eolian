@@ -1,6 +1,9 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"buddin.us/eolian/dsp"
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
 	Register("Control", func(c Config) (Patcher, error) {
@@ -21,36 +24,36 @@ func init() {
 type ctrl struct {
 	IO
 	in, mod, min, max *In
-	avg               Value
+	avg               dsp.Float64
 	smooth            bool
 }
 
 func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 	m := &ctrl{
-		in:     &In{Name: "input", Source: zero},
-		mod:    &In{Name: "mod", Source: NewBuffer(Value(1))},
-		min:    &In{Name: "min", Source: NewBuffer(Value(min))},
-		max:    &In{Name: "max", Source: NewBuffer(Value(max))},
+		in:     NewIn("input", dsp.Float64(0)),
+		mod:    NewInBuffer("mod", dsp.Float64(1)),
+		min:    NewInBuffer("min", dsp.Float64(min)),
+		max:    NewInBuffer("max", dsp.Float64(max)),
 		smooth: smooth,
 	}
 	err := m.Expose(
 		"Control",
 		[]*In{m.in, m.mod, m.min, m.max},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-func (c *ctrl) Read(out Frame) {
-	c.in.Read(out)
+func (c *ctrl) Process(out dsp.Frame) {
+	c.in.Process(out)
 
 	var (
-		mod      = c.mod.ReadFrame()
-		min, max = c.min.ReadFrame(), c.max.ReadFrame()
+		mod      = c.mod.ProcessFrame()
+		min, max = c.min.ProcessFrame(), c.max.ProcessFrame()
 	)
 
 	for i := range out {
-		m := clampValue(mod[i], -1, 1)
+		m := dsp.Clamp(mod[i], -1, 1)
 
 		if c.smooth {
 			c.avg -= c.avg / averageVelocitySamples

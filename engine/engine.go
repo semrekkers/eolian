@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/module"
 	"github.com/gordonklaus/portaudio"
 )
@@ -42,12 +43,12 @@ func New(deviceIndex int) (*Engine, error) {
 
 	dev := devices[deviceIndex]
 	fmt.Printf("Device: %s (%s)\n", dev.Name, dev.DefaultLowOutputLatency)
-	fmt.Println("Sample Rate:", module.SampleRate)
-	fmt.Println("Frame Size:", module.FrameSize)
+	fmt.Println("Sample Rate:", dsp.SampleRate)
+	fmt.Println("Frame Size:", dsp.FrameSize)
 
 	m := &Engine{
-		left:           &module.In{Name: "left", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
-		right:          &module.In{Name: "right", Source: module.NewBuffer(module.Value(0)), ForceSinking: true},
+		left:           &module.In{Name: "left", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
+		right:          &module.In{Name: "right", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
 		errors:         make(chan error),
 		stop:           make(chan error),
 		timings:        make(chan metrics),
@@ -106,8 +107,8 @@ func (e *Engine) Errors() chan error {
 func (e *Engine) params() portaudio.StreamParameters {
 	params := portaudio.LowLatencyParameters(nil, e.device)
 	params.Output.Channels = 2
-	params.SampleRate = module.SampleRate
-	params.FramesPerBuffer = module.FrameSize
+	params.SampleRate = dsp.SampleRate
+	params.FramesPerBuffer = dsp.FrameSize
 	return params
 }
 
@@ -147,7 +148,7 @@ func (e *Engine) Stop() error {
 func (e *Engine) portAudioCallback(_, out [][]float32) {
 	e.Lock()
 	now := time.Now()
-	left, right := e.left.ReadFrame(), e.right.ReadFrame()
+	left, right := e.left.ProcessFrame(), e.right.ProcessFrame()
 	for i := range out {
 		for j := 0; j < len(out[i]); j++ {
 			if i%2 == 0 {

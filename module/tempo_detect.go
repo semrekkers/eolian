@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("TempoDetect", func(Config) (Patcher, error) { return newTempoDetect() })
 }
@@ -9,25 +11,25 @@ type tempoDetect struct {
 	tap *In
 
 	tick             int
-	capture, lastTap Value
+	capture, lastTap dsp.Float64
 }
 
 func newTempoDetect() (*tempoDetect, error) {
 	m := &tempoDetect{
-		tap: &In{Name: "tap", Source: NewBuffer(zero)},
+		tap: NewInBuffer("tap", dsp.Float64(0)),
 	}
 	return m, m.Expose(
 		"TempoDetect",
 		[]*In{m.tap},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (t *tempoDetect) Read(out Frame) {
-	tap := t.tap.ReadFrame()
+func (t *tempoDetect) Process(out dsp.Frame) {
+	tap := t.tap.ProcessFrame()
 	for i := range out {
 		if t.lastTap < 0 && tap[i] > 0 {
-			t.capture = Value((SampleRate / float64(t.tick)) / SampleRate)
+			t.capture = dsp.Float64((dsp.SampleRate / float64(t.tick)) / dsp.SampleRate)
 			t.tick = 0
 		}
 		out[i] = t.capture
