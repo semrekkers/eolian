@@ -29,6 +29,6 @@ func (c *crossfade) Process(out dsp.Frame) {
 	a, b := c.a.ProcessFrame(), c.b.ProcessFrame()
 	bias := c.bias.ProcessFrame()
 	for i := range out {
-		out[i] = dsp.CrossSum(bias[i], a[i], b[i])
+		out[i] = dsp.AttenSum(bias[i], a[i], b[i])
 	}
 }

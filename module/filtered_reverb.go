@@ -82,6 +82,6 @@ func (m *filteredReverb) Process(out dsp.Frame) {
 		}
 		m.filter.Cutoff = cutoff[i]
 		wet, _, _ = m.filter.Tick(wet)
-		out[i] = dsp.CrossSum(bias[i], dry, wet)
+		out[i] = dsp.AttenSum(bias[i], dry, wet)
 	}
 }

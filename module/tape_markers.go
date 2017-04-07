@@ -44,7 +44,14 @@ func (b *markers) GetRange(organize dsp.Float64) (int, int) {
 		return 0, size - 1
 	}
 	zoneSize := 1 / float64(size-1)
-	start := dsp.MinInt(size-2, int(float64(organize)/zoneSize))
-	end := dsp.MinInt(size-1, start+1)
+	start := minInt(size-2, int(float64(organize)/zoneSize))
+	end := minInt(size-1, start+1)
 	return start, end
+}
+
+func minInt(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
 }

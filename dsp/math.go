@@ -53,17 +53,9 @@ func ExpRatio(ratio, speed Float64) Float64 {
 	return Float64(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))
 }
 
-// MinInt returns the minimum of two integers
-func MinInt(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-// CrossSum adds two inputs together, but allows you to attenuate either (mutually exclusive) with a bias input. -1 will
+// AttenSum adds two inputs together, but allows you to attenuate either (mutually exclusive) with a bias input. -1 will
 // be 100% signal a and none of signal b. 1 will be none of signal a and 100% signal b. 0 they will be equal (100%).
-func CrossSum(bias, a, b Float64) Float64 {
+func AttenSum(bias, a, b Float64) Float64 {
 	if bias > 0 {
 		return (1-bias)*a + b
 	} else if bias < 0 {
