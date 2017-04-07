@@ -14,9 +14,9 @@ type crossfeed struct {
 
 func newCrossfeed() (*crossfeed, error) {
 	m := &crossfeed{
-		aIn:    NewInBuffer("a", dsp.Float64(zero)),
-		bIn:    NewInBuffer("b", dsp.Float64(zero)),
-		amount: NewInBuffer("amount", dsp.Float64(zero)),
+		aIn:    NewInBuffer("a", dsp.Float64(0)),
+		bIn:    NewInBuffer("b", dsp.Float64(0)),
+		amount: NewInBuffer("amount", dsp.Float64(0)),
 		aOut:   dsp.NewFrame(),
 		bOut:   dsp.NewFrame(),
 	}

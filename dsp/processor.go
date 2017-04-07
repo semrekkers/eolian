@@ -15,6 +15,7 @@ type SourceSetter interface {
 	SetSource(Processor)
 }
 
+// ProcessValuer is a Processor and Valuer
 type ProcessValuer interface {
 	Processor
 	Valuer

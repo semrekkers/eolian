@@ -22,8 +22,8 @@ func (d *DelayLine) Tick(v Float64) Float64 {
 	return d.TickDuration(v, d.sizeMS.Value())
 }
 
-// Tick advances the operation with a specific length in samples. The length must be less than or equal to the total
-// length of the delay line.
+// TickDuration advances the operation with a specific length in samples. The length must be less than or equal to the
+// total length of the delay line.
 func (d *DelayLine) TickDuration(v, duration Float64) Float64 {
 	if d.offset >= int(duration) || d.offset >= d.size {
 		d.offset = 0

@@ -98,8 +98,8 @@ func newModule(forceSinking bool) (*IO, error) {
 	if err := io.Expose(
 		"Module",
 		[]*In{
-			{Name: "input", Source: dsp.NewBuffer(zero), ForceSinking: forceSinking},
-			{Name: "level", Source: dsp.NewBuffer(zero)},
+			{Name: "input", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: forceSinking},
+			{Name: "level", Source: dsp.NewBuffer(dsp.Float64(0))},
 		},
 		[]*Out{{Name: "output", Provider: dsp.Provide(mockOutput{})}},
 	); err != nil {

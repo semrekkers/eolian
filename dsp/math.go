@@ -5,6 +5,7 @@ import (
 	"math/rand"
 )
 
+// Epsilon is the smallest number that we can represent as a float64
 var Epsilon = math.Nextafter(1, 2) - 1
 
 // Clamp limits a value to a specific range

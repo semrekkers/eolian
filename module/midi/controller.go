@@ -154,13 +154,13 @@ type ctrlGate struct {
 	state         *gateState
 }
 
-func (reader *ctrlGate) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (g *ctrlGate) Process(out dsp.Frame) {
+	g.controller.read(out)
 	for i := range out {
-		reader.state.event = reader.controller.events[i]
-		reader.state.channelOffset = reader.channelOffset
-		reader.stateFunc = reader.stateFunc(reader.state)
-		out[i] = reader.state.value
+		g.state.event = g.controller.events[i]
+		g.state.channelOffset = g.channelOffset
+		g.stateFunc = g.stateFunc(g.state)
+		out[i] = g.state.value
 	}
 }
 
@@ -219,19 +219,19 @@ type ctrlVelocity struct {
 	lastVelocity  dsp.Float64
 }
 
-func (reader *ctrlVelocity) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (v *ctrlVelocity) Process(out dsp.Frame) {
+	v.controller.read(out)
 	for i := range out {
-		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
-			data2 := int(reader.controller.events[i].Data2)
+		if int(v.controller.events[i].Status) == 144+v.channelOffset {
+			data2 := int(v.controller.events[i].Data2)
 			if data2 == 0 {
-				out[i] = reader.lastVelocity
+				out[i] = v.lastVelocity
 			} else {
 				out[i] = dsp.Float64(data2) / 127
-				reader.lastVelocity = out[i]
+				v.lastVelocity = out[i]
 			}
 		} else {
-			out[i] = reader.lastVelocity
+			out[i] = v.lastVelocity
 		}
 	}
 }
@@ -241,16 +241,16 @@ type ctrlSync struct {
 	tick       int
 }
 
-func (reader *ctrlSync) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (s *ctrlSync) Process(out dsp.Frame) {
+	s.controller.read(out)
 	for i := range out {
-		if reader.controller.events[i].Status == 248 || reader.controller.events[i].Status == 250 {
-			reader.tick++
+		if s.controller.events[i].Status == 248 || s.controller.events[i].Status == 250 {
+			s.tick++
 		}
 
-		if reader.tick%reader.controller.frameRate == 0 {
+		if s.tick%s.controller.frameRate == 0 {
 			out[i] = 1
-			reader.tick = 0
+			s.tick = 0
 		} else {
 			out[i] = -1
 		}
@@ -263,23 +263,23 @@ type ctrlPitch struct {
 	pitch         dsp.Float64
 }
 
-func (reader *ctrlPitch) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (p *ctrlPitch) Process(out dsp.Frame) {
+	p.controller.read(out)
 	for i := range out {
-		if int(reader.controller.events[i].Status) == 144+reader.channelOffset {
-			data1 := int(reader.controller.events[i].Data1)
-			data2 := int(reader.controller.events[i].Data2)
+		if int(p.controller.events[i].Status) == 144+p.channelOffset {
+			data1 := int(p.controller.events[i].Data1)
+			data2 := int(p.controller.events[i].Data2)
 			if data2 == 0 {
 				continue
 			}
 
 			if v, ok := pitches[data1]; ok {
 				if data2 > 0 {
-					reader.pitch = v
+					p.pitch = v
 				}
 			}
 		}
-		out[i] = reader.pitch
+		out[i] = p.pitch
 	}
 }
 
@@ -287,10 +287,10 @@ type ctrlReset struct {
 	controller *controller
 }
 
-func (reader ctrlReset) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (r ctrlReset) Process(out dsp.Frame) {
+	r.controller.read(out)
 	for i := range out {
-		if reader.controller.events[i].Status == 250 {
+		if r.controller.events[i].Status == 250 {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -302,10 +302,10 @@ type ctrlPitchBend struct {
 	controller *controller
 }
 
-func (reader *ctrlPitchBend) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (b *ctrlPitchBend) Process(out dsp.Frame) {
+	b.controller.read(out)
 	for i := range out {
-		e := reader.controller.events[i]
+		e := b.controller.events[i]
 		if e.Status == 224 && e.Data1 == 0 {
 			switch e.Data2 {
 			case 127:
@@ -327,14 +327,14 @@ type ctrlCC struct {
 	value          dsp.Float64
 }
 
-func (reader *ctrlCC) Process(out dsp.Frame) {
-	reader.controller.read(out)
+func (c *ctrlCC) Process(out dsp.Frame) {
+	c.controller.read(out)
 	for i := range out {
-		e := reader.controller.events[i]
-		if int(e.Status) == reader.status && int(e.Data1) == reader.number {
-			reader.value = dsp.Float64(float64(e.Data2) / 127)
+		e := c.controller.events[i]
+		if int(e.Status) == c.status && int(e.Data1) == c.number {
+			c.value = dsp.Float64(float64(e.Data2) / 127)
 		}
-		out[i] = reader.value
+		out[i] = c.value
 	}
 }
 

@@ -9,8 +9,6 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-var zero = dsp.Float64(0)
-
 func init() {
 	Register("Clock", func(Config) (Patcher, error) { return newClock() })
 	Register("RotatingClockDivide", func(Config) (Patcher, error) { return newRCD(8) })
@@ -187,7 +185,7 @@ type rcd struct {
 
 func newRCD(size int) (*rcd, error) {
 	m := &rcd{
-		in:          NewInBuffer("input", dsp.Float64(zero)),
+		in:          NewInBuffer("input", dsp.Float64(0)),
 		rotate:      NewInBuffer("rotate", dsp.Float64(0)),
 		reset:       NewInBuffer("reset", dsp.Float64(0)),
 		ticks:       make([]int, size),

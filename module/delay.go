@@ -177,7 +177,7 @@ func newFBLoopDelay(size dsp.MS) (*fbLoopDelay, error) {
 		gain:     NewInBuffer("gain", dsp.Float64(0.98)),
 		feedbackReturn: &In{
 			Name:         "feedbackReturn",
-			Source:       dsp.NewBuffer(zero),
+			Source:       dsp.NewBuffer(dsp.Float64(0)),
 			ForceSinking: true,
 		},
 

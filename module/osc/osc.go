@@ -167,17 +167,17 @@ type serverOut struct {
 	last   dsp.Float64
 }
 
-func (reader *serverOut) Process(out dsp.Frame) {
+func (o *serverOut) Process(out dsp.Frame) {
 	for i := range out {
 		select {
-		case v := <-reader.values:
-			if reader.interp == interpGate && reader.last == v {
+		case v := <-o.values:
+			if o.interp == interpGate && o.last == v {
 				v = -1
 			}
 			out[i] = v
-			reader.last = out[i]
+			o.last = out[i]
 		default:
-			out[i] = reader.last
+			out[i] = o.last
 		}
 	}
 }

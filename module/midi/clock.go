@@ -106,12 +106,12 @@ type clockPulse struct {
 	*clock
 }
 
-func (reader *clockPulse) Process(out dsp.Frame) {
-	reader.read(out)
+func (p *clockPulse) Process(out dsp.Frame) {
+	p.read(out)
 	for i := range out {
-		if reader.count%reader.frameRate == 0 {
+		if p.count%p.frameRate == 0 {
 			out[i] = 1
-			reader.count = 0
+			p.count = 0
 		} else {
 			out[i] = -1
 		}
@@ -122,12 +122,12 @@ type clockReset struct {
 	*clock
 }
 
-func (reader *clockReset) Process(out dsp.Frame) {
-	reader.read(out)
+func (r *clockReset) Process(out dsp.Frame) {
+	r.read(out)
 	for i := range out {
-		if reader.events[i].Status == 250 {
+		if r.events[i].Status == 250 {
 			out[i] = 1
-			reader.count = 0
+			r.count = 0
 		} else {
 			out[i] = -1
 		}

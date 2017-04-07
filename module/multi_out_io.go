@@ -24,16 +24,16 @@ func (io *multiOutIO) incr() {
 
 func provideCopyOut(r dsp.Processor, cache *dsp.Frame) dsp.ProcessorProvider {
 	return dsp.ProcessorProviderFunc(func() dsp.Processor {
-		return &copyOut{reader: r, cache: cache}
+		return &copyOut{processor: r, cache: cache}
 	})
 }
 
 type copyOut struct {
-	reader dsp.Processor
-	cache  *dsp.Frame
+	processor dsp.Processor
+	cache     *dsp.Frame
 }
 
 func (o *copyOut) Process(out dsp.Frame) {
-	o.reader.Process(out)
+	o.processor.Process(out)
 	copy(out, *o.cache)
 }

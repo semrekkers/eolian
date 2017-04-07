@@ -96,7 +96,7 @@ func (io *IO) AddOutput(out *Out) error {
 	return nil
 }
 
-// Patch assigns an input's reader to some source (Processor, Value, etc)
+// Patch assigns an input's processor to some source (Processor, Value, etc)
 func (io *IO) Patch(name string, t interface{}) error {
 	io.lazyInit()
 	name = canonicalPort(name)
@@ -107,13 +107,13 @@ func (io *IO) Patch(name string, t interface{}) error {
 	if err := input.Close(); err != nil {
 		return err
 	}
-	reader, err := assertProcessor(t)
+	processor, err := assertProcessor(t)
 	if err != nil {
 		return err
 	}
 
-	input.SetSource(reader)
-	if o, ok := reader.(*Out); ok {
+	input.SetSource(processor)
+	if o, ok := processor.(*Out); ok {
 		o.setDestination(input)
 	}
 	return nil
@@ -171,7 +171,7 @@ func (io *IO) Output(name string) (*Out, error) {
 		if o.IsActive() {
 			return nil, fmt.Errorf(`%s: output "%s" is already patched`, io.ID(), name)
 		}
-		o.reader = o.Provider.Processor()
+		o.processor = o.Provider.Processor()
 		return o, nil
 	}
 	return nil, fmt.Errorf(`%s: output "%s" doesn't exist`, io.ID(), name)
@@ -331,7 +331,7 @@ func (i *In) IsSinking() bool {
 type Out struct {
 	Name        string
 	Provider    dsp.ProcessorProvider
-	reader      dsp.Processor
+	processor   dsp.Processor
 	destination *In
 	owner       *IO
 }
@@ -342,12 +342,13 @@ func (o *Out) String() string {
 
 // IsActive returns whether or not there is a realized Processor assigned
 func (o *Out) IsActive() bool {
-	return o.reader != nil
+	return o.processor != nil
 }
 
+// Process proxies to the internal processor if its set
 func (o *Out) Process(out dsp.Frame) {
-	if o.reader != nil {
-		o.reader.Process(out)
+	if o.processor != nil {
+		o.processor.Process(out)
 	}
 }
 
@@ -371,10 +372,10 @@ func (o *Out) IsSinking() bool {
 // Close closes the output
 func (o *Out) Close() error {
 	defer func() {
-		o.reader = nil
+		o.processor = nil
 		o.destination = nil
 	}()
-	if c, ok := o.reader.(io.Closer); ok {
+	if c, ok := o.processor.(io.Closer); ok {
 		return c.Close()
 	}
 	return nil
