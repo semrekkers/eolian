@@ -1,3 +1,4 @@
+// Package wav provides WAV file decoding
 package wav
 
 import (
