@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Toggle", func(Config) (Patcher, error) { return newToggle() })
 }
@@ -7,23 +9,23 @@ func init() {
 type toggle struct {
 	IO
 	trigger            *In
-	value, lastTrigger Value
+	value, lastTrigger dsp.Float64
 }
 
 func newToggle() (*toggle, error) {
 	m := &toggle{
-		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
+		trigger:     NewInBuffer("trigger", dsp.Float64(0)),
 		lastTrigger: -1,
 	}
 	return m, m.Expose(
 		"Toggle",
 		[]*In{m.trigger},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (t *toggle) Read(out Frame) {
-	trigger := t.trigger.ReadFrame()
+func (t *toggle) Process(out dsp.Frame) {
+	trigger := t.trigger.ProcessFrame()
 	for i := range out {
 		if t.lastTrigger <= 0 && trigger[i] > 0 {
 			if t.value == 1 {

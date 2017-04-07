@@ -5,6 +5,8 @@ import (
 	"os"
 	"strconv"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -22,24 +24,24 @@ func init() {
 
 type fileSource struct {
 	IO
-	values []Value
+	values []dsp.Float64
 	idx    int
 }
 
 func newFileSource(path string) (*fileSource, error) {
 	m := &fileSource{
-		values: []Value{},
+		values: []dsp.Float64{},
 	}
 
 	if err := m.loadData(path); err != nil {
 		return nil, err
 	}
 
-	err := m.Expose("FileSource", nil, []*Out{{Name: "output", Provider: Provide(m)}})
+	err := m.Expose("FileSource", nil, []*Out{{Name: "output", Provider: dsp.Provide(m)}})
 	return m, err
 }
 
-func (f *fileSource) Read(out Frame) {
+func (f *fileSource) Process(out dsp.Frame) {
 	for i := range out {
 		out[i] = f.values[f.idx]
 		f.idx = (f.idx + 1) % len(f.values)
@@ -56,7 +58,7 @@ func (f *fileSource) loadData(path string) error {
 	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		if v, err := strconv.ParseFloat(scanner.Text(), 64); err == nil {
-			f.values = append(f.values, Value(v))
+			f.values = append(f.values, dsp.Float64(v))
 		}
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/musictheory"
 	"buddin.us/musictheory/intervals"
 	"github.com/mitchellh/mapstructure"
@@ -30,10 +31,10 @@ type noteQuantize struct {
 	IO
 	in, octave    *In
 	key           musictheory.Pitch
-	pitches       []Pitch
+	pitches       []dsp.Pitch
 	intervals     []musictheory.Interval
 	intervalsName string
-	lastOctave    Value
+	lastOctave    dsp.Float64
 }
 
 func newNoteQuantize(key, intervalsName string) (*noteQuantize, error) {
@@ -49,8 +50,8 @@ func newNoteQuantize(key, intervalsName string) (*noteQuantize, error) {
 	}
 
 	m := &noteQuantize{
-		in:            &In{Name: "input", Source: zero},
-		octave:        &In{Name: "octave", Source: NewBuffer(Value(3))},
+		in:            NewIn("input", dsp.Float64(0)),
+		octave:        NewInBuffer("octave", dsp.Float64(3)),
 		key:           *mtKey,
 		intervalsName: intervalsName,
 		intervals:     intervals,
@@ -60,15 +61,15 @@ func newNoteQuantize(key, intervalsName string) (*noteQuantize, error) {
 	return m, m.Expose(
 		"NoteQuantize",
 		[]*In{m.in, m.octave},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
 func (q *noteQuantize) fillPitches(tonic musictheory.Pitch) {
-	q.pitches = make([]Pitch, len(q.intervals))
+	q.pitches = make([]dsp.Pitch, len(q.intervals))
 	p := tonic
 	for i, interval := range q.intervals {
-		q.pitches[i] = Pitch{Raw: p.Name(musictheory.AscNames), Valuer: Frequency(p.Freq())}
+		q.pitches[i] = dsp.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: dsp.Frequency(p.Freq())}
 		p = p.Transpose(interval).(musictheory.Pitch)
 	}
 }
@@ -113,9 +114,9 @@ func (q *noteQuantize) LuaMethods() map[string]LuaMethod {
 	}
 }
 
-func (q *noteQuantize) Read(out Frame) {
-	q.in.Read(out)
-	octave := q.octave.ReadFrame()
+func (q *noteQuantize) Process(out dsp.Frame) {
+	q.in.Process(out)
+	octave := q.octave.ProcessFrame()
 	for i := range out {
 		if q.lastOctave != octave[i] {
 			q.fillPitches(q.key.Transpose(musictheory.Octave(int(octave[i]))).(musictheory.Pitch))

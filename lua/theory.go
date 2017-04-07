@@ -1,7 +1,7 @@
 package lua
 
 import (
-	"buddin.us/eolian/module"
+	"buddin.us/eolian/dsp"
 	"buddin.us/musictheory"
 	"buddin.us/musictheory/intervals"
 	lua "github.com/yuin/gopher-lua"
@@ -73,7 +73,7 @@ func newScale(state *lua.LState) int {
 	for i, v := range scale {
 		p := v.(musictheory.Pitch)
 		ud := state.NewUserData()
-		ud.Value = module.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: module.Frequency(p.Freq())}
+		ud.Value = dsp.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: dsp.Frequency(p.Freq())}
 		t.RawSetInt(i+1, ud)
 	}
 	state.Push(t)
@@ -140,7 +140,7 @@ func addPitchMethods(state *lua.LState, table *lua.LTable, p musictheory.Pitch) 
 	funcs := func(p musictheory.Pitch) map[string]lua.LGFunction {
 		return map[string]lua.LGFunction{
 			"value": func(state *lua.LState) int {
-				v := module.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: module.Frequency(p.Freq())}
+				v := dsp.Pitch{Raw: p.Name(musictheory.AscNames), Valuer: dsp.Frequency(p.Freq())}
 				state.Push(&lua.LUserData{Value: v})
 				return 1
 			},

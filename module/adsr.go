@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("ADSR", func(Config) (Patcher, error) { return newADSR() })
 }
@@ -11,23 +13,22 @@ type adsr struct {
 
 	stateFunc            adsrStateFunc
 	state                *adsrState
-	mainOut, endCycleOut Frame
+	mainOut, endCycleOut dsp.Frame
 }
 
 func newADSR() (*adsr, error) {
 	m := &adsr{
-		gate:           &In{Name: "gate", Source: NewBuffer(zero)},
-		attack:         &In{Name: "attack", Source: NewBuffer(Duration(10))},
-		decay:          &In{Name: "decay", Source: NewBuffer(Duration(10))},
-		release:        &In{Name: "release", Source: NewBuffer(Duration(10))},
-		ratio:          &In{Name: "ratio", Source: NewBuffer(Value(0.01))},
-		sustain:        &In{Name: "sustain", Source: NewBuffer(Value(0.1))},
-		disableSustain: &In{Name: "disableSustain", Source: NewBuffer(zero)},
-
-		stateFunc:   adsrIdle,
-		state:       &adsrState{lastGate: -1},
-		mainOut:     make(Frame, FrameSize),
-		endCycleOut: make(Frame, FrameSize),
+		gate:           NewInBuffer("gate", dsp.Float64(0)),
+		attack:         NewInBuffer("attack", dsp.Duration(10)),
+		decay:          NewInBuffer("decay", dsp.Duration(10)),
+		release:        NewInBuffer("release", dsp.Duration(10)),
+		ratio:          NewInBuffer("ratio", dsp.Float64(0.01)),
+		sustain:        NewInBuffer("sustain", dsp.Float64(0.1)),
+		disableSustain: NewInBuffer("disableSustain", dsp.Float64(0)),
+		stateFunc:      adsrIdle,
+		state:          &adsrState{lastGate: -1},
+		mainOut:        dsp.NewFrame(),
+		endCycleOut:    dsp.NewFrame(),
 	}
 	err := m.Expose(
 		"ADSR",
@@ -40,16 +41,16 @@ func newADSR() (*adsr, error) {
 	return m, err
 }
 
-func (e *adsr) Read(out Frame) {
+func (e *adsr) Process(out dsp.Frame) {
 	e.incrRead(func() {
 		var (
-			gate           = e.gate.ReadFrame()
-			attack         = e.attack.ReadFrame()
-			decay          = e.decay.ReadFrame()
-			release        = e.release.ReadFrame()
-			sustain        = e.sustain.ReadFrame()
-			disableSustain = e.disableSustain.ReadFrame()
-			ratio          = e.ratio.ReadFrame()
+			gate           = e.gate.ProcessFrame()
+			attack         = e.attack.ProcessFrame()
+			decay          = e.decay.ProcessFrame()
+			release        = e.release.ProcessFrame()
+			sustain        = e.sustain.ProcessFrame()
+			disableSustain = e.disableSustain.ProcessFrame()
+			ratio          = e.ratio.ProcessFrame()
 		)
 
 		for i := range out {
@@ -74,11 +75,11 @@ func (e *adsr) Read(out Frame) {
 }
 
 type adsrState struct {
-	value, gate, attack, decay, sustain, disableSustain, release Value
+	value, gate, attack, decay, sustain, disableSustain, release dsp.Float64
 
-	ratio            Value
-	base, multiplier Value
-	lastGate         Value
+	ratio            dsp.Float64
+	base, multiplier dsp.Float64
+	lastGate         dsp.Float64
 	endCycle         bool
 }
 
@@ -140,7 +141,7 @@ func adsrRelease(s *adsrState) adsrStateFunc {
 		}
 	}
 	s.value = s.base + s.value*s.multiplier
-	if float64(s.value) <= epsilon {
+	if float64(s.value) <= dsp.Epsilon {
 		s.value = 0
 		return adsrIdle
 	}
@@ -168,8 +169,8 @@ const (
 	logCurve
 )
 
-func shapeCoeffs(ratio, duration, target Value, curve int) (base, multiplier Value) {
-	multiplier = expRatio(ratio, duration)
+func shapeCoeffs(ratio, duration, target dsp.Float64, curve int) (base, multiplier dsp.Float64) {
+	multiplier = dsp.ExpRatio(ratio, duration)
 	if curve == expCurve {
 		ratio = -ratio
 	}

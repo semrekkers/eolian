@@ -4,8 +4,12 @@ import (
 	"math"
 	"strconv"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
+
+var zero = dsp.Float64(0)
 
 func init() {
 	Register("Clock", func(Config) (Patcher, error) { return newClock() })
@@ -45,36 +49,36 @@ type clock struct {
 
 func newClock() (*clock, error) {
 	m := &clock{
-		tempo:   &In{Name: "tempo", Source: NewBuffer(BPM(120))},
-		width:   &In{Name: "pulseWidth", Source: NewBuffer(Value(0.9))},
-		shuffle: &In{Name: "shuffle", Source: NewBuffer(Value(0))},
+		tempo:   NewInBuffer("tempo", dsp.BPM(120)),
+		width:   NewInBuffer("pulseWidth", dsp.Float64(0.9)),
+		shuffle: NewInBuffer("shuffle", dsp.Float64(0)),
 	}
 	return m, m.Expose(
 		"Clock",
 		[]*In{m.tempo, m.width, m.shuffle},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (t *clock) Read(out Frame) {
-	tempo := t.tempo.ReadFrame()
-	width := t.width.ReadFrame()
-	shuffle := t.shuffle.ReadFrame()
+func (t *clock) Process(out dsp.Frame) {
+	tempo := t.tempo.ProcessFrame()
+	width := t.width.ProcessFrame()
+	shuffle := t.shuffle.ProcessFrame()
 
 	for i := range out {
-		duty := math.Floor(float64(60/(tempo[i]*60*SampleRate)*SampleRate) + 0.5)
+		duty := math.Floor(float64(60/(tempo[i]*60*dsp.SampleRate)*dsp.SampleRate) + 0.5)
 
 		if !t.second {
 			if t.tick >= int(duty) {
 				t.tick = 0
 				t.second = true
 			}
-		} else if t.tick >= int(duty+(duty*float64(clampValue(shuffle[i], -0.5, 0.5)))) {
+		} else if t.tick >= int(duty+(duty*float64(dsp.Clamp(shuffle[i], -0.5, 0.5)))) {
 			t.tick = 0
 			t.second = false
 		}
 
-		if Value(t.tick) <= width[i]*Value(duty) {
+		if dsp.Float64(t.tick) <= width[i]*dsp.Float64(duty) {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -88,28 +92,28 @@ type clockDivide struct {
 	in, divisor *In
 
 	tick int
-	last Value
+	last dsp.Float64
 }
 
 func newClockDivider(factor int) (*clockDivide, error) {
 	m := &clockDivide{
-		in:      &In{Name: "input", Source: zero},
-		divisor: &In{Name: "divisor", Source: NewBuffer(Value(factor))},
+		in:      NewIn("input", dsp.Float64(0)),
+		divisor: NewInBuffer("divisor", dsp.Float64(factor)),
 	}
 	err := m.Expose(
 		"ClockDivide",
 		[]*In{m.in, m.divisor},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-func (d *clockDivide) Read(out Frame) {
-	d.in.Read(out)
-	divisor := d.divisor.ReadFrame()
+func (d *clockDivide) Process(out dsp.Frame) {
+	d.in.Process(out)
+	divisor := d.divisor.ProcessFrame()
 	for i := range out {
 		in := out[i]
-		if d.tick == 0 || Value(d.tick) >= divisor[i] {
+		if d.tick == 0 || dsp.Float64(d.tick) >= divisor[i] {
 			out[i] = 1
 			d.tick = 0
 		} else {
@@ -128,7 +132,7 @@ type clockMultiply struct {
 
 	learn struct {
 		rate int
-		last Value
+		last dsp.Float64
 	}
 
 	rate int
@@ -137,20 +141,20 @@ type clockMultiply struct {
 
 func newClockMultiply(factor int) (*clockMultiply, error) {
 	m := &clockMultiply{
-		in:         &In{Name: "input", Source: zero},
-		multiplier: &In{Name: "multiplier", Source: NewBuffer(Value(factor))},
+		in:         NewIn("input", dsp.Float64(0)),
+		multiplier: NewInBuffer("multiplier", dsp.Float64(factor)),
 	}
 	err := m.Expose(
 		"ClockMultiply",
 		[]*In{m.in, m.multiplier},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-func (m *clockMultiply) Read(out Frame) {
-	m.in.Read(out)
-	multiplier := m.multiplier.ReadFrame()
+func (m *clockMultiply) Process(out dsp.Frame) {
+	m.in.Process(out)
+	multiplier := m.multiplier.ProcessFrame()
 	for i := range out {
 		in := out[i]
 		if m.learn.last < 0 && in > 0 {
@@ -160,7 +164,7 @@ func (m *clockMultiply) Read(out Frame) {
 		m.learn.rate++
 		m.learn.last = in
 
-		if Value(m.tick) < Value(m.rate)/multiplier[i] {
+		if dsp.Float64(m.tick) < dsp.Float64(m.rate)/multiplier[i] {
 			out[i] = -1
 		} else {
 			out[i] = 1
@@ -177,17 +181,17 @@ type rcd struct {
 	rotation, maxRotation int
 	ticks                 []int
 
-	lastIn, lastRotate, lastReset Value
-	outs                          []Frame
+	lastIn, lastRotate, lastReset dsp.Float64
+	outs                          []dsp.Frame
 }
 
 func newRCD(size int) (*rcd, error) {
 	m := &rcd{
-		in:          &In{Name: "input", Source: NewBuffer(zero)},
-		rotate:      &In{Name: "rotate", Source: NewBuffer(zero)},
-		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
+		in:          NewInBuffer("input", dsp.Float64(zero)),
+		rotate:      NewInBuffer("rotate", dsp.Float64(0)),
+		reset:       NewInBuffer("reset", dsp.Float64(0)),
 		ticks:       make([]int, size),
-		outs:        make([]Frame, size),
+		outs:        make([]dsp.Frame, size),
 		maxRotation: size,
 		lastIn:      -1,
 		lastReset:   -1,
@@ -196,7 +200,7 @@ func newRCD(size int) (*rcd, error) {
 
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
-		m.outs[i] = make(Frame, FrameSize)
+		m.outs[i] = dsp.NewFrame()
 		outputs = append(outputs, &Out{
 			Name:     strconv.Itoa(i + 1),
 			Provider: provideCopyOut(m, &m.outs[i])})
@@ -209,12 +213,12 @@ func newRCD(size int) (*rcd, error) {
 	)
 }
 
-func (d *rcd) Read(out Frame) {
+func (d *rcd) Process(out dsp.Frame) {
 	d.incrRead(func() {
 		var (
-			in     = d.in.ReadFrame()
-			rotate = d.rotate.ReadFrame()
-			reset  = d.reset.ReadFrame()
+			in     = d.in.ProcessFrame()
+			rotate = d.rotate.ProcessFrame()
+			reset  = d.reset.ProcessFrame()
 		)
 
 		for i := range out {

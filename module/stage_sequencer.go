@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/rand"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -42,13 +44,13 @@ type stageSequence struct {
 	pong                                 bool
 	slew                                 *slew
 
-	lastClock, lastReset, rollingVelocity Value
+	lastClock, lastReset, rollingVelocity dsp.Float64
 
 	gateOut,
 	pitchOut,
 	velocityOut,
 	syncOut,
-	endStageOut Frame
+	endStageOut dsp.Frame
 }
 
 type stage struct {
@@ -57,48 +59,33 @@ type stage struct {
 
 func newStageSequence(stages int) (*stageSequence, error) {
 	m := &stageSequence{
-		clock:       &In{Name: "clock", Source: NewBuffer(zero)},
-		transpose:   &In{Name: "transpose", Source: NewBuffer(Value(1))},
-		reset:       &In{Name: "reset", Source: NewBuffer(zero)},
-		glide:       &In{Name: "glide", Source: NewBuffer(zero)},
-		mode:        &In{Name: "mode", Source: NewBuffer(zero)},
+		clock:       NewInBuffer("clock", dsp.Float64(0)),
+		transpose:   NewInBuffer("transpose", dsp.Float64(1)),
+		reset:       NewInBuffer("reset", dsp.Float64(0)),
+		glide:       NewInBuffer("glide", dsp.Float64(0)),
+		mode:        NewInBuffer("mode", dsp.Float64(0)),
 		stages:      make([]stage, stages),
 		lastClock:   -1,
 		lastReset:   -1,
 		lastStage:   -1,
 		pulse:       -1,
 		slew:        newSlew(),
-		gateOut:     make(Frame, FrameSize),
-		pitchOut:    make(Frame, FrameSize),
-		velocityOut: make(Frame, FrameSize),
-		syncOut:     make(Frame, FrameSize),
-		endStageOut: make(Frame, FrameSize),
+		gateOut:     dsp.NewFrame(),
+		pitchOut:    dsp.NewFrame(),
+		velocityOut: dsp.NewFrame(),
+		syncOut:     dsp.NewFrame(),
+		endStageOut: dsp.NewFrame(),
 	}
 
 	inputs := []*In{m.clock, m.transpose, m.reset, m.glide, m.mode}
 
 	for i := 0; i < stages; i++ {
 		m.stages[i] = stage{
-			pitch: &In{
-				Name:   fmt.Sprintf("%d/pitch", i),
-				Source: NewBuffer(zero),
-			},
-			pulses: &In{
-				Name:   fmt.Sprintf("%d/pulses", i),
-				Source: NewBuffer(Value(1)),
-			},
-			gateMode: &In{
-				Name:   fmt.Sprintf("%d/mode", i),
-				Source: NewBuffer(Value(1)),
-			},
-			glide: &In{
-				Name:   fmt.Sprintf("%d/glide", i),
-				Source: NewBuffer(zero),
-			},
-			velocity: &In{
-				Name:   fmt.Sprintf("%d/velocity", i),
-				Source: NewBuffer(Value(1)),
-			},
+			pitch:    NewInBuffer(fmt.Sprintf("%d/pitch", i), dsp.Float64(0)),
+			pulses:   NewInBuffer(fmt.Sprintf("%d/pulses", i), dsp.Float64(1)),
+			gateMode: NewInBuffer(fmt.Sprintf("%d/mode", i), dsp.Float64(1)),
+			glide:    NewInBuffer(fmt.Sprintf("%d/glide", i), dsp.Float64(0)),
+			velocity: NewInBuffer(fmt.Sprintf("%d/velocity", i), dsp.Float64(1)),
 		}
 		inputs = append(inputs,
 			m.stages[i].pitch,
@@ -121,21 +108,21 @@ func newStageSequence(stages int) (*stageSequence, error) {
 	)
 }
 
-func (s *stageSequence) Read(out Frame) {
+func (s *stageSequence) Process(out dsp.Frame) {
 	s.incrRead(func() {
 
-		clock := s.clock.ReadFrame()
-		reset := s.reset.ReadFrame()
-		mode := s.mode.ReadFrame()
-		transpose := s.transpose.ReadFrame()
-		glide := s.glide.ReadFrame()
+		clock := s.clock.ProcessFrame()
+		reset := s.reset.ProcessFrame()
+		mode := s.mode.ProcessFrame()
+		transpose := s.transpose.ProcessFrame()
+		glide := s.glide.ProcessFrame()
 
 		for _, stg := range s.stages {
-			stg.pitch.ReadFrame()
-			stg.pulses.ReadFrame()
-			stg.gateMode.ReadFrame()
-			stg.glide.ReadFrame()
-			stg.velocity.ReadFrame()
+			stg.pitch.ProcessFrame()
+			stg.pulses.ProcessFrame()
+			stg.gateMode.ProcessFrame()
+			stg.glide.ProcessFrame()
+			stg.velocity.ProcessFrame()
 		}
 
 		for i := range out {
@@ -186,7 +173,7 @@ func (s *stageSequence) Read(out Frame) {
 	})
 }
 
-func (s *stageSequence) fillGate(i int, clock Value) {
+func (s *stageSequence) fillGate(i int, clock dsp.Float64) {
 	gateMode := s.stages[s.stage].gateMode.LastFrame()
 
 	switch mapGateMode(gateMode[i]) {
@@ -209,7 +196,7 @@ func (s *stageSequence) fillGate(i int, clock Value) {
 	}
 }
 
-func (s *stageSequence) fillPitch(i int, transpose, glideAmount Value) {
+func (s *stageSequence) fillPitch(i int, transpose, glideAmount dsp.Float64) {
 	stage := s.stages[s.stage]
 	in := stage.pitch.LastFrame()[i] * transpose
 	glide := stage.glide.LastFrame()[i]
@@ -237,7 +224,7 @@ func (s *stageSequence) fillVelocity(i int) {
 
 const averageVelocitySamples = 100
 
-func mapPatternMode(v Value) int {
+func mapPatternMode(v dsp.Float64) int {
 	switch v {
 	case 0:
 		return patternModeSequential
@@ -250,7 +237,7 @@ func mapPatternMode(v Value) int {
 	}
 }
 
-func mapGateMode(v Value) int {
+func mapGateMode(v dsp.Float64) int {
 	switch int(v) {
 	case 0:
 		return gateModeRest

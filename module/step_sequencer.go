@@ -3,8 +3,12 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
+
+const alphaSeries = "abcdefghijklmnopqrstuvwxyz"
 
 func init() {
 	Register("StepSequence", func(c Config) (Patcher, error) {
@@ -34,19 +38,19 @@ type stepSequence struct {
 	pitches                               [][]*In
 	step, lastStep, layerCount, stepCount int
 
-	lastClock, lastReset Value
+	lastClock, lastReset dsp.Float64
 
-	pitchesOut, gatesOut []Frame
+	pitchesOut, gatesOut []dsp.Frame
 }
 
 func newStepSequence(steps, layers int) (*stepSequence, error) {
 	m := &stepSequence{
-		clock:      &In{Name: "clock", Source: NewBuffer(zero)},
-		reset:      &In{Name: "reset", Source: NewBuffer(zero)},
-		pitchesOut: make([]Frame, layers),
+		clock:      NewInBuffer("clock", dsp.Float64(0)),
+		reset:      NewInBuffer("reset", dsp.Float64(0)),
+		pitchesOut: make([]dsp.Frame, layers),
 		pitches:    make([][]*In, layers),
 		enables:    make([]*In, steps),
-		gatesOut:   make([]Frame, steps),
+		gatesOut:   make([]dsp.Frame, steps),
 		lastClock:  -1,
 		lastReset:  -1,
 		lastStep:   -1,
@@ -62,13 +66,10 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 	for i := 0; i < layers; i++ {
 		m.pitches[i] = make([]*In, steps)
 		for j := 0; j < steps; j++ {
-			m.pitches[i][j] = &In{
-				Name:   fmt.Sprintf("%c/%d/pitch", alphaSeries[i], j),
-				Source: NewBuffer(zero),
-			}
+			m.pitches[i][j] = NewInBuffer(fmt.Sprintf("%c/%d/pitch", alphaSeries[i], j), dsp.Float64(0))
 			inputs = append(inputs, m.pitches[i][j])
 		}
-		m.pitchesOut[i] = make(Frame, FrameSize)
+		m.pitchesOut[i] = dsp.NewFrame()
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%c/pitch", alphaSeries[i]),
 			Provider: provideCopyOut(m, &m.pitchesOut[i]),
@@ -76,13 +77,10 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 	}
 
 	for i := 0; i < steps; i++ {
-		m.enables[i] = &In{
-			Name:   fmt.Sprintf("%d/enabled", i),
-			Source: NewBuffer(Value(1)),
-		}
+		m.enables[i] = NewInBuffer(fmt.Sprintf("%d/enabled", i), dsp.Float64(1))
 		inputs = append(inputs, m.enables[i])
 
-		m.gatesOut[i] = make(Frame, FrameSize)
+		m.gatesOut[i] = dsp.NewFrame()
 		outputs = append(outputs, &Out{
 			Name:     fmt.Sprintf("%d/gate", i),
 			Provider: provideCopyOut(m, &m.gatesOut[i]),
@@ -92,17 +90,17 @@ func newStepSequence(steps, layers int) (*stepSequence, error) {
 	return m, m.Expose("StepSequence", inputs, outputs)
 }
 
-func (s *stepSequence) Read(out Frame) {
+func (s *stepSequence) Process(out dsp.Frame) {
 	s.incrRead(func() {
-		clock := s.clock.ReadFrame()
-		reset := s.reset.ReadFrame()
+		clock := s.clock.ProcessFrame()
+		reset := s.reset.ProcessFrame()
 		for l, layer := range s.pitches {
 			for i := range layer {
-				s.pitches[l][i].ReadFrame()
+				s.pitches[l][i].ProcessFrame()
 			}
 		}
 		for i := 0; i < s.stepCount; i++ {
-			s.enables[i].ReadFrame()
+			s.enables[i].ProcessFrame()
 		}
 
 		for i := range out {
@@ -132,7 +130,7 @@ func (s *stepSequence) fillPitches(i int) {
 	}
 }
 
-func (s *stepSequence) fillGates(i int, clock Value) {
+func (s *stepSequence) fillGates(i int, clock dsp.Float64) {
 	for j := range s.gatesOut {
 		if clock > 0 && j == s.step {
 			s.gatesOut[j][i] = 1

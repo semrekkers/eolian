@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+
+	"buddin.us/eolian/dsp"
 )
 
 var moduleSequence uint64
@@ -71,8 +73,8 @@ func (io *IO) AddInput(in *In) error {
 		return fmt.Errorf(`duplicate input exposed "%s"`, in.Name)
 	}
 
-	if b, ok := in.Source.(*Buffer); ok {
-		in.initial = b.Reader
+	if b, ok := in.Source.(*dsp.Buffer); ok {
+		in.initial = b.Processor
 	} else {
 		in.initial = in.Source
 	}
@@ -94,7 +96,7 @@ func (io *IO) AddOutput(out *Out) error {
 	return nil
 }
 
-// Patch assigns an input's reader to some source (Reader, Value, etc)
+// Patch assigns an input's reader to some source (Processor, Value, etc)
 func (io *IO) Patch(name string, t interface{}) error {
 	io.lazyInit()
 	name = canonicalPort(name)
@@ -105,7 +107,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 	if err := input.Close(); err != nil {
 		return err
 	}
-	reader, err := assertReader(t)
+	reader, err := assertProcessor(t)
 	if err != nil {
 		return err
 	}
@@ -117,32 +119,32 @@ func (io *IO) Patch(name string, t interface{}) error {
 	return nil
 }
 
-func assertReader(t interface{}) (Reader, error) {
+func assertProcessor(t interface{}) (dsp.Processor, error) {
 	switch v := t.(type) {
 	case Port:
 		return v.Patcher.Output(v.Port)
-	case Value:
+	case dsp.Float64:
 		return v, nil
-	case Pitch:
+	case dsp.Pitch:
 		return v, nil
-	case Hz:
+	case dsp.Hz:
 		return v, nil
-	case MS:
+	case dsp.MS:
 		return v, nil
 	case string:
 		if floatV, err := strconv.ParseFloat(v, 64); err == nil {
-			return Value(floatV), nil
+			return dsp.Float64(floatV), nil
 		}
-		r, err := ParseValueString(v)
+		r, err := dsp.ParseValueString(v)
 		if err != nil {
 			return nil, err
 		}
-		return r.(readValuer), nil
+		return r.(dsp.ProcessValuer), nil
 	case int:
-		return Value(v), nil
+		return dsp.Float64(v), nil
 	case float64:
-		return Value(v), nil
-	case Reader:
+		return dsp.Float64(v), nil
+	case dsp.Processor:
 		return v, nil
 	default:
 		return nil, fmt.Errorf(`unpatchable source value %v (%T)`, v, v)
@@ -169,7 +171,7 @@ func (io *IO) Output(name string) (*Out, error) {
 		if o.IsActive() {
 			return nil, fmt.Errorf(`%s: output "%s" is already patched`, io.ID(), name)
 		}
-		o.reader = o.Provider.Reader()
+		o.reader = o.Provider.Processor()
 		return o, nil
 	}
 	return nil, fmt.Errorf(`%s: output "%s" doesn't exist`, io.ID(), name)
@@ -241,24 +243,34 @@ func (io *IO) Close() error {
 
 // In is a module input
 type In struct {
-	Source       Reader
+	Source       dsp.Processor
 	Name         string
 	ForceSinking bool
-	initial      Reader
+	initial      dsp.Processor
 	owner        *IO
 }
 
-// Read reads the output of the source into a Frame
-func (i *In) Read(f Frame) {
-	i.Source.Read(f)
+// NewIn returns a new unbuffered input
+func NewIn(name string, v dsp.Processor) *In {
+	return &In{Name: name, Source: v}
 }
 
-// SetSource sets the internal source to some Reader
-func (i *In) SetSource(r Reader) {
+// NewInBuffer returns a new buffered input
+func NewInBuffer(name string, v dsp.Processor) *In {
+	return &In{Name: name, Source: dsp.NewBuffer(v)}
+}
+
+// Process reads the output of the source into a Frame
+func (i *In) Process(f dsp.Frame) {
+	i.Source.Process(f)
+}
+
+// SetSource sets the internal source to some Processor
+func (i *In) SetSource(r dsp.Processor) {
 	switch v := i.Source.(type) {
-	case SourceSetter:
+	case dsp.SourceSetter:
 		v.SetSource(r)
-	case Reader:
+	case dsp.Processor:
 		i.Source = r
 	}
 }
@@ -281,14 +293,14 @@ func (i *In) String() string {
 	return fmt.Sprintf("%s/%s", i.owner.ID(), i.Name)
 }
 
-// ReadFrame reads an entire frame into the buffered input
-func (i *In) ReadFrame() Frame {
-	return i.Source.(*Buffer).ReadFrame()
+// ProcessFrame reads an entire frame into the buffered input
+func (i *In) ProcessFrame() dsp.Frame {
+	return i.Source.(*dsp.Buffer).ProcessFrame()
 }
 
-// LastFrame returns the last frame read with ReadFrame
-func (i *In) LastFrame() Frame {
-	return i.Source.(*Buffer).Frame
+// LastFrame returns the last frame read with ProcessFrame
+func (i *In) LastFrame() dsp.Frame {
+	return i.Source.(*dsp.Buffer).Frame
 }
 
 // Close closes the input
@@ -318,8 +330,8 @@ func (i *In) IsSinking() bool {
 // Out is a module output
 type Out struct {
 	Name        string
-	Provider    ReaderProvider
-	reader      Reader
+	Provider    dsp.ProcessorProvider
+	reader      dsp.Processor
 	destination *In
 	owner       *IO
 }
@@ -328,14 +340,14 @@ func (o *Out) String() string {
 	return fmt.Sprintf("%s/%s", o.owner, o.Name)
 }
 
-// IsActive returns whether or not there is a realized Reader assigned
+// IsActive returns whether or not there is a realized Processor assigned
 func (o *Out) IsActive() bool {
 	return o.reader != nil
 }
 
-func (o *Out) Read(out Frame) {
+func (o *Out) Process(out dsp.Frame) {
 	if o.reader != nil {
-		o.reader.Read(out)
+		o.reader.Process(out)
 	}
 }
 

@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Crossfade", func(Config) (Patcher, error) { return newCrossfade() })
 }
@@ -11,28 +13,22 @@ type crossfade struct {
 
 func newCrossfade() (*crossfade, error) {
 	m := &crossfade{
-		a:    &In{Name: "a", Source: NewBuffer(zero)},
-		b:    &In{Name: "b", Source: NewBuffer(zero)},
-		bias: &In{Name: "bias", Source: NewBuffer(zero)},
+		a:    NewInBuffer("a", dsp.Float64(0)),
+		b:    NewInBuffer("b", dsp.Float64(0)),
+		bias: NewInBuffer("bias", dsp.Float64(0)),
 	}
 	err := m.Expose(
 		"Crossfade",
 		[]*In{m.a, m.b, m.bias},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-func (c *crossfade) Read(out Frame) {
-	a, b := c.a.ReadFrame(), c.b.ReadFrame()
-	bias := c.bias.ReadFrame()
+func (c *crossfade) Process(out dsp.Frame) {
+	a, b := c.a.ProcessFrame(), c.b.ProcessFrame()
+	bias := c.bias.ProcessFrame()
 	for i := range out {
-		if bias[i] > 0 {
-			out[i] = (1-bias[i])*a[i] + b[i]
-		} else if bias[i] < 0 {
-			out[i] = a[i] + (1+bias[i])*b[i]
-		} else {
-			out[i] = a[i] + b[i]
-		}
+		out[i] = dsp.CrossSum(bias[i], a[i], b[i])
 	}
 }

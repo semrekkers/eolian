@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Noise", func(Config) (Patcher, error) { return newNoise() })
 }
@@ -11,26 +13,26 @@ type noise struct {
 
 func newNoise() (*noise, error) {
 	m := &noise{
-		in:   &In{Name: "input", Source: zero},
-		min:  &In{Name: "min", Source: NewBuffer(Value(-1))},
-		max:  &In{Name: "max", Source: NewBuffer(Value(1))},
-		gain: &In{Name: "gain", Source: NewBuffer(Value(1))},
+		in:   NewIn("input", dsp.Float64(0)),
+		min:  NewInBuffer("min", dsp.Float64(-1)),
+		max:  NewInBuffer("max", dsp.Float64(1)),
+		gain: NewInBuffer("gain", dsp.Float64(1)),
 	}
 	err := m.Expose(
 		"Noise",
 		[]*In{m.in, m.min, m.max, m.gain},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
 }
 
-func (n *noise) Read(out Frame) {
-	n.in.Read(out)
-	min := n.min.ReadFrame()
-	max := n.max.ReadFrame()
-	gain := n.gain.ReadFrame()
+func (n *noise) Process(out dsp.Frame) {
+	n.in.Process(out)
+	min := n.min.ProcessFrame()
+	max := n.max.ProcessFrame()
+	gain := n.gain.ProcessFrame()
 	for i := range out {
 		diff := max[i] - min[i]
-		out[i] += (randValue()*diff + min[i]) * gain[i]
+		out[i] += (dsp.Rand()*diff + min[i]) * gain[i]
 	}
 }

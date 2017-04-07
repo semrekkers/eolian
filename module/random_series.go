@@ -1,6 +1,10 @@
 package module
 
-import "math/rand"
+import (
+	"math/rand"
+
+	"buddin.us/eolian/dsp"
+)
 
 func init() {
 	Register("RandomSeries", func(Config) (Patcher, error) { return newRandomSeries() })
@@ -12,23 +16,23 @@ type randomSeries struct {
 	multiOutIO
 	clock, size, trigger, min, max *In
 	idx                            int
-	memory, gateMemory             []Value
-	lastTrigger, lastClock         Value
+	memory, gateMemory             []dsp.Float64
+	lastTrigger, lastClock         dsp.Float64
 
-	valueOut, gateOut Frame
+	valueOut, gateOut dsp.Frame
 }
 
 func newRandomSeries() (*randomSeries, error) {
 	m := &randomSeries{
-		clock:       &In{Name: "clock", Source: NewBuffer(zero)},
-		size:        &In{Name: "size", Source: NewBuffer(Value(8))},
-		trigger:     &In{Name: "trigger", Source: NewBuffer(zero)},
-		min:         &In{Name: "min", Source: NewBuffer(zero)},
-		max:         &In{Name: "max", Source: NewBuffer(Value(1))},
-		memory:      make([]Value, randomSeriesMax),
-		gateMemory:  make([]Value, randomSeriesMax),
-		valueOut:    make(Frame, FrameSize),
-		gateOut:     make(Frame, FrameSize),
+		clock:       NewInBuffer("clock", dsp.Float64(0)),
+		size:        NewInBuffer("size", dsp.Float64(8)),
+		trigger:     NewInBuffer("trigger", dsp.Float64(0)),
+		min:         NewInBuffer("min", dsp.Float64(0)),
+		max:         NewInBuffer("max", dsp.Float64(1)),
+		memory:      make([]dsp.Float64, randomSeriesMax),
+		gateMemory:  make([]dsp.Float64, randomSeriesMax),
+		valueOut:    dsp.NewFrame(),
+		gateOut:     dsp.NewFrame(),
 		lastTrigger: -1,
 		lastClock:   -1,
 	}
@@ -43,18 +47,18 @@ func newRandomSeries() (*randomSeries, error) {
 	)
 }
 
-func (s *randomSeries) Read(out Frame) {
+func (s *randomSeries) Process(out dsp.Frame) {
 	s.incrRead(func() {
 		var (
-			min     = s.min.ReadFrame()
-			max     = s.max.ReadFrame()
-			trigger = s.trigger.ReadFrame()
-			size    = s.size.ReadFrame()
-			clock   = s.clock.ReadFrame()
+			min     = s.min.ProcessFrame()
+			max     = s.max.ProcessFrame()
+			trigger = s.trigger.ProcessFrame()
+			size    = s.size.ProcessFrame()
+			clock   = s.clock.ProcessFrame()
 		)
 
 		for i := range out {
-			size := clampValue(size[i], 1, randomSeriesMax)
+			size := dsp.Clamp(size[i], 1, randomSeriesMax)
 			if s.lastClock < 0 && clock[i] > 0 {
 				s.idx++
 				if s.idx >= int(size) {
@@ -63,7 +67,7 @@ func (s *randomSeries) Read(out Frame) {
 			}
 			if s.lastTrigger < 0 && trigger[i] > 0 {
 				for j := 0; j < int(size); j++ {
-					s.memory[j] = randValue()*(max[j]-min[j]) + min[j]
+					s.memory[j] = dsp.Rand()*(max[j]-min[j]) + min[j]
 					if rand.Float32() > 0.25 {
 						s.gateMemory[j] = 1
 					} else {

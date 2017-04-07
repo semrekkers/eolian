@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("SampleHold", func(Config) (Patcher, error) { return newSampleHold() })
 }
@@ -7,24 +9,24 @@ func init() {
 type sampleHold struct {
 	IO
 	in, trigger         *In
-	sample, lastTrigger Value
+	sample, lastTrigger dsp.Float64
 }
 
 func newSampleHold() (*sampleHold, error) {
 	m := &sampleHold{
-		in:      &In{Name: "input", Source: zero},
-		trigger: &In{Name: "trigger", Source: NewBuffer(zero)},
+		in:      NewIn("input", dsp.Float64(0)),
+		trigger: NewInBuffer("trigger", dsp.Float64(0)),
 	}
 	return m, m.Expose(
 		"SampleHold",
 		[]*In{m.in, m.trigger},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (sh *sampleHold) Read(out Frame) {
-	sh.in.Read(out)
-	trigger := sh.trigger.ReadFrame()
+func (sh *sampleHold) Process(out dsp.Frame) {
+	sh.in.Process(out)
+	trigger := sh.trigger.ProcessFrame()
 	for i := range out {
 		if sh.lastTrigger < 0 && trigger[i] > 0 {
 			sh.sample = out[i]

@@ -1,6 +1,10 @@
 package module
 
-import "sort"
+import (
+	"sort"
+
+	"buddin.us/eolian/dsp"
+)
 
 func newMarkers() *markers {
 	return &markers{
@@ -34,13 +38,13 @@ func (b *markers) Erase(end int) {
 	b.indexes = append(b.indexes[:end], b.indexes[end+1:]...)
 }
 
-func (b *markers) GetRange(organize Value) (int, int) {
+func (b *markers) GetRange(organize dsp.Float64) (int, int) {
 	size := len(b.indexes)
 	if size == 2 {
 		return 0, size - 1
 	}
 	zoneSize := 1 / float64(size-1)
-	start := minInt(size-2, int(float64(organize)/zoneSize))
-	end := minInt(size-1, start+1)
+	start := dsp.MinInt(size-2, int(float64(organize)/zoneSize))
+	end := dsp.MinInt(size-1, start+1)
 	return start, end
 }

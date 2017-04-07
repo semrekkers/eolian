@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 type multiOutIO struct {
 	IO
 	reads int
@@ -20,18 +22,18 @@ func (io *multiOutIO) incr() {
 	}
 }
 
-func provideCopyOut(r Reader, cache *Frame) ReaderProvider {
-	return ReaderProviderFunc(func() Reader {
+func provideCopyOut(r dsp.Processor, cache *dsp.Frame) dsp.ProcessorProvider {
+	return dsp.ProcessorProviderFunc(func() dsp.Processor {
 		return &copyOut{reader: r, cache: cache}
 	})
 }
 
 type copyOut struct {
-	reader Reader
-	cache  *Frame
+	reader dsp.Processor
+	cache  *dsp.Frame
 }
 
-func (o *copyOut) Read(out Frame) {
-	o.reader.Read(out)
+func (o *copyOut) Process(out dsp.Frame) {
+	o.reader.Process(out)
 	copy(out, *o.cache)
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/Knetic/govaluate"
 	"github.com/mitchellh/mapstructure"
 )
@@ -36,7 +38,7 @@ func newExpression(exp string) (*expression, error) {
 	}
 
 	m := &expression{
-		in:     &In{Name: "input", Source: zero},
+		in:     NewIn("input", dsp.Float64(0)),
 		vars:   []*In{},
 		exp:    parsed,
 		params: map[string]interface{}{},
@@ -49,7 +51,7 @@ func newExpression(exp string) (*expression, error) {
 		if _, ok := seen[v]; ok {
 			continue
 		}
-		in := &In{Name: v, Source: NewBuffer(zero)}
+		in := NewInBuffer(v, dsp.Float64(0))
 		inputs = append(inputs, in)
 		m.vars = append(m.vars, in)
 		m.params[in.Name] = 0
@@ -59,14 +61,14 @@ func newExpression(exp string) (*expression, error) {
 	return m, m.Expose(
 		"Expression",
 		inputs,
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (e *expression) Read(out Frame) {
-	e.in.Read(out)
+func (e *expression) Process(out dsp.Frame) {
+	e.in.Process(out)
 	for _, v := range e.vars {
-		v.ReadFrame()
+		v.ProcessFrame()
 	}
 	for i := range out {
 		for _, v := range e.vars {
@@ -78,11 +80,11 @@ func (e *expression) Read(out Frame) {
 		}
 		switch v := r.(type) {
 		case float64:
-			out[i] = Value(v)
+			out[i] = dsp.Float64(v)
 		case int:
-			out[i] = Value(v)
+			out[i] = dsp.Float64(v)
 		case int64:
-			out[i] = Value(v)
+			out[i] = dsp.Float64(v)
 		case bool:
 			if v {
 				out[i] = 1

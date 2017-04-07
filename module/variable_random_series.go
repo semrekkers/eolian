@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("VariableRandomSeries", func(Config) (Patcher, error) { return newVariableRandomSeries() })
 }
@@ -8,23 +10,23 @@ type variableRandomSeries struct {
 	multiOutIO
 	clock, size, random, min, max *In
 	idx                           int
-	memory, gateMemory            []Value
+	memory, gateMemory            []dsp.Float64
 
-	value, gates Frame
-	lastClock    Value
+	value, gates dsp.Frame
+	lastClock    dsp.Float64
 }
 
 func newVariableRandomSeries() (*variableRandomSeries, error) {
 	m := &variableRandomSeries{
-		clock:      &In{Name: "clock", Source: NewBuffer(zero)},
-		size:       &In{Name: "size", Source: NewBuffer(Value(8))},
-		random:     &In{Name: "random", Source: NewBuffer(zero)},
-		min:        &In{Name: "min", Source: NewBuffer(zero)},
-		max:        &In{Name: "max", Source: NewBuffer(Value(1))},
-		memory:     make([]Value, randomSeriesMax),
-		gateMemory: make([]Value, randomSeriesMax),
-		value:      make(Frame, FrameSize),
-		gates:      make(Frame, FrameSize),
+		clock:      NewInBuffer("clock", dsp.Float64(0)),
+		size:       NewInBuffer("size", dsp.Float64(8)),
+		random:     NewInBuffer("random", dsp.Float64(0)),
+		min:        NewInBuffer("min", dsp.Float64(0)),
+		max:        NewInBuffer("max", dsp.Float64(1)),
+		memory:     make([]dsp.Float64, randomSeriesMax),
+		gateMemory: make([]dsp.Float64, randomSeriesMax),
+		value:      dsp.NewFrame(),
+		gates:      dsp.NewFrame(),
 	}
 
 	return m, m.Expose(
@@ -37,22 +39,22 @@ func newVariableRandomSeries() (*variableRandomSeries, error) {
 	)
 }
 
-func (s *variableRandomSeries) Read(out Frame) {
+func (s *variableRandomSeries) Process(out dsp.Frame) {
 	s.incrRead(func() {
 		var (
-			clock  = s.clock.ReadFrame()
-			size   = s.size.ReadFrame()
-			random = s.random.ReadFrame()
-			min    = s.min.ReadFrame()
-			max    = s.max.ReadFrame()
+			clock  = s.clock.ProcessFrame()
+			size   = s.size.ProcessFrame()
+			random = s.random.ProcessFrame()
+			min    = s.min.ProcessFrame()
+			max    = s.max.ProcessFrame()
 		)
 
 		for i := range out {
-			size := clampValue(size[i], 1, randomSeriesMax)
+			size := dsp.Clamp(size[i], 1, randomSeriesMax)
 
 			if s.lastClock < 0 && clock[i] > 0 {
-				if r := random[i]; r != 0 && (r == 1 || randValue() > 1-r) {
-					scale := randValue()
+				if r := random[i]; r != 0 && (r == 1 || dsp.Rand() > 1-r) {
+					scale := dsp.Rand()
 					s.memory[s.idx] = scale*(max[i]-min[i]) + min[i]
 					if scale > 0.5 {
 						s.gateMemory[s.idx] = 1

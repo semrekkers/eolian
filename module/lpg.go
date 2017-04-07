@@ -1,6 +1,7 @@
 package module
 
 import (
+	"buddin.us/eolian/dsp"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -17,32 +18,32 @@ func init() {
 type lpg struct {
 	IO
 	in, ctrl, mode, cutoff, resonance *In
-	filter                            *filter
+	filter                            *dsp.SVFilter
 }
 
 func newLPG() (*lpg, error) {
 	m := &lpg{
-		in:        &In{Name: "input", Source: zero},
-		ctrl:      &In{Name: "control", Source: NewBuffer(Value(1))},
-		mode:      &In{Name: "mode", Source: NewBuffer(Value(1))},
-		cutoff:    &In{Name: "cutoff", Source: NewBuffer(Frequency(20000))},
-		resonance: &In{Name: "resonance", Source: NewBuffer(Value(1))},
-		filter:    &filter{poles: 4},
+		in:        NewIn("input", dsp.Float64(0)),
+		ctrl:      NewInBuffer("control", dsp.Float64(1)),
+		mode:      NewInBuffer("mode", dsp.Float64(1)),
+		cutoff:    NewInBuffer("cutoff", dsp.Frequency(20000)),
+		resonance: NewInBuffer("resonance", dsp.Float64(1)),
+		filter:    &dsp.SVFilter{Poles: 4},
 	}
 	return m, m.Expose("LPGate",
 		[]*In{m.in, m.ctrl, m.mode, m.cutoff, m.resonance},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (l *lpg) Read(out Frame) {
-	l.in.Read(out)
+func (l *lpg) Process(out dsp.Frame) {
+	l.in.Process(out)
 
 	var (
-		mode   = l.mode.ReadFrame()
-		ctrl   = l.ctrl.ReadFrame()
-		cutoff = l.cutoff.ReadFrame()
-		res    = l.resonance.ReadFrame()
+		mode   = l.mode.ProcessFrame()
+		ctrl   = l.ctrl.ProcessFrame()
+		cutoff = l.cutoff.ProcessFrame()
+		res    = l.resonance.ProcessFrame()
 	)
 
 	for i := range out {
@@ -58,9 +59,9 @@ func (l *lpg) Read(out Frame) {
 	}
 }
 
-func (l *lpg) applyFilter(in, ctrl, cutoff, res Value) Value {
-	l.filter.cutoff = cutoff * ctrl
-	l.filter.resonance = res
+func (l *lpg) applyFilter(in, ctrl, cutoff, res dsp.Float64) dsp.Float64 {
+	l.filter.Cutoff = cutoff * ctrl
+	l.filter.Resonance = res
 	lp, _, _ := l.filter.Tick(in)
 	return lp
 }
@@ -71,7 +72,7 @@ const (
 	lpgModeAmplitude
 )
 
-func mapLPGMode(v Value) int {
+func mapLPGMode(v dsp.Float64) int {
 	switch int(v) {
 	case 0:
 		return lpgModeLowPass

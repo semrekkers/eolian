@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -25,30 +27,30 @@ type multiple struct {
 	IO
 	in *In
 
-	frame Frame
+	frame dsp.Frame
 	size  int
 	reads int
 }
 
 func newMultiple(size int) (*multiple, error) {
 	m := &multiple{
-		in:    &In{Name: "input", Source: NewBuffer(zero)},
-		frame: make(Frame, FrameSize),
+		in:    NewInBuffer("input", dsp.Float64(0)),
+		frame: dsp.NewFrame(),
 		size:  size,
 	}
 
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
 		name := fmt.Sprintf("%d", i)
-		outputs = append(outputs, &Out{Name: name, Provider: Provide(&multOut{m})})
+		outputs = append(outputs, &Out{Name: name, Provider: dsp.Provide(&multOut{m})})
 	}
 
 	return m, m.Expose("Multiple", []*In{m.in}, outputs)
 }
 
-func (m *multiple) read(out Frame) {
+func (m *multiple) read(out dsp.Frame) {
 	if m.reads == 0 {
-		copy(m.frame, m.in.ReadFrame())
+		copy(m.frame, m.in.ProcessFrame())
 	}
 	for i := range out {
 		out[i] = m.frame[i]
@@ -62,6 +64,6 @@ type multOut struct {
 	*multiple
 }
 
-func (o *multOut) Read(out Frame) {
+func (o *multOut) Process(out dsp.Frame) {
 	o.multiple.read(out)
 }

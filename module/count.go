@@ -1,6 +1,9 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"buddin.us/eolian/dsp"
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
 	Register("Count", func(c Config) (Patcher, error) {
@@ -25,30 +28,30 @@ type count struct {
 	IO
 	count                       int
 	trigger, reset, limit, step *In
-	lastTrigger, lastReset      Value
+	lastTrigger, lastReset      dsp.Float64
 }
 
 func newCount(limit, step int) (*count, error) {
 	m := &count{
-		trigger:     &In{Name: "trigger", Source: NewBuffer(Value(-1))},
-		reset:       &In{Name: "reset", Source: NewBuffer(Value(-1))},
-		limit:       &In{Name: "limit", Source: NewBuffer(Value(limit))},
-		step:        &In{Name: "step", Source: NewBuffer(Value(step))},
+		trigger:     NewInBuffer("trigger", dsp.Float64(-1)),
+		reset:       NewInBuffer("reset", dsp.Float64(-1)),
+		limit:       NewInBuffer("limit", dsp.Float64(limit)),
+		step:        NewInBuffer("step", dsp.Float64(step)),
 		lastTrigger: -1,
 		lastReset:   -1,
 	}
 	return m, m.Expose(
 		"Count",
 		[]*In{m.trigger, m.reset, m.limit, m.step},
-		[]*Out{{Name: "output", Provider: Provide(m)}})
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}})
 }
 
-func (c *count) Read(out Frame) {
+func (c *count) Process(out dsp.Frame) {
 	var (
-		trigger = c.trigger.ReadFrame()
-		reset   = c.reset.ReadFrame()
-		limit   = c.limit.ReadFrame()
-		step    = c.step.ReadFrame()
+		trigger = c.trigger.ProcessFrame()
+		reset   = c.reset.ProcessFrame()
+		limit   = c.limit.ProcessFrame()
+		step    = c.step.ProcessFrame()
 	)
 
 	for i := range out {
@@ -58,7 +61,7 @@ func (c *count) Read(out Frame) {
 		if c.lastTrigger < 0 && trigger[i] > 0 {
 			c.count = (c.count + int(step[i])) % int(limit[i])
 		}
-		out[i] = Value(c.count)
+		out[i] = dsp.Float64(c.count)
 		c.lastReset = reset[i]
 		c.lastTrigger = trigger[i]
 	}

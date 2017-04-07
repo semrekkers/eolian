@@ -3,7 +3,7 @@ package lua
 import (
 	lua "github.com/yuin/gopher-lua"
 
-	"buddin.us/eolian/module"
+	"buddin.us/eolian/dsp"
 )
 
 var valueFuncs = map[string]lua.LGFunction{
@@ -15,21 +15,21 @@ var valueFuncs = map[string]lua.LGFunction{
 
 func hz(state *lua.LState) int {
 	value := state.ToNumber(1)
-	hz := module.Frequency(float64(value))
+	hz := dsp.Frequency(float64(value))
 	state.Push(&lua.LUserData{Value: hz})
 	return 1
 }
 
 func bpm(state *lua.LState) int {
 	value := state.ToNumber(1)
-	bpm := module.BPM(float64(value))
+	bpm := dsp.BPM(float64(value))
 	state.Push(&lua.LUserData{Value: bpm})
 	return 1
 }
 
 func pitch(state *lua.LState) int {
 	value := state.ToString(1)
-	pitch, err := module.ParsePitch(value)
+	pitch, err := dsp.ParsePitch(value)
 	if err != nil {
 		state.RaiseError("%s", err.Error())
 	}
@@ -39,7 +39,7 @@ func pitch(state *lua.LState) int {
 
 func ms(state *lua.LState) int {
 	value := state.ToNumber(1)
-	ms := module.Duration(float64(value))
+	ms := dsp.Duration(float64(value))
 	state.Push(&lua.LUserData{Value: ms})
 	return 1
 }

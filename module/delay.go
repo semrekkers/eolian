@@ -1,8 +1,28 @@
 package module
 
-import "github.com/mitchellh/mapstructure"
+import (
+	"buddin.us/eolian/dsp"
+	"github.com/mitchellh/mapstructure"
+)
 
 func init() {
+	setup := func(f func(s dsp.MS, c Config) (Patcher, error)) func(Config) (Patcher, error) {
+		return func(c Config) (Patcher, error) {
+			var config struct{ Size int }
+			if err := mapstructure.Decode(c, &config); err != nil {
+				return nil, err
+			}
+			if config.Size == 0 {
+				config.Size = 10000
+			}
+			return f(dsp.DurationInt(config.Size), c)
+		}
+	}
+
+	Register("FBDelay", setup(func(s dsp.MS, c Config) (Patcher, error) { return newFBDelay(s) }))
+	Register("Allpass", setup(func(s dsp.MS, c Config) (Patcher, error) { return newAllpass(s) }))
+	Register("FilteredFBDelay", setup(func(s dsp.MS, c Config) (Patcher, error) { return newFilteredFBDelay(s) }))
+	Register("FBLoopDelay", setup(func(s dsp.MS, c Config) (Patcher, error) { return newFBLoopDelay(s) }))
 	Register("Delay", func(c Config) (Patcher, error) {
 		var config struct{ Size int }
 		if err := mapstructure.Decode(c, &config); err != nil {
@@ -11,69 +31,196 @@ func init() {
 		if config.Size == 0 {
 			config.Size = 10000
 		}
-		return newDelay(DurationInt(config.Size))
+		return newDelay(dsp.DurationInt(config.Size))
 	})
 }
 
 type delay struct {
 	IO
 	in, duration *In
-	line         *delayline
+	line         *dsp.DelayLine
 }
 
-func newDelay(size MS) (*delay, error) {
+func newDelay(size dsp.MS) (*delay, error) {
 	m := &delay{
-		in:       &In{Name: "input", Source: zero},
-		duration: &In{Name: "duration", Source: NewBuffer(Duration(1000))},
-		line:     newDelayLine(size),
+		in:       NewIn("input", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		line:     dsp.NewDelayLine(size),
 	}
 
 	err := m.Expose(
 		"Delay",
 		[]*In{m.in, m.duration},
 		[]*Out{
-			{Name: "output", Provider: Provide(m)},
+			{Name: "output", Provider: dsp.Provide(m)},
 		},
 	)
 	return m, err
 }
 
-func (c *delay) Read(out Frame) {
-	c.in.Read(out)
-	duration := c.duration.ReadFrame()
+func (c *delay) Process(out dsp.Frame) {
+	c.in.Process(out)
+	duration := c.duration.ProcessFrame()
 	for i := range out {
 		out[i] = c.line.TickDuration(out[i], duration[i])
 	}
 }
 
-type delayline struct {
-	buffer       Frame
-	size, offset int
+type fbDelay struct {
+	IO
+	in, duration, gain *In
+	comb               *dsp.FBComb
 }
 
-func newDelayLine(size MS) *delayline {
-	v := int(size.Value())
-	return &delayline{
-		size:   v,
-		buffer: make(Frame, v),
+func newFBDelay(size dsp.MS) (*fbDelay, error) {
+	m := &fbDelay{
+		in:       NewIn("input", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		gain:     NewInBuffer("gain", dsp.Float64(0.9)),
+		comb:     dsp.NewFBComb(size),
 	}
+	err := m.Expose(
+		"FBComb",
+		[]*In{m.in, m.duration, m.gain},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
+	)
+	return m, err
 }
 
-func (d *delayline) TickDuration(v, duration Value) Value {
-	if d.offset >= int(duration) || d.offset >= d.size {
-		d.offset = 0
-	}
-	v, d.buffer[d.offset] = d.buffer[d.offset], v
-	d.offset++
-	return v
-}
-
-func (d *delayline) Tick(v Value) Value {
-	return d.TickDuration(v, 1)
-}
-
-func (d *delayline) Read(out Frame) {
+func (c *fbDelay) Process(out dsp.Frame) {
+	c.in.Process(out)
+	gain := c.gain.ProcessFrame()
+	duration := c.duration.ProcessFrame()
 	for i := range out {
-		out[i] = d.Tick(out[i])
+		out[i] = c.comb.TickDuration(out[i], gain[i], duration[i])
+	}
+}
+
+type allpass struct {
+	IO
+	in, duration, gain *In
+	comb               *dsp.AllPass
+}
+
+func newAllpass(size dsp.MS) (*allpass, error) {
+	m := &allpass{
+		in:       NewIn("input", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		gain:     NewInBuffer("gain", dsp.Float64(0.9)),
+		comb:     dsp.NewAllPass(size),
+	}
+	err := m.Expose(
+		"Allpass",
+		[]*In{m.in, m.duration, m.gain},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
+	)
+	return m, err
+}
+
+func (p *allpass) Process(out dsp.Frame) {
+	p.in.Process(out)
+	gain := p.gain.ProcessFrame()
+	duration := p.duration.ProcessFrame()
+	for i := range out {
+		out[i] = p.comb.TickDuration(out[i], gain[i], duration[i])
+	}
+}
+
+type filteredFBDelay struct {
+	IO
+	in, duration, gain, cutoff, resonance *In
+	comb                                  *dsp.FilteredFBComb
+}
+
+func newFilteredFBDelay(size dsp.MS) (*filteredFBDelay, error) {
+	m := &filteredFBDelay{
+		in:        NewIn("input", dsp.Float64(0)),
+		duration:  NewInBuffer("duration", dsp.Duration(1000)),
+		gain:      NewInBuffer("gain", dsp.Float64(0.98)),
+		cutoff:    NewInBuffer("cutoff", dsp.Frequency(1000)),
+		resonance: NewInBuffer("resonance", dsp.Float64(1)),
+		comb:      dsp.NewFilteredFBComb(size, 4),
+	}
+	err := m.Expose(
+		"FilteredFBComb",
+		[]*In{m.in, m.duration, m.gain, m.cutoff, m.resonance},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
+	)
+	return m, err
+}
+
+func (c *filteredFBDelay) Process(out dsp.Frame) {
+	c.in.Process(out)
+	gain := c.gain.ProcessFrame()
+	duration := c.duration.ProcessFrame()
+	cutoff := c.cutoff.ProcessFrame()
+	resonance := c.resonance.ProcessFrame()
+	for i := range out {
+		out[i] = c.comb.TickDuration(out[i], gain[i], duration[i], cutoff[i], resonance[i])
+	}
+}
+
+type fbLoopDelay struct {
+	IO
+	in, duration, gain, feedbackReturn *In
+	feedbackSend                       *Out
+
+	sent dsp.Frame
+	line *dsp.DelayLine
+	last dsp.Float64
+}
+
+func newFBLoopDelay(size dsp.MS) (*fbLoopDelay, error) {
+	m := &fbLoopDelay{
+		in:       NewIn("input", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		gain:     NewInBuffer("gain", dsp.Float64(0.98)),
+		feedbackReturn: &In{
+			Name:         "feedbackReturn",
+			Source:       dsp.NewBuffer(zero),
+			ForceSinking: true,
+		},
+
+		sent: dsp.NewFrame(),
+		line: dsp.NewDelayLine(size),
+	}
+	m.feedbackSend = &Out{Name: "feedbackSend", Provider: dsp.Provide(&loopDelaySend{m})}
+
+	err := m.Expose(
+		"FBLoopComb",
+		[]*In{m.in, m.duration, m.gain, m.feedbackReturn},
+		[]*Out{
+			m.feedbackSend,
+			{Name: "output", Provider: dsp.Provide(m)},
+		},
+	)
+	return m, err
+}
+
+func (c *fbLoopDelay) Process(out dsp.Frame) {
+	c.in.Process(out)
+	gain := c.gain.ProcessFrame()
+	duration := c.duration.ProcessFrame()
+	if c.feedbackSend.IsActive() {
+		c.feedbackReturn.ProcessFrame()
+	}
+	for i := range out {
+		out[i] += c.last
+		c.sent[i] = c.line.TickDuration(out[i], duration[i])
+		if c.feedbackSend.IsActive() {
+			c.last = gain[i] * c.feedbackReturn.LastFrame()[i]
+		} else {
+			c.last = gain[i] * c.sent[i]
+		}
+	}
+}
+
+type loopDelaySend struct {
+	*fbLoopDelay
+}
+
+func (c *loopDelaySend) Process(out dsp.Frame) {
+	for i := range out {
+		out[i] = c.sent[i]
 	}
 }

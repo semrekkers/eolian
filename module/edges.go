@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("Edges", func(c Config) (Patcher, error) { return newEdges() })
 }
@@ -7,15 +9,15 @@ func init() {
 type edges struct {
 	multiOutIO
 	in                *In
-	endRise, endCycle Frame
-	lastIn            Value
+	endRise, endCycle dsp.Frame
+	lastIn            dsp.Float64
 }
 
 func newEdges() (*edges, error) {
 	m := &edges{
-		in:       &In{Name: "input", Source: NewBuffer(zero)},
-		endRise:  make(Frame, FrameSize),
-		endCycle: make(Frame, FrameSize),
+		in:       NewIn("input", dsp.Float64(0)),
+		endRise:  dsp.NewFrame(),
+		endCycle: dsp.NewFrame(),
 	}
 	return m, m.Expose(
 		"Edges",
@@ -27,9 +29,9 @@ func newEdges() (*edges, error) {
 	)
 }
 
-func (e *edges) Read(out Frame) {
+func (e *edges) Process(out dsp.Frame) {
 	e.incrRead(func() {
-		e.in.Read(out)
+		e.in.Process(out)
 
 		for i := range out {
 			if e.lastIn < 0 && out[i] > 0 {

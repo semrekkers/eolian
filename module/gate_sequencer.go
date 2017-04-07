@@ -3,6 +3,8 @@ package module
 import (
 	"fmt"
 
+	"buddin.us/eolian/dsp"
+
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -27,19 +29,19 @@ type gateSequence struct {
 	steps                []*In
 	size                 int
 	step, lastStep       int
-	lastClock, lastReset Value
+	lastClock, lastReset dsp.Float64
 
-	onBeatOut, offBeatOut Frame
+	onBeatOut, offBeatOut dsp.Frame
 }
 
 func newGateSequence(steps int) (*gateSequence, error) {
 	m := &gateSequence{
-		clock:      &In{Name: "clock", Source: NewBuffer(zero)},
-		reset:      &In{Name: "reset", Source: NewBuffer(zero)},
+		clock:      NewInBuffer("clock", dsp.Float64(0)),
+		reset:      NewInBuffer("reset", dsp.Float64(0)),
 		size:       steps,
 		steps:      make([]*In, steps),
-		onBeatOut:  make(Frame, FrameSize),
-		offBeatOut: make(Frame, FrameSize),
+		onBeatOut:  dsp.NewFrame(),
+		offBeatOut: dsp.NewFrame(),
 		lastReset:  -1,
 		lastClock:  -1,
 		lastStep:   -1,
@@ -47,7 +49,7 @@ func newGateSequence(steps int) (*gateSequence, error) {
 
 	inputs := []*In{m.clock, m.reset}
 	for i := 0; i < steps; i++ {
-		m.steps[i] = &In{Name: fmt.Sprintf("%d/mode", i), Source: NewBuffer(zero)}
+		m.steps[i] = NewInBuffer(fmt.Sprintf("%d/mode", i), dsp.Float64(0))
 		inputs = append(inputs, m.steps[i])
 	}
 
@@ -59,12 +61,12 @@ func newGateSequence(steps int) (*gateSequence, error) {
 	return m, m.Expose("GateSequence", inputs, outputs)
 }
 
-func (s *gateSequence) Read(out Frame) {
+func (s *gateSequence) Process(out dsp.Frame) {
 	s.incrRead(func() {
-		clock := s.clock.ReadFrame()
-		reset := s.reset.ReadFrame()
+		clock := s.clock.ProcessFrame()
+		reset := s.reset.ProcessFrame()
 		for _, s := range s.steps {
-			s.ReadFrame()
+			s.ProcessFrame()
 		}
 		for i := range out {
 			if s.lastClock <= 0 && clock[i] > 0 {

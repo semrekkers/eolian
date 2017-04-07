@@ -1,5 +1,7 @@
 package module
 
+import "buddin.us/eolian/dsp"
+
 func init() {
 	Register("TrackHold", func(Config) (Patcher, error) { return newTrackHold() })
 }
@@ -7,24 +9,24 @@ func init() {
 type trackHold struct {
 	IO
 	in, hang  *In
-	lastValue Value
+	lastValue dsp.Float64
 }
 
 func newTrackHold() (*trackHold, error) {
 	m := &trackHold{
-		in:   &In{Name: "input", Source: zero},
-		hang: &In{Name: "hang", Source: NewBuffer(zero)},
+		in:   NewIn("input", dsp.Float64(0)),
+		hang: NewInBuffer("hang", dsp.Float64(0)),
 	}
 	return m, m.Expose(
-		"trackHold",
+		"TrackHold",
 		[]*In{m.in, m.hang},
-		[]*Out{{Name: "output", Provider: Provide(m)}},
+		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 }
 
-func (th *trackHold) Read(out Frame) {
-	th.in.Read(out)
-	hang := th.hang.ReadFrame()
+func (th *trackHold) Process(out dsp.Frame) {
+	th.in.Process(out)
+	hang := th.hang.ProcessFrame()
 	for i := range out {
 		if hang[i] > 0 {
 			out[i] = th.lastValue

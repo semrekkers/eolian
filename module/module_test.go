@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"buddin.us/eolian/dsp"
+
 	"gopkg.in/go-playground/assert.v1"
 )
 
@@ -42,7 +44,6 @@ var allModules = []struct {
 	{"Edges", nil, []string{"input"}, []string{"endRise", "endCycle"}},
 	{"FBDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
-	{"FFDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FileSource", Config{"path": "testdata/dummy_source.txt"}, nil, defaultOutput},
 	{"FilteredFBDelay", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
 	{"FilteredReverb", nil, []string{"input", "gain", "feedback", "cutoff", "fbCutoff"}, defaultOutput},
@@ -135,7 +136,7 @@ func TestRegisteredModules(t *testing.T) {
 			err = mock.Expose(
 				"MockModule",
 				[]*In{},
-				[]*Out{{Name: "output", Provider: Provide(mockOutput{})}},
+				[]*Out{{Name: "output", Provider: dsp.Provide(mockOutput{})}},
 			)
 			assert.Equal(t, err, nil)
 
@@ -152,11 +153,11 @@ func TestRegisteredModules(t *testing.T) {
 				assert.Equal(t, mock.OutputsActive(false), 0)
 			}
 
-			frame := make(Frame, FrameSize)
+			frame := dsp.NewFrame()
 			for _, name := range m.Outputs {
 				out, err := p.Output(name)
 				assert.Equal(t, err, nil)
-				out.Read(frame)
+				out.Process(frame)
 				assert.Equal(t, out.Close(), nil)
 			}
 		})
@@ -174,7 +175,7 @@ func TestRegisteredModules(t *testing.T) {
 }
 
 func BenchmarkModules(b *testing.B) {
-	frame := make(Frame, FrameSize)
+	frame := dsp.NewFrame()
 
 	for _, m := range allModules {
 		init, err := Lookup(m.Name)
@@ -196,7 +197,7 @@ func BenchmarkModules(b *testing.B) {
 			b.Run(fmt.Sprintf("%s_%s", m.Name, out), func(b *testing.B) {
 				b.ResetTimer()
 				for i := 0; i < b.N; i++ {
-					port.Read(frame)
+					port.Process(frame)
 				}
 			})
 

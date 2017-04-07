@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"buddin.us/eolian/dsp"
 	"buddin.us/eolian/module"
 	"github.com/hypebeast/go-osc/osc"
 	"github.com/mitchellh/mapstructure"
@@ -40,7 +41,7 @@ type server struct {
 	client *osc.Client
 
 	listener net.PacketConn
-	values   map[string]chan module.Value
+	values   map[string]chan dsp.Float64
 }
 
 func newServer(c oscConfig) (*server, error) {
@@ -48,7 +49,7 @@ func newServer(c oscConfig) (*server, error) {
 		Server: &osc.Server{
 			Dispatcher: osc.NewOscDispatcher(),
 		},
-		values: map[string]chan module.Value{},
+		values: map[string]chan dsp.Float64{},
 	}
 
 	if c.ClientHost != "" && c.ClientPort > 0 {
@@ -57,11 +58,11 @@ func newServer(c oscConfig) (*server, error) {
 
 	outs := []*module.Out{}
 	for _, addr := range c.Addresses {
-		io.values[addr.Path] = make(chan module.Value, 100)
+		io.values[addr.Path] = make(chan dsp.Float64, 100)
 		func(addr address) {
 			outs = append(outs, &module.Out{
 				Name:     addr.Path,
-				Provider: module.Provide(io.newOut(addr)),
+				Provider: dsp.Provide(io.newOut(addr)),
 			})
 		}(addr)
 
@@ -99,7 +100,7 @@ func (s *server) newOut(addr address) *serverOut {
 
 		values  = s.values[addr.Path]
 		interp  = determineInterp(addr.Interp)
-		initial = module.Value(addr.Min)
+		initial = dsp.Float64(addr.Min)
 	)
 
 	if interp == interpGate {
@@ -127,11 +128,11 @@ func (s *server) newOut(addr address) *serverOut {
 
 			switch interp {
 			case interpRaw:
-				values <- module.Value(v)
+				values <- dsp.Float64(v)
 			case interpMS:
-				values <- module.Duration(v).Value()
+				values <- dsp.Duration(v).Value()
 			case interpHz:
-				values <- module.Frequency(v).Value()
+				values <- dsp.Frequency(v).Value()
 			case interpGate:
 				if v == 1 {
 					values <- 1
@@ -161,12 +162,12 @@ type interpolation int
 
 type serverOut struct {
 	*server
-	values chan module.Value
+	values chan dsp.Float64
 	interp interpolation
-	last   module.Value
+	last   dsp.Float64
 }
 
-func (reader *serverOut) Read(out module.Frame) {
+func (reader *serverOut) Process(out dsp.Frame) {
 	for i := range out {
 		select {
 		case v := <-reader.values:
