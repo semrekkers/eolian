@@ -44,8 +44,8 @@ func Ceil(v Float64) Float64 {
 }
 
 // Max is math.Max()
-func Max(v1, v2 Float64) Float64 {
-	return Float64(math.Max(float64(v1), float64(v2)))
+func Max(a, b Float64) Float64 {
+	return Float64(math.Max(float64(a), float64(b)))
 }
 
 // ExpRatio produces an (inverse-)exponential curve that's inflection can be controlled by a specific ratio
