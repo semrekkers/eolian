@@ -178,15 +178,6 @@ func newTapeState(size int) *tapeState {
 	}
 }
 
-func (s *tapeState) crossfade(live, record dsp.Float64) dsp.Float64 {
-	if s.bias > 0 {
-		return (1-s.bias)*live + record
-	} else if s.bias < 0 {
-		return live + (1+s.bias)*record
-	}
-	return live + record
-}
-
 func (s *tapeState) mark() {
 	// Prohibit creating splices less than 10ms in length
 	start, end := s.markers.At(s.spliceStart), s.markers.At(s.spliceEnd)
@@ -237,7 +228,7 @@ func (s *tapeState) playbackSpeed() dsp.Float64 {
 }
 
 func (s *tapeState) recordInput() {
-	in := s.crossfade(s.in, s.memory[s.offset])
+	in := dsp.AttenSum(s.bias, s.in, s.memory[s.offset])
 	s.writeToMemory(in, int(s.playbackSpeed()))
 	s.out = in
 }
@@ -250,7 +241,7 @@ func (s *tapeState) writeToMemory(in dsp.Float64, oversample int) {
 }
 
 func (s *tapeState) playback() {
-	s.out = s.crossfade(s.in, s.memory[s.offset])
+	s.out = dsp.AttenSum(s.bias, s.in, s.memory[s.offset])
 	s.offset += int(s.playbackSpeed())
 
 	start := s.markers.At(s.spliceStart)
@@ -290,7 +281,7 @@ func tapeIdle(s *tapeState) tapeStateFunc {
 		s.playheadTo(s.markers.At(s.spliceStart))
 		return tapePlay
 	}
-	s.out = s.crossfade(s.in, 0)
+	s.out = dsp.AttenSum(s.bias, s.in, 0)
 	return tapeIdle
 }
 
