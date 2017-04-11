@@ -69,7 +69,7 @@ return function(env)
                 trigger = out(r.trigger),
                 size    = 8,
             })
-            set(r.quant, { input = out(r.series, 'values') })
+            set(r.quant, { input = out(r.series, 'value') })
 
             local scale = theory.scale('C3', 'minorPentatonic', 2)
             for i,p in ipairs(scale) do
