@@ -1,8 +1,8 @@
 package dsp
 
-// NewFBComb returns a new FBComb
-func NewFBComb(ms MS) *FBComb {
-	return &FBComb{dl: NewDelayLine(ms)}
+// NewFBCombMS returns a new FBComb
+func NewFBCombMS(ms MS) *FBComb {
+	return &FBComb{dl: NewDelayLineMS(ms)}
 }
 
 // FBComb is a feedback comb filter
@@ -24,8 +24,8 @@ func (c *FBComb) TickDuration(in, gain, duration Float64) Float64 {
 }
 
 // NewFilteredFBComb returns a new FilteredFBComb
-func NewFilteredFBComb(ms MS, poles int) *FilteredFBComb {
-	return &FilteredFBComb{dl: NewDelayLine(ms), f: &SVFilter{Poles: poles}}
+func NewFilteredFBCombMS(ms MS, poles int) *FilteredFBComb {
+	return &FilteredFBComb{dl: NewDelayLineMS(ms), f: &SVFilter{Poles: poles}}
 }
 
 // FilteredFBComb is a feedback comb filter
@@ -52,8 +52,8 @@ func (c *FilteredFBComb) TickDuration(in, gain, duration, cutoff, resonance Floa
 }
 
 // NewFFComb returns a new FFComb
-func NewFFComb(ms MS) *FFComb {
-	return &FFComb{dl: NewDelayLine(ms)}
+func NewFFCombMS(ms MS) *FFComb {
+	return &FFComb{dl: NewDelayLineMS(ms)}
 }
 
 // FFComb is a feedforward comb filter
@@ -70,29 +70,6 @@ func (c *FFComb) Tick(in, gain Float64) Float64 {
 // TickDuration advances the filter's operation with a specific duration
 func (c *FFComb) TickDuration(in, gain, duration Float64) Float64 {
 	return in + gain*c.dl.TickDuration(in, duration)
-}
-
-// NewAllPass returns a new AllPass
-func NewAllPass(ms MS) *AllPass {
-	return &AllPass{dl: NewDelayLine(ms)}
-}
-
-// AllPass is an allpass filter
-type AllPass struct {
-	dl   *DelayLine
-	last Float64
-}
-
-// Tick advances the filter's operation with the default duration
-func (a *AllPass) Tick(in, gain Float64) Float64 {
-	return a.TickDuration(in, gain, -1)
-}
-
-// TickDuration advances the filter's operation
-func (a *AllPass) TickDuration(in, gain, duration Float64) Float64 {
-	before := in + -gain*a.last
-	a.last = tick(a.dl, before, duration)
-	return a.last + gain*before
 }
 
 func tick(dl *DelayLine, in, duration Float64) Float64 {
