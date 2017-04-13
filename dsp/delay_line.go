@@ -40,11 +40,13 @@ func (d *DelayLine) TickDuration(v, duration Float64) Float64 {
 	return v
 }
 
+// TappedDelayLine is a series of delay lines with tap points in-between
 type TappedDelayLine struct {
 	dl   []*DelayLine
 	taps []Float64
 }
 
+// NewTappedDelayLine returns a new TappedDelayLine
 func NewTappedDelayLine(taps []int) *TappedDelayLine {
 	dl := &TappedDelayLine{
 		dl:   make([]*DelayLine, len(taps)),
@@ -56,6 +58,7 @@ func NewTappedDelayLine(taps []int) *TappedDelayLine {
 	return dl
 }
 
+// TapCount returns the number of taps in the delay line
 func (d *TappedDelayLine) TapCount() int {
 	return len(d.taps)
 }
