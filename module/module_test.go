@@ -105,6 +105,7 @@ var allModules = []struct {
 		[]string{"clock", "a/0/pitch", "a/1/pitch", "0/enabled", "1/enabled"},
 		[]string{"a/pitch", "0/gate", "1/gate"}},
 	{"Sum", nil, []string{"a", "b"}, defaultOutput},
+	{"Survey", nil, []string{"a", "b", "or1", "or2", "and1", "and2", "slope", "crease", "offset", "fade", "survey"}, []string{"a", "b", "crease", "follow", "or", "and", "slope"}},
 	{"Switch", nil, []string{"clock", "reset"}, defaultOutput},
 	{"TankReverb", nil, []string{"a", "b"}, []string{"a", "b"}},
 	{"Tap", nil, []string{"input"}, []string{"output", "tap"}},

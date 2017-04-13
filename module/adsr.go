@@ -1,6 +1,8 @@
 package module
 
-import "buddin.us/eolian/dsp"
+import (
+	"buddin.us/eolian/dsp"
+)
 
 func init() {
 	Register("ADSR", func(Config) (Patcher, error) { return newADSR() })
