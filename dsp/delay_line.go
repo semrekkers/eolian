@@ -39,3 +39,33 @@ func (d *DelayLine) TickDuration(v, duration Float64) Float64 {
 	d.offset++
 	return v
 }
+
+type TappedDelayLine struct {
+	dl   []*DelayLine
+	taps []Float64
+}
+
+func NewTappedDelayLine(taps []int) *TappedDelayLine {
+	dl := &TappedDelayLine{
+		dl:   make([]*DelayLine, len(taps)),
+		taps: make([]Float64, len(taps)),
+	}
+	for i, t := range taps {
+		dl.dl[i] = NewDelayLine(t)
+	}
+	return dl
+}
+
+func (d *TappedDelayLine) TapCount() int {
+	return len(d.taps)
+}
+
+// Tick advances the operation using the full delay line size as duration
+func (d *TappedDelayLine) Tick(v Float64) []Float64 {
+	dv := v
+	for i, dl := range d.dl {
+		dv = dl.Tick(dv)
+		d.taps[i] = dv
+	}
+	return d.taps
+}

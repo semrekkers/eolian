@@ -28,6 +28,7 @@ return function(env)
             mix    = synth.Mix(),
             panLFO = synth.Oscillator { algorithm = 'simple' },
             pan    = synth.Pan(),
+            reverb = synth.TankReverb(),
             crossfeed = synth.Crossfeed(),
         }
     end
@@ -102,8 +103,8 @@ return function(env)
 
         rack.filter:set {
             input     = rack.delay.delay:out(),
-            cutoff    = hz(7000),
-            resonance = 10,
+            cutoff    = hz(5000),
+            resonance = 2,
         }
 
         rack.mix:set { master = 0.15 }
@@ -114,8 +115,13 @@ return function(env)
         rack.panLFO:set { pitch = hz(0.5) }
         rack.pan:set { input = rack.mix:out(), bias = rack.panLFO:out('sine') }
         rack.crossfeed:set { a = rack.pan:out('a'), b = rack.pan:out('b'), amount = 0.5 }
+        rack.reverb:set {
+            a = rack.crossfeed:out('a'),
+            b = rack.crossfeed:out('b'),
+            cutoff = hz(500),
+        }
 
-        return rack.crossfeed:out('a'), rack.crossfeed:out('b')
+        return rack.reverb:out('a'), rack.reverb:out('b')
     end
 
     return build, patch

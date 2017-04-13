@@ -5,25 +5,23 @@ import (
 )
 
 func init() {
-	Register("TankReverb", func(c Config) (Patcher, error) {
-		return newAllpassReverb([]int{113, 162, 241, 399})
-	})
+	Register("TankReverb", func(c Config) (Patcher, error) { return newTankReverb() })
 }
 
-type allpassReverb struct {
+type tankReverb struct {
 	multiOutIO
 
 	a, b, defuse, bias, cutoff, decay *In
 	aFilter                           *dsp.SVFilter
 	bFilter                           *dsp.SVFilter
 	ap, aAP, bAP                      []*dsp.AllPass
-	aDL, bDL                          *dsp.DelayLine
+	aDL, bDL                          *dsp.TappedDelayLine
 	aLast, bLast                      dsp.Float64
 	aOut, bOut                        dsp.Frame
 }
 
-func newAllpassReverb(sizes []int) (*allpassReverb, error) {
-	m := &allpassReverb{
+func newTankReverb() (*tankReverb, error) {
+	m := &tankReverb{
 		a:       NewInBuffer("a", dsp.Float64(0)),
 		b:       NewInBuffer("b", dsp.Float64(0)),
 		defuse:  NewInBuffer("defuse", dsp.Float64(0.5)),
@@ -32,24 +30,25 @@ func newAllpassReverb(sizes []int) (*allpassReverb, error) {
 		bias:    NewInBuffer("bias", dsp.Float64(0)),
 		aFilter: &dsp.SVFilter{Poles: 2, Resonance: 1},
 		bFilter: &dsp.SVFilter{Poles: 2, Resonance: 1},
-		ap:      make([]*dsp.AllPass, len(sizes)),
+		ap:      make([]*dsp.AllPass, 4),
 		aAP:     make([]*dsp.AllPass, 2),
 		bAP:     make([]*dsp.AllPass, 2),
 		aOut:    dsp.NewFrame(),
 		bOut:    dsp.NewFrame(),
 	}
 
-	for i, s := range sizes {
-		m.ap[i] = dsp.NewAllPass(s)
-	}
+	m.ap[0] = dsp.NewAllPass(113)
+	m.ap[1] = dsp.NewAllPass(162)
+	m.ap[2] = dsp.NewAllPass(241)
+	m.ap[3] = dsp.NewAllPass(399)
 
 	m.aAP[0] = dsp.NewAllPass(1653)
 	m.aAP[1] = dsp.NewAllPass(2038)
-	m.aDL = dsp.NewDelayLine(3411)
+	m.aDL = dsp.NewTappedDelayLine([]int{1913, 3411})
 
 	m.bAP[0] = dsp.NewAllPass(1913)
 	m.bAP[1] = dsp.NewAllPass(1663)
-	m.bDL = dsp.NewDelayLine(4782)
+	m.bDL = dsp.NewTappedDelayLine([]int{1653, 4782})
 
 	return m, m.Expose(
 		"AllPassReverb",
@@ -61,7 +60,7 @@ func newAllpassReverb(sizes []int) (*allpassReverb, error) {
 	)
 }
 
-func (m *allpassReverb) Process(out dsp.Frame) {
+func (m *tankReverb) Process(out dsp.Frame) {
 	m.incrRead(func() {
 		a := m.a.ProcessFrame()
 		b := m.b.ProcessFrame()
@@ -78,21 +77,35 @@ func (m *allpassReverb) Process(out dsp.Frame) {
 			d = m.ap[2].Tick(d, baseDefuse+0.125)
 			d = m.ap[3].Tick(d, baseDefuse+0.125)
 
-			aOut := d + (m.bLast * decay[i])
-			m.aFilter.Cutoff = cutoff[i]
-			aOut, _, _ = m.aFilter.Tick(aOut)
-			aOut = m.aAP[0].Tick(aOut, -baseDefuse-0.2)
-			aOut = m.aAP[1].Tick(aOut, baseDefuse)
-			aOut = m.aDL.Tick(aOut)
-			m.aLast = aOut
+			var (
+				aOut, bOut dsp.Float64
+			)
 
-			bOut := d + (m.aLast * decay[i])
+			aSig := d + (m.bLast * decay[i])
+			m.aFilter.Cutoff = cutoff[i]
+			aSig, _, _ = m.aFilter.Tick(aSig)
+			aOut += aSig * 0.5
+			aSig = m.aAP[0].Tick(aSig, -baseDefuse-0.2)
+			aOut += aSig * 0.5
+			aSig = m.aAP[1].Tick(aSig*decay[i], baseDefuse)
+
+			aTaps := m.aDL.Tick(aSig)
+			aOut -= aTaps[0]
+			aOut += aTaps[1]
+			m.aLast = aTaps[1]
+
+			bSig := d + (m.aLast * decay[i])
 			m.bFilter.Cutoff = cutoff[i]
-			bOut, _, _ = m.bFilter.Tick(bOut)
-			bOut = m.bAP[0].Tick(bOut, -baseDefuse-0.2)
-			bOut = m.bAP[1].Tick(bOut, baseDefuse)
-			bOut = m.bDL.Tick(bOut)
-			m.bLast = bOut
+			bSig, _, _ = m.bFilter.Tick(bSig)
+			bOut += bSig * 0.5
+			bSig = m.bAP[0].Tick(bSig, -baseDefuse-0.2)
+			bOut += bSig * 0.5
+			bSig = m.bAP[1].Tick(bSig*decay[i], baseDefuse)
+
+			bTaps := m.bDL.Tick(bSig)
+			bOut -= bTaps[0]
+			bOut += bTaps[1]
+			m.bLast = bTaps[1]
 
 			m.aOut[i] = dsp.AttenSum(bias[i], a[i], aOut)
 			m.bOut[i] = dsp.AttenSum(bias[i], b[i], bOut)
