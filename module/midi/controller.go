@@ -193,7 +193,7 @@ func gateDown(s *gateState) gateStateFunc {
 			s.which = -1
 			return gateUp
 		}
-	case 128:
+	case 128 + s.channelOffset:
 		if which == s.which {
 			s.which = -1
 			return gateUp
