@@ -45,7 +45,7 @@ func newDelay(size dsp.MS) (*delay, error) {
 	m := &delay{
 		in:       NewIn("input", dsp.Float64(0)),
 		duration: NewInBuffer("duration", dsp.Duration(1000)),
-		line:     dsp.NewDelayLine(size),
+		line:     dsp.NewDelayLineMS(size),
 	}
 
 	err := m.Expose(
@@ -77,7 +77,7 @@ func newFBDelay(size dsp.MS) (*fbDelay, error) {
 		in:       NewIn("input", dsp.Float64(0)),
 		duration: NewInBuffer("duration", dsp.Duration(1000)),
 		gain:     NewInBuffer("gain", dsp.Float64(0.9)),
-		comb:     dsp.NewFBComb(size),
+		comb:     dsp.NewFBCombMS(size),
 	}
 	err := m.Expose(
 		"FBComb",
@@ -107,7 +107,7 @@ func newAllpass(size dsp.MS) (*allpass, error) {
 		in:       NewIn("input", dsp.Float64(0)),
 		duration: NewInBuffer("duration", dsp.Duration(1000)),
 		gain:     NewInBuffer("gain", dsp.Float64(0.9)),
-		comb:     dsp.NewAllPass(size),
+		comb:     dsp.NewAllPassMS(size),
 	}
 	err := m.Expose(
 		"Allpass",
@@ -139,7 +139,7 @@ func newFilteredFBDelay(size dsp.MS) (*filteredFBDelay, error) {
 		gain:      NewInBuffer("gain", dsp.Float64(0.98)),
 		cutoff:    NewInBuffer("cutoff", dsp.Frequency(1000)),
 		resonance: NewInBuffer("resonance", dsp.Float64(1)),
-		comb:      dsp.NewFilteredFBComb(size, 4),
+		comb:      dsp.NewFilteredFBCombMS(size, 4),
 	}
 	err := m.Expose(
 		"FilteredFBComb",
@@ -182,7 +182,7 @@ func newFBLoopDelay(size dsp.MS) (*fbLoopDelay, error) {
 		},
 
 		sent: dsp.NewFrame(),
-		line: dsp.NewDelayLine(size),
+		line: dsp.NewDelayLineMS(size),
 	}
 	m.feedbackSend = &Out{Name: "feedbackSend", Provider: dsp.Provide(&loopDelaySend{m})}
 

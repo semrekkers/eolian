@@ -45,10 +45,10 @@ func newReverb(feedback, allpass []int) (*reverb, error) {
 	}
 
 	for i, s := range feedback {
-		m.fb[i] = dsp.NewFBComb(dsp.DurationInt(s))
+		m.fb[i] = dsp.NewFBCombMS(dsp.DurationInt(s))
 	}
 	for i, s := range allpass {
-		m.allpass[i] = dsp.NewAllPass(dsp.DurationInt(s))
+		m.allpass[i] = dsp.NewAllPassMS(dsp.DurationInt(s))
 	}
 
 	return m, m.Expose(

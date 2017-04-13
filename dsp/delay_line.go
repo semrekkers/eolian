@@ -8,10 +8,17 @@ type DelayLine struct {
 }
 
 // NewDelayLine returns a new DelayLine of a specific maximum size in milliseconds
-func NewDelayLine(size MS) *DelayLine {
+func NewDelayLine(size int) *DelayLine {
+	return &DelayLine{
+		size:   size,
+		buffer: make(Frame, size),
+	}
+}
+
+// NewDelayLineMS returns a new DelayLine of a specific maximum size in milliseconds
+func NewDelayLineMS(size MS) *DelayLine {
 	v := int(size.Value())
 	return &DelayLine{
-		sizeMS: size,
 		size:   v,
 		buffer: make(Frame, v),
 	}
@@ -19,7 +26,7 @@ func NewDelayLine(size MS) *DelayLine {
 
 // Tick advances the operation using the full delay line size as duration
 func (d *DelayLine) Tick(v Float64) Float64 {
-	return d.TickDuration(v, d.sizeMS.Value())
+	return d.TickDuration(v, Float64(d.size))
 }
 
 // TickDuration advances the operation with a specific length in samples. The length must be less than or equal to the
