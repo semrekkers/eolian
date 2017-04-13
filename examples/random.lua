@@ -35,7 +35,7 @@ return function(env)
 
     local function patch(rack)
         with(rack.clock, function(c)
-            c.osc:set { pitch = hz(5) }
+            c.osc:set { pitch = hz(7) }
             c.multiple:set { input = c.osc:out('pulse') }
         end)
 
@@ -60,7 +60,7 @@ return function(env)
         end)
 
         with(rack.voice, function(v)
-            local gate  = rack.random.series:out('gate')
+            local gate  = rack.clock.multiple:out(2)
             local quant = rack.random.quant:out()
 
             v.adsr:set {
@@ -73,8 +73,8 @@ return function(env)
             v.osc:set { pitch = quant }
             v.mix:set {
                 { input = v.osc:out('sine') },
-                { input = v.osc:out('saw'), level = 0.1 },
-                { input = v.osc:out('sub'), level = 0.5 },
+                { input = v.osc:out('saw'), level = 0.5 },
+                { input = v.osc:out('sub'), level = 1 },
             }
             v.amp:set {
                 input   = v.mix:out(),
@@ -82,29 +82,9 @@ return function(env)
             }
         end)
 
-        with(rack.delay, function(d)
-            local voice = rack.voice.amp:out()
-
-            d.gain:set {
-                pitch  = hz(0.2),
-                amp    = 0.5,
-                offset = 0.7
-            }
-            d.delay:set {
-                input          = voice,
-                gain           = d.gain:out('sine'),
-                feedbackReturn = d.filter:out('bandpass'),
-            }
-            d.filter:set {
-                input = d.delay:out('feedbackSend'),
-                cutoff = hz(1000),
-            }
-        end)
-
         rack.filter:set {
-            input     = rack.delay.delay:out(),
-            cutoff    = hz(5000),
-            resonance = 2,
+            input     = rack.voice.amp:out(),
+            cutoff    = hz(7000),
         }
 
         rack.mix:set { master = 0.15 }
@@ -114,7 +94,7 @@ return function(env)
 
         rack.panLFO:set { pitch = hz(0.5) }
         rack.pan:set { input = rack.mix:out(), bias = rack.panLFO:out('sine') }
-        rack.crossfeed:set { a = rack.pan:out('a'), b = rack.pan:out('b'), amount = 0.5 }
+        rack.crossfeed:set { a = rack.pan:out('a'), b = rack.pan:out('b'), amount = 0.3 }
         rack.reverb:set {
             a = rack.crossfeed:out('a'),
             b = rack.crossfeed:out('b'),
