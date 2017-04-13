@@ -14,10 +14,12 @@ return function(env)
                 quant   = synth.Quantize(),
             },
             voice = {
-                adsr = synth.ADSR(),
-                osc  = synth.Oscillator(),
-                mix  = synth.Mix(),
-                amp  = synth.LPGate(),
+                lfo     = synth.Oscillator { algorithm = 'simple' },
+                adsr    = synth.ADSR(),
+                osc     = synth.Oscillator(),
+                mix     = synth.Mix(),
+                amp     = synth.LPGate(),
+                distort = synth.Distort(),
             },
             delay = {
                 gain   = synth.Oscillator { algorithm = 'simple' },
@@ -44,12 +46,12 @@ return function(env)
 
             r.trigger:set {
                 input   = clock:out(0),
-                divisor = 16,
+                divisor = 30,
             }
             r.series:set {
                 clock   = clock:out(1),
                 trigger = r.trigger:out(),
-                size    = 8,
+                size    = 16,
             }
             r.quant:set { input = r.series:out('value') }
 
@@ -70,14 +72,16 @@ return function(env)
                 sustain = 0.1,
                 release = ms(1000),
             }
-            v.osc:set { pitch = quant }
+            v.lfo:set { pitch = hz(0.5), amp = 0.1, offset = 0.6 }
+            v.osc:set { pitch = quant, pulseWidth = v.lfo:out('sine') }
             v.mix:set {
-                { input = v.osc:out('sine') },
+                { input = v.osc:out('pulse') },
                 { input = v.osc:out('saw'), level = 0.5 },
                 { input = v.osc:out('sub'), level = 1 },
             }
+            v.distort:set { input = v.mix:out(), gain = 8 }
             v.amp:set {
-                input   = v.mix:out(),
+                input   = v.distort:out(),
                 control = v.adsr:out(),
             }
         end)
