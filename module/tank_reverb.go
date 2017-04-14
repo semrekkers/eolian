@@ -64,43 +64,44 @@ func (m *tankReverb) Process(out dsp.Frame) {
 	m.incrRead(func() {
 		a := m.a.ProcessFrame()
 		b := m.b.ProcessFrame()
-		defuse := m.defuse.ProcessFrame()
+		defuseIn := m.defuse.ProcessFrame()
 		cutoff := m.cutoff.ProcessFrame()
 		bias := m.bias.ProcessFrame()
-		decay := m.decay.ProcessFrame()
+		decayIn := m.decay.ProcessFrame()
 
 		for i := range out {
-			baseDefuse := dsp.Clamp(defuse[i], 0.4, 0.6)
+			defuse := dsp.Clamp(defuseIn[i], 0.4, 0.6)
+			decay := dsp.Clamp(decayIn[i], 0, 0.9)
 
-			d := m.ap[0].Tick(a[i]+b[i], baseDefuse+0.25)
-			d = m.ap[1].Tick(d, baseDefuse+0.25)
-			d = m.ap[2].Tick(d, baseDefuse+0.125)
-			d = m.ap[3].Tick(d, baseDefuse+0.125)
+			d := m.ap[0].Tick(a[i]+b[i], defuse+0.25)
+			d = m.ap[1].Tick(d, defuse+0.25)
+			d = m.ap[2].Tick(d, defuse+0.125)
+			d = m.ap[3].Tick(d, defuse+0.125)
 
 			var (
 				aOut, bOut dsp.Float64
 			)
 
-			aSig := d + (m.bLast * decay[i])
+			aSig := d + (m.bLast * decay)
 			m.aFilter.Cutoff = cutoff[i]
 			aSig, _, _ = m.aFilter.Tick(aSig)
 			aOut += aSig * 0.5
-			aSig = m.aAP[0].Tick(aSig, -baseDefuse-0.2)
+			aSig = m.aAP[0].Tick(aSig, -defuse-0.2)
 			aOut += aSig * 0.5
-			aSig = m.aAP[1].Tick(aSig*decay[i], baseDefuse)
+			aSig = m.aAP[1].Tick(aSig*decay, defuse)
 
 			aTaps := m.aDL.Tick(aSig)
 			aOut -= aTaps[0]
 			aOut += aTaps[1]
 			m.aLast = aTaps[1]
 
-			bSig := d + (m.aLast * decay[i])
+			bSig := d + (m.aLast * decay)
 			m.bFilter.Cutoff = cutoff[i]
 			bSig, _, _ = m.bFilter.Tick(bSig)
 			bOut += bSig * 0.5
-			bSig = m.bAP[0].Tick(bSig, -baseDefuse-0.2)
+			bSig = m.bAP[0].Tick(bSig, -defuse-0.2)
 			bOut += bSig * 0.5
-			bSig = m.bAP[1].Tick(bSig*decay[i], baseDefuse)
+			bSig = m.bAP[1].Tick(bSig*decay, defuse)
 
 			bTaps := m.bDL.Tick(bSig)
 			bOut -= bTaps[0]
