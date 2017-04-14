@@ -66,12 +66,13 @@ func (m *tankReverb) Process(out dsp.Frame) {
 		b := m.b.ProcessFrame()
 		defuseIn := m.defuse.ProcessFrame()
 		cutoff := m.cutoff.ProcessFrame()
-		bias := m.bias.ProcessFrame()
+		biasIn := m.bias.ProcessFrame()
 		decayIn := m.decay.ProcessFrame()
 
 		for i := range out {
 			defuse := dsp.Clamp(defuseIn[i], 0.4, 0.6)
 			decay := dsp.Clamp(decayIn[i], 0, 0.9)
+			bias := dsp.Clamp(biasIn[i], -1, 1)
 
 			d := m.ap[0].Tick(a[i]+b[i], defuse+0.25)
 			d = m.ap[1].Tick(d, defuse+0.25)
@@ -108,8 +109,8 @@ func (m *tankReverb) Process(out dsp.Frame) {
 			bOut += bTaps[1]
 			m.bLast = bTaps[1]
 
-			m.aOut[i] = dsp.AttenSum(bias[i], a[i], aOut)
-			m.bOut[i] = dsp.AttenSum(bias[i], b[i], bOut)
+			m.aOut[i] = dsp.AttenSum(bias, a[i], aOut)
+			m.bOut[i] = dsp.AttenSum(bias, b[i], bOut)
 		}
 	})
 }
