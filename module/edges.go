@@ -23,8 +23,8 @@ func newEdges() (*edges, error) {
 		"Edges",
 		[]*In{m.in},
 		[]*Out{
-			{Name: "endRise", Provider: provideCopyOut(m, &m.endRise)},
-			{Name: "endCycle", Provider: provideCopyOut(m, &m.endCycle)},
+			{Name: "endrise", Provider: provideCopyOut(m, &m.endRise)},
+			{Name: "endcycle", Provider: provideCopyOut(m, &m.endCycle)},
 		},
 	)
 }

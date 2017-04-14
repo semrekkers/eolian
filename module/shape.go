@@ -36,7 +36,7 @@ func newShape() (*shape, error) {
 		[]*In{m.gate, m.trigger, m.rise, m.fall, m.cycle, m.ratio},
 		[]*Out{
 			{Name: "output", Provider: provideCopyOut(m, &m.main)},
-			{Name: "endCycle", Provider: provideCopyOut(m, &m.endCycle)},
+			{Name: "endcycle", Provider: provideCopyOut(m, &m.endCycle)},
 		},
 	)
 }

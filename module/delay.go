@@ -80,7 +80,7 @@ func newFBDelay(size dsp.MS) (*fbDelay, error) {
 		comb:     dsp.NewFBCombMS(size),
 	}
 	err := m.Expose(
-		"FBComb",
+		"FBDelay",
 		[]*In{m.in, m.duration, m.gain},
 		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
@@ -142,7 +142,7 @@ func newFilteredFBDelay(size dsp.MS) (*filteredFBDelay, error) {
 		comb:      dsp.NewFilteredFBCombMS(size, 4),
 	}
 	err := m.Expose(
-		"FilteredFBComb",
+		"FilteredFBDelay",
 		[]*In{m.in, m.duration, m.gain, m.cutoff, m.resonance},
 		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
@@ -187,7 +187,7 @@ func newFBLoopDelay(size dsp.MS) (*fbLoopDelay, error) {
 	m.feedbackSend = &Out{Name: "feedbackSend", Provider: dsp.Provide(&loopDelaySend{m})}
 
 	err := m.Expose(
-		"FBLoopComb",
+		"FBLoopDelay",
 		[]*In{m.in, m.duration, m.gain, m.feedbackReturn},
 		[]*Out{
 			m.feedbackSend,
