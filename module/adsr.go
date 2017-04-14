@@ -37,7 +37,7 @@ func newADSR() (*adsr, error) {
 		[]*In{m.gate, m.attack, m.decay, m.release, m.sustain, m.disableSustain, m.ratio},
 		[]*Out{
 			{Name: "output", Provider: provideCopyOut(m, &m.mainOut)},
-			{Name: "endCycle", Provider: provideCopyOut(m, &m.endCycleOut)},
+			{Name: "endcycle", Provider: provideCopyOut(m, &m.endCycleOut)},
 		},
 	)
 	return m, err

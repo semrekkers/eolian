@@ -18,7 +18,7 @@ var allModules = []struct {
 	Config          Config
 	Inputs, Outputs []string
 }{
-	{"ADSR", nil, []string{"attack", "decay", "sustain", "release", "disableSustain", "ratio"}, []string{"output", "endCycle"}},
+	{"ADSR", nil, []string{"attack", "decay", "sustain", "release", "disableSustain", "ratio"}, []string{"output", "endcycle"}},
 	{"AND", nil, []string{"a", "b"}, defaultOutput},
 	{"Allpass", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"Ceil", nil, []string{"input"}, defaultOutput},
@@ -41,7 +41,7 @@ var allModules = []struct {
 	{"Direct", nil, []string{"input"}, defaultOutput},
 	{"Distort", nil, []string{"input", "gain", "offsetA", "offsetB"}, defaultOutput},
 	{"Divide", nil, []string{"a", "b"}, defaultOutput},
-	{"Edges", nil, []string{"input"}, []string{"endRise", "endCycle"}},
+	{"Edges", nil, []string{"input"}, []string{"endrise", "endcycle"}},
 	{"FBDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FileSource", Config{"path": "testdata/dummy_source.txt"}, nil, defaultOutput},
@@ -82,7 +82,7 @@ var allModules = []struct {
 		[]string{"1", "2", "3", "4", "5", "6", "7", "8"}},
 	{"Round", nil, []string{"input"}, defaultOutput},
 	{"SampleHold", nil, []string{"input", "trigger"}, defaultOutput},
-	{"Shape", nil, []string{"gate", "trigger", "rise", "fall", "ratio", "cycle"}, []string{"output", "endCycle"}},
+	{"Shape", nil, []string{"gate", "trigger", "rise", "fall", "ratio", "cycle"}, []string{"output", "endcycle"}},
 	{"SoftClip", nil, []string{"input", "gain"}, defaultOutput},
 	{"StageSequence", Config{"stages": 2}, []string{
 		"clock",
