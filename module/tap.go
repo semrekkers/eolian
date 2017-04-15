@@ -34,12 +34,9 @@ func newTap() (*tap, error) {
 
 func (c *tap) Process(out dsp.Frame) {
 	c.in.Process(out)
-	var tap dsp.Frame
-	if !isNormal(c.tap) {
-		tap = c.tap.ProcessFrame()
-	}
+	tap := c.tap.ProcessFrame()
 	for i := range out {
-		if tap == nil {
+		if isNormal(c.tap) {
 			c.side[i] = out[i]
 		} else {
 			c.side[i] = tap[i]
