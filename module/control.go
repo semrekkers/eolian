@@ -24,17 +24,18 @@ func init() {
 type ctrl struct {
 	IO
 	in, mod, min, max *In
-	avg               dsp.Float64
+	average           dsp.RollingAverage
 	smooth            bool
 }
 
 func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 	m := &ctrl{
-		in:     NewIn("input", dsp.Float64(0)),
-		mod:    NewInBuffer("mod", dsp.Float64(1)),
-		min:    NewInBuffer("min", dsp.Float64(min)),
-		max:    NewInBuffer("max", dsp.Float64(max)),
-		smooth: smooth,
+		in:      NewIn("input", dsp.Float64(0)),
+		mod:     NewInBuffer("mod", dsp.Float64(1)),
+		min:     NewInBuffer("min", dsp.Float64(min)),
+		max:     NewInBuffer("max", dsp.Float64(max)),
+		smooth:  smooth,
+		average: dsp.RollingAverage{Window: averageVelocitySamples},
 	}
 	err := m.Expose(
 		"Control",
@@ -46,20 +47,14 @@ func newCtrl(min, max float64, smooth bool) (*ctrl, error) {
 
 func (c *ctrl) Process(out dsp.Frame) {
 	c.in.Process(out)
-
-	var (
-		mod      = c.mod.ProcessFrame()
-		min, max = c.min.ProcessFrame(), c.max.ProcessFrame()
-	)
+	mod := c.mod.ProcessFrame()
+	min, max := c.min.ProcessFrame(), c.max.ProcessFrame()
 
 	for i := range out {
 		m := dsp.Clamp(mod[i], -1, 1)
-
 		if c.smooth {
-			c.avg -= c.avg / averageVelocitySamples
-			c.avg += out[i] / averageVelocitySamples
-			out[i] = c.avg
+			out[i] = c.average.Tick(out[i])
 		}
-		out[i] = (out[i]*(max[i]-min[i]) + min[i]) * m
+		out[i] = dsp.Lerp(out[i], min[i], max[i]) * m
 	}
 }

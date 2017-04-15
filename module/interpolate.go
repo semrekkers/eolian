@@ -27,17 +27,17 @@ type interpolate struct {
 	IO
 	in       *In
 	min, max dsp.Float64
-
-	smooth  bool
-	rolling dsp.Float64
+	average  dsp.RollingAverage
+	smooth   bool
 }
 
 func newInterpolate(config interpolateConfig) (*interpolate, error) {
 	m := &interpolate{
-		in:     NewIn("input", dsp.Float64(0)),
-		max:    dsp.Float64(config.Max),
-		min:    dsp.Float64(config.Min),
-		smooth: config.Smooth,
+		in:      NewIn("input", dsp.Float64(0)),
+		max:     dsp.Float64(config.Max),
+		min:     dsp.Float64(config.Min),
+		smooth:  config.Smooth,
+		average: dsp.RollingAverage{Window: averageVelocitySamples},
 	}
 	err := m.Expose(
 		"Interpolate",
@@ -50,11 +50,9 @@ func newInterpolate(config interpolateConfig) (*interpolate, error) {
 func (m *interpolate) Process(out dsp.Frame) {
 	m.in.Process(out)
 	for i := range out {
-		out[i] = out[i]*(m.max-m.min) + m.min
+		out[i] = dsp.Lerp(out[i], m.min, m.max)
 		if m.smooth {
-			m.rolling -= m.rolling / averageVelocitySamples
-			m.rolling += out[i] / averageVelocitySamples
-			out[i] = m.rolling
+			out[i] = m.average.Tick(out[i])
 		}
 	}
 }
