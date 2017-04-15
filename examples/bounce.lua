@@ -35,6 +35,7 @@ return function(_)
             amp1    = synth.Multiply(),
             amp2    = synth.Multiply(),
             mono    = synth.Multiple { size = 2 },
+            reverb  = synth.TankReverb(),
         }
     end
 
@@ -91,7 +92,7 @@ return function(_)
         -- The slope of the channel 1's fall attenuates both the rise and fall of channel 3
         -- Channel 3 is cycling which creates the bounces
         r.func[2].input:set { input = r.func[1].mult:out(0) }
-        r.shorten:set        { input = r.func[2].mult:out(0) }
+        r.shorten:set       { input = r.func[2].mult:out(0) }
         r.func[3].rise:set  { mod = r.shorten:out(0) }
         r.func[3].fall:set  { mod = r.shorten:out(1) }
 
@@ -100,7 +101,8 @@ return function(_)
         r.amp2:set { a = r.noise:out(), b = r.amp1:out() }
 
         r.mono:set { input = r.amp2:out() }
-        return r.mono:out(0), r.mono:out(1)
+        r.reverb:set { a = r.mono:out(0), b = r.mono:out(1), decay = 0.1 }
+        return r.reverb:out('a'), r.reverb:out('b')
     end
 
     return build, patch
