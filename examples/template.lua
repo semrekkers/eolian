@@ -1,8 +1,7 @@
 -- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
+local synth = require('eolian.synth')
 
 return function(env)
-    local synth = require('eolian.synth')
-
     local function build()
         return {
             mono = synth.Multiple { size = 2 },
