@@ -46,7 +46,7 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.theory", preloadTheory)
 	state.PreloadModule("eolian.time", preloadTime)
 
-	state.SetGlobal("Engine", decoratePatcher(state, p, mtx))
+	state.SetGlobal("Engine", addModuleMethods(state, p, mtx))
 	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
