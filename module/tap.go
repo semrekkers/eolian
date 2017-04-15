@@ -8,23 +8,24 @@ func init() {
 
 type tap struct {
 	IO
-	in   *In
-	tap  *Out
-	side dsp.Frame
+	in, tap *In
+	tapOut  *Out
+	side    dsp.Frame
 }
 
 func newTap() (*tap, error) {
 	m := &tap{
-		in:   &In{Name: "input", Source: dsp.Float64(0), ForceSinking: true},
+		in:   &In{Name: "input", Source: dsp.Float64(0)},
+		tap:  &In{Name: "tap", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
 		side: dsp.NewFrame(),
 	}
-	m.tap = &Out{Name: "tap", Provider: dsp.Provide(&tapTap{m})}
+	m.tapOut = &Out{Name: "tap", Provider: dsp.Provide(&tapTap{m})}
 
 	err := m.Expose(
 		"Tap",
-		[]*In{m.in},
+		[]*In{m.in, m.tap},
 		[]*Out{
-			m.tap,
+			m.tapOut,
 			{Name: "output", Provider: dsp.Provide(m)},
 		},
 	)
@@ -33,8 +34,16 @@ func newTap() (*tap, error) {
 
 func (c *tap) Process(out dsp.Frame) {
 	c.in.Process(out)
+	var tap dsp.Frame
+	if !isNormal(c.tap) {
+		tap = c.tap.ProcessFrame()
+	}
 	for i := range out {
-		c.side[i] = out[i]
+		if tap == nil {
+			c.side[i] = out[i]
+		} else {
+			c.side[i] = tap[i]
+		}
 	}
 }
 
