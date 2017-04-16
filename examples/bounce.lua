@@ -58,7 +58,7 @@ return function(_)
             end)
             with(f[2], function(ch)
                 ch.input:set { mod = 0.1 }
-                ch.mult:set { input = ch.input:out() }
+                ch.mult:set  { input = ch.input:out() }
             end)
             with(f[3], function(ch)
                 ch.input:set { input = 1 }
@@ -76,8 +76,8 @@ return function(_)
         end)
 
         -- Tone
-        r.osc:set   { pitch = pitch('Eb2'), pulseWidth = 0.3 }
-        r.waveMix:set { 
+        r.osc:set { pitch = pitch('Eb2'), pulseWidth = 0.7 }
+        r.waveMix:set {
             { input = r.osc:out('sine') },
             { input = r.osc:out('pulse'), level = 0.5 },
             { input = r.osc:out('sub'), level = 0.5 },
@@ -100,8 +100,9 @@ return function(_)
         r.amp1:set { a = r.func[3].mult:out(1), b = r.func[1].mult:out(1) }
         r.amp2:set { a = r.noise:out(), b = r.amp1:out() }
 
-        r.mono:set { input = r.amp2:out() }
+        r.mono:set   { input = r.amp2:out() }
         r.reverb:set { a = r.mono:out(0), b = r.mono:out(1), decay = 0.1 }
+
         return r.reverb:out('a'), r.reverb:out('b')
     end
 
