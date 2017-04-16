@@ -1,6 +1,10 @@
 package module
 
-import "buddin.us/eolian/dsp"
+import (
+	"math"
+
+	"buddin.us/eolian/dsp"
+)
 
 func init() {
 	Register("Shape", func(Config) (Patcher, error) { return newShape() })
@@ -110,7 +114,7 @@ func shapeFall(s *shapeState) shapeStateFunc {
 		return prepRise(s)
 	}
 	s.out = s.base + s.out*s.multiplier
-	if float64(s.out) <= dsp.Epsilon {
+	if float64(s.out) <= math.SmallestNonzeroFloat64 {
 		s.endCycle = true
 		s.out = 0
 		if s.cycle > 0 {

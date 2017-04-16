@@ -1,6 +1,8 @@
 package module
 
 import (
+	"math"
+
 	"buddin.us/eolian/dsp"
 )
 
@@ -143,7 +145,7 @@ func adsrRelease(s *adsrState) adsrStateFunc {
 		}
 	}
 	s.value = s.base + s.value*s.multiplier
-	if float64(s.value) <= dsp.Epsilon {
+	if float64(s.value) <= math.SmallestNonzeroFloat64 {
 		s.value = 0
 		return adsrIdle
 	}

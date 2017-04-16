@@ -5,9 +5,6 @@ import (
 	"math/rand"
 )
 
-// Epsilon is the smallest number that we can represent as a float64
-var Epsilon = math.Nextafter(1, 2) - 1
-
 // Clamp limits a value to a specific range
 func Clamp(s, min, max Float64) Float64 {
 	if s > max {
@@ -26,6 +23,11 @@ func Tan(v Float64) Float64 {
 // Rand is rand.Float64()
 func Rand() Float64 {
 	return Float64(rand.Float64())
+}
+
+// RandRange returns random values between a specified range
+func RandRange(min, max Float64) Float64 {
+	return Rand()*(max-min) + min
 }
 
 // Abs is math.Abs()

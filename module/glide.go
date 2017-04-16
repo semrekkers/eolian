@@ -1,6 +1,8 @@
 package module
 
 import (
+	"math"
+
 	"buddin.us/eolian/dsp"
 	"github.com/mitchellh/mapstructure"
 )
@@ -81,7 +83,7 @@ func slewIdle(s *slewState) slewStateFunc {
 		s.value = s.in
 		return slewIdle
 	}
-	if s.in != s.lastIn && dsp.Abs(s.in-s.lastIn) > dsp.Float64(dsp.Epsilon) {
+	if s.in != s.lastIn && dsp.Abs(s.in-s.lastIn) > dsp.Float64(math.SmallestNonzeroFloat64) {
 		s.from, s.to = s.lastIn, s.in
 		s.lastIn = s.in
 		s.value = s.from
@@ -108,7 +110,7 @@ func slewTransition(s *slewState) slewStateFunc {
 			return slewFinish
 		}
 		amount = d / s.rise
-	} else if dsp.Abs(d) < dsp.Float64(dsp.Epsilon) {
+	} else if dsp.Abs(d) < dsp.Float64(math.SmallestNonzeroFloat64) {
 		return slewFinish
 	}
 
