@@ -15,7 +15,7 @@ type tap struct {
 
 func newTap() (*tap, error) {
 	m := &tap{
-		in:   &In{Name: "input", Source: dsp.Float64(0)},
+		in:   &In{Name: "input", Source: dsp.Float64(0), ForceSinking: true},
 		tap:  &In{Name: "tap", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
 		side: dsp.NewFrame(),
 	}
