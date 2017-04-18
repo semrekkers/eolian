@@ -48,7 +48,7 @@ var allModules = []struct {
 	{"FilteredFBDelay", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
 	{"FilteredReverb", nil, []string{"input", "gain", "feedback", "cutoff", "fbCutoff"}, defaultOutput},
 	{"Floor", nil, []string{"input"}, defaultOutput},
-	{"Fold", nil, []string{"input", "level"}, defaultOutput},
+	{"Fold", nil, []string{"input", "level", "gain", "stages"}, defaultOutput},
 	{"Follow", nil, []string{"input", "attack", "release"}, defaultOutput},
 	{"GateMix", nil, []string{"0", "1", "2", "3"}, defaultOutput},
 	{"GateSequence", Config{"steps": 2}, []string{"clock", "reset", "0.mode", "1.mode"}, []string{"on", "off"}},
