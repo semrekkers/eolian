@@ -112,14 +112,9 @@ func (io *IO) Patch(name string, t interface{}) error {
 		return err
 	}
 
-	if input.Source != nil {
-		if out, ok := input.Source.(*Out); ok {
-			out.removeDestination(input)
-		}
-	}
 	input.SetSource(processor)
 	if o, ok := processor.(*Out); ok {
-		o.addDestination(input)
+		o.setDestination(input)
 	}
 	return nil
 }
@@ -173,9 +168,10 @@ func (io *IO) Output(name string) (*Out, error) {
 	io.lazyInit()
 	name = canonicalPort(name)
 	if o, ok := io.outs[name]; ok {
-		if !o.IsActive() {
-			o.buffer = dsp.NewBuffer(o.Provider.Processor())
+		if o.IsActive() {
+			return nil, fmt.Errorf(`%s: output "%s" is already patched`, io.ID(), name)
 		}
+		o.processor = o.Provider.Processor()
 		return o, nil
 	}
 	return nil, fmt.Errorf(`%s: output "%s" doesn't exist`, io.ID(), name)
@@ -333,12 +329,11 @@ func (i *In) IsSinking() bool {
 
 // Out is a module output
 type Out struct {
-	Name         string
-	Provider     dsp.ProcessorProvider
-	buffer       *dsp.Buffer
-	destinations []*In
-	owner        *IO
-	reads        int
+	Name        string
+	Provider    dsp.ProcessorProvider
+	processor   dsp.Processor
+	destination *In
+	owner       *IO
 }
 
 func (o *Out) String() string {
@@ -347,77 +342,43 @@ func (o *Out) String() string {
 
 // IsActive returns whether or not there is a realized Processor assigned
 func (o *Out) IsActive() bool {
-	return o.buffer != nil
+	return o.processor != nil
 }
 
 // Process proxies to the internal processor if its set
 func (o *Out) Process(out dsp.Frame) {
-	if o.buffer != nil {
-		if len(o.destinations) == 1 {
-			o.buffer.Process(out)
-			return
-		}
-
-		if o.reads == 0 {
-			o.buffer.Process(out)
-			copy(o.buffer.Frame, out)
-		} else {
-			copy(out, o.buffer.Frame)
-		}
-		var sinking int
-		for _, d := range o.destinations {
-			if d.IsSinking() {
-				sinking++
-			}
-		}
-		if sinking > 0 {
-			o.reads = (o.reads + 1) % sinking
-		}
+	if o.processor != nil {
+		o.processor.Process(out)
 	}
 }
 
-func (o *Out) addDestination(in *In) {
-	o.destinations = append(o.destinations, in)
+func (o *Out) setDestination(in *In) {
+	o.destination = in
 }
 
-func (o *Out) removeDestination(in *In) {
-	filtered := []*In{}
-	for _, d := range o.destinations {
-		if d != in {
-			filtered = append(filtered, d)
-		}
+// DestinationName returns the name of the destination input
+func (o *Out) DestinationName() string {
+	if o.destination == nil {
+		return "(none)"
 	}
-	o.destinations = filtered
-}
-
-// DestinationNames returns the name of the destination input
-func (o *Out) DestinationNames() []string {
-	names := []string{}
-	for _, d := range o.destinations {
-		names = append(names, d.String())
-	}
-	return names
+	return fmt.Sprintf("%s", o.destination)
 }
 
 // IsSinking returns whether the output is sinking to audio output
 func (o *Out) IsSinking() bool {
-	var sinking bool
-	for _, d := range o.destinations {
-		if d.IsSinking() {
-			sinking = true
-		}
-	}
-	return sinking
+	return o.destination.IsSinking()
 }
 
 // Close closes the output
 func (o *Out) Close() error {
 	defer func() {
-		o.buffer = nil
-		o.destinations = nil
-		o.reads = 0
+		o.processor = nil
+		o.destination = nil
 	}()
-	return o.buffer.Close()
+	if c, ok := o.processor.(io.Closer); ok {
+		return c.Close()
+	}
+	return nil
 }
 
 // Port represents the address of a specific port on a Patcher

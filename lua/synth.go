@@ -227,11 +227,7 @@ func moduleOutputs(state *lua.LState, p module.Patcher) int {
 	}
 	t := state.NewTable()
 	for k, v := range l.Outputs() {
-		dests := state.NewTable()
-		for i, name := range v.DestinationNames() {
-			dests.Insert(i+1, lua.LString(name))
-		}
-		t.RawSet(lua.LString(k), dests)
+		t.RawSet(lua.LString(k), lua.LString(v.DestinationName()))
 	}
 	state.Push(t)
 	return 1

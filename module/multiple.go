@@ -52,7 +52,9 @@ func (m *multiple) read(out dsp.Frame) {
 	if m.reads == 0 {
 		copy(m.frame, m.in.ProcessFrame())
 	}
-	copy(out, m.frame)
+	for i := range out {
+		out[i] = m.frame[i]
+	}
 	if outs := m.OutputsActive(true); outs > 0 {
 		m.reads = (m.reads + 1) % outs
 	}
