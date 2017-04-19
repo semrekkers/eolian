@@ -88,6 +88,10 @@ func ahdIdle(s *ahdState) ahdStateFunc {
 	s.endCycle = false
 	s.value = 0
 	if s.lastGate <= 0 && s.gate > 0 {
+		if s.attack == 0 {
+			s.value = 1
+			return ahdHold
+		}
 		return prepAHDAttack(s)
 	}
 	return ahdIdle
@@ -106,6 +110,10 @@ func ahdHold(s *ahdState) ahdStateFunc {
 	s.holdTick++
 	if s.holdTick >= int(s.hold) {
 		s.holdTick = 0
+		if s.decay == 0 {
+			s.value = 0
+			return ahdIdle
+		}
 		return prepAHDDecay
 	}
 	return ahdHold
