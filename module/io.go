@@ -114,7 +114,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 
 	input.SetSource(processor)
 	if o, ok := processor.(*Out); ok {
-		o.setDestination(input)
+		o.addDestination(input)
 	}
 	return nil
 }
@@ -168,10 +168,9 @@ func (io *IO) Output(name string) (*Out, error) {
 	io.lazyInit()
 	name = canonicalPort(name)
 	if o, ok := io.outs[name]; ok {
-		if o.IsActive() {
-			return nil, fmt.Errorf(`%s: output "%s" is already patched`, io.ID(), name)
+		if !o.IsActive() {
+			o.buffer = dsp.NewBuffer(o.Provider.Processor())
 		}
-		o.processor = o.Provider.Processor()
 		return o, nil
 	}
 	return nil, fmt.Errorf(`%s: output "%s" doesn't exist`, io.ID(), name)
@@ -303,17 +302,30 @@ func (i *In) LastFrame() dsp.Frame {
 	return i.Source.(*dsp.Buffer).Frame
 }
 
+func (i *In) setDefault() {
+	i.SetSource(i.initial)
+}
+
+func (i *In) removeFromOutput() {
+	switch v := i.Source.(type) {
+	case *dsp.Buffer:
+		if o, ok := v.Processor.(*Out); ok {
+			o.removeDestination(i)
+		}
+	case *Out:
+		v.removeDestination(i)
+	}
+}
+
 // Close closes the input
 func (i *In) Close() error {
-	if c, ok := i.Source.(*In); ok {
-		return c.Close()
-	} else if c, ok := i.Source.(io.Closer); ok {
-		if err := c.Close(); err != nil {
-			return err
-		}
+	i.removeFromOutput()
+	var err error
+	if c, ok := i.Source.(io.Closer); ok {
+		err = c.Close()
 	}
-	i.SetSource(i.initial)
-	return nil
+	i.setDefault()
+	return err
 }
 
 // IsSinking returns whether the input is sinking to audio output
@@ -329,11 +341,12 @@ func (i *In) IsSinking() bool {
 
 // Out is a module output
 type Out struct {
-	Name        string
-	Provider    dsp.ProcessorProvider
-	processor   dsp.Processor
-	destination *In
-	owner       *IO
+	Name         string
+	Provider     dsp.ProcessorProvider
+	buffer       *dsp.Buffer
+	destinations []*In
+	owner        *IO
+	reads        int
 }
 
 func (o *Out) String() string {
@@ -342,41 +355,83 @@ func (o *Out) String() string {
 
 // IsActive returns whether or not there is a realized Processor assigned
 func (o *Out) IsActive() bool {
-	return o.processor != nil
+	return o.buffer != nil
 }
 
 // Process proxies to the internal processor if its set
 func (o *Out) Process(out dsp.Frame) {
-	if o.processor != nil {
-		o.processor.Process(out)
+	if o.buffer == nil {
+		return
+	}
+
+	if len(o.destinations) == 1 {
+		o.buffer.Process(out)
+		return
+	}
+
+	if o.reads == 0 {
+		o.buffer.Process(out)
+		copy(o.buffer.Frame, out)
+	} else {
+		copy(out, o.buffer.Frame)
+	}
+	var sinking int
+	for _, d := range o.destinations {
+		if d.IsSinking() {
+			sinking++
+		}
+	}
+	if sinking > 0 {
+		o.reads = (o.reads + 1) % sinking
 	}
 }
 
-func (o *Out) setDestination(in *In) {
-	o.destination = in
+func (o *Out) addDestination(in *In) {
+	o.destinations = append(o.destinations, in)
 }
 
-// DestinationName returns the name of the destination input
-func (o *Out) DestinationName() string {
-	if o.destination == nil {
-		return "(none)"
+func (o *Out) removeDestination(in *In) {
+	filtered := []*In{}
+	for _, d := range o.destinations {
+		if d != in {
+			filtered = append(filtered, d)
+		}
 	}
-	return fmt.Sprintf("%s", o.destination)
+	o.destinations = filtered
+}
+
+// DestinationNames returns the name of the destination input
+func (o *Out) DestinationNames() []string {
+	names := []string{}
+	for _, d := range o.destinations {
+		names = append(names, d.String())
+	}
+	return names
 }
 
 // IsSinking returns whether the output is sinking to audio output
 func (o *Out) IsSinking() bool {
-	return o.destination.IsSinking()
+	var sinking bool
+	for _, d := range o.destinations {
+		if d.IsSinking() {
+			sinking = true
+		}
+	}
+	return sinking
 }
 
 // Close closes the output
 func (o *Out) Close() error {
 	defer func() {
-		o.processor = nil
-		o.destination = nil
+		for _, d := range o.destinations {
+			d.setDefault()
+		}
+		o.buffer = nil
+		o.destinations = nil
+		o.reads = 0
 	}()
-	if c, ok := o.processor.(io.Closer); ok {
-		return c.Close()
+	if o.buffer != nil {
+		return o.buffer.Close()
 	}
 	return nil
 }

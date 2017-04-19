@@ -1,6 +1,7 @@
 package module
 
 import (
+	"fmt"
 	"testing"
 
 	"buddin.us/eolian/dsp"
@@ -106,4 +107,44 @@ func newModule(forceSinking bool) (*IO, error) {
 		return nil, err
 	}
 	return io, nil
+}
+
+func TestMultipleOutputDestinations(t *testing.T) {
+	one, err := newModule(false)
+	assert.Equal(t, err, nil)
+
+	two, err := newModule(false)
+	assert.Equal(t, err, nil)
+
+	three, err := newModule(true)
+	assert.Equal(t, err, nil)
+
+	err = two.Patch("input", Port{one, "output"})
+	assert.Equal(t, err, nil)
+
+	err = three.Patch("input", Port{one, "output"})
+	assert.Equal(t, err, nil)
+
+	actual, expected := one.OutputsActive(true), 1
+	assert.Equal(t, actual, expected)
+
+	actual, expected = two.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+
+	actual, expected = three.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+
+	o, _ := one.Output("output")
+	fmt.Println(o.destinations)
+
+	err = two.Reset()
+	assert.Equal(t, err, nil)
+
+	actual, expected = one.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+
+	o, _ = one.Output("output")
+	fmt.Println(o.destinations)
+
+	fmt.Println(three.ins["input"].Source)
 }
