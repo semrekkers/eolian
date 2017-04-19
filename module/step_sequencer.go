@@ -115,27 +115,7 @@ func (s *stepSequence) Process(out dsp.Frame) {
 
 		for i := range out {
 			if s.lastStep >= 0 && s.lastClock < 0 && clock[i] > 0 {
-				switch mapPatternMode(mode[i]) {
-				case patternModeSequential:
-					s.step = (s.step + 1) % s.stepCount
-					s.pong = false
-				case patternModePingPong:
-					if s.pong {
-						s.step -= 1
-					} else {
-						s.step += 1
-					}
-					if s.step == s.stepCount-1 {
-						s.step = s.stepCount - 1
-						s.pong = true
-					} else if s.step == 0 {
-						s.step = 0
-						s.pong = false
-					}
-				case patternModeRandom:
-					s.step = rand.Intn(s.stepCount)
-					s.pong = false
-				}
+				s.advance(mode[i])
 			}
 
 			if s.lastReset < 0 && reset[i] > 0 {
@@ -145,8 +125,20 @@ func (s *stepSequence) Process(out dsp.Frame) {
 				s.step = 0
 			}
 
-			s.fillPitches(i)
-			s.fillGates(i, clock[i])
+			for j := 0; j < s.layerCount; j++ {
+				s.pitchesOut[j][i] = s.pitches[j][s.step].LastFrame()[i]
+			}
+
+			var max dsp.Float64
+			for j := 0; j < s.stepCount; j++ {
+				if j == s.step && clock[i] > 0 {
+					s.gatesOut[j][i] = 1
+				} else {
+					s.gatesOut[j][i] = -1
+				}
+				max = dsp.Max(max, s.gatesOut[j][i])
+			}
+			s.allGateOut[i] = max
 
 			s.lastClock = clock[i]
 			s.lastReset = reset[i]
@@ -155,19 +147,26 @@ func (s *stepSequence) Process(out dsp.Frame) {
 	})
 }
 
-func (s *stepSequence) fillPitches(i int) {
-	for l := range s.pitches {
-		s.pitchesOut[l][i] = s.pitches[l][s.step].LastFrame()[i]
-	}
-}
-
-func (s *stepSequence) fillGates(i int, clock dsp.Float64) {
-	for j := range s.gatesOut {
-		if clock > 0 && j == s.step {
-			s.gatesOut[j][i] = 1
+func (s *stepSequence) advance(mode dsp.Float64) {
+	switch mapPatternMode(mode) {
+	case patternModeSequential:
+		s.step = (s.step + 1) % s.stepCount
+		s.pong = false
+	case patternModePingPong:
+		if s.pong {
+			s.step -= 1
 		} else {
-			s.gatesOut[j][i] = -1
+			s.step += 1
 		}
-		s.allGateOut[i] = dsp.Max(s.allGateOut[i], s.gatesOut[j][i])
+		if s.step == s.stepCount-1 {
+			s.step = s.stepCount - 1
+			s.pong = true
+		} else if s.step == 0 {
+			s.step = 0
+			s.pong = false
+		}
+	case patternModeRandom:
+		s.step = rand.Intn(s.stepCount)
+		s.pong = false
 	}
 }
