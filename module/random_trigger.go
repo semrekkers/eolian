@@ -35,5 +35,6 @@ func (r *randomTrigger) Process(out dsp.Frame) {
 		} else {
 			out[i] = -1
 		}
+		r.lastClock = clock[i]
 	}
 }
