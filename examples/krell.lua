@@ -8,14 +8,12 @@ return function(_)
         return {
             debug       = synth.Debug(),
             clock       = synth.OR(),
-            clockMult   = synth.Multiple { size = 3 },
-            random      = synth.Random(),
+            clockDiv    = synth.ClockDivide(),
+            random      = synth.RandomSeries(),
             random2     = synth.Random(),
-            random2Mult = synth.Multiple(),
 
             rise    = synth.Control(),
             fall    = synth.Control(),
-            both    = synth.Multiple { size = 2 },
             tap     = synth.Tap(),
             shape   = synth.Shape(),
             gate    = synth.LPGate(),
@@ -35,13 +33,12 @@ return function(_)
 
     local function patch(r)
         r.clock:set       { a = 0, b = r.tap:out('tap') }
-        r.clockMult:set   { input = r.clock:out() }
-        r.random:set      { clock = r.clockMult:out(0) }
-        r.random2:set     { clock = r.clockMult:out(1), min = 0.1, max = 1 }
-        r.random2Mult:set { input = r.random2:out('stepped') }
+        r.clockDiv:set    { input = r.clock:out(), divisor = 20 }
+        r.random:set      { clock = r.clock:out(), trigger = r.clockDiv:out() }
+        r.random2:set     { clock = r.clock:out(), min = 0.1, max = 1 }
 
         -- Quantized steps to Eb minor pentatonic
-        r.quant:set { input = r.random:out('stepped') }
+        r.quant:set { input = r.random:out('value') }
         local scale = theory.scale('Eb2', 'minorPentatonic', 4)
         for i,p in ipairs(scale) do
             r.quant:set(i-1 .. '/pitch', p)
@@ -56,12 +53,12 @@ return function(_)
         r.filter:set { input = r.waveMix:out(), cutoff = hz(500) }
 
         -- Envelope length
-        r.rise:set { input = ms(400), mod = r.random2Mult:out(0) }
-        r.fall:set { input = ms(1000), mod = r.random2Mult:out(1) }
+        r.rise:set { input = ms(400), mod = r.random2:out('stepped') }
+        r.fall:set { input = ms(1000), mod = r.random2:out('stepped') }
 
         -- Envelope
         r.shape:set  {
-            trigger = r.clockMult:out(2),
+            trigger = r.clock:out(),
             rise    = r.rise:out(),
             fall    = r.fall:out(),
             ratio   = 0.001,
