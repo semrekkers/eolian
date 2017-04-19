@@ -114,19 +114,23 @@ function inspect(o, prefix)
         end
 
         for _,k in ipairs(outputNames) do
-            local name  = outputs[k]
-            local parts = split(name, '/')
-            local path  = find(Rack.modules, parts[1])
+            local outs  = outputs[k]
+            local names = {}
 
-            if path ~= nil then
-                local rest = {}
-                for i=2,#parts do
-                    table.insert(rest, parts[i])
+            for _,name in ipairs(outs) do
+                local parts = split(name, '/')
+                local path  = find(Rack.modules, parts[1])
+
+                if path ~= nil then
+                    local rest = {}
+                    for i=2,#parts do
+                        table.insert(rest, parts[i])
+                    end
+                    table.insert(names, string.format("%s/%s", path, join(rest, '/')))
                 end
-                name = string.format("%s/%s", path, join(rest, '/'))
             end
 
-            w.write(string.format("%s\t->\t%s\t\n", k, name))
+            w.write(string.format("%s\t->\t%s\t\n", k, join(names, ', ')))
         end
 
         local s, count = string.gsub(w.flush(), "\n$", "")
