@@ -38,7 +38,7 @@ func (f *fold) Process(out dsp.Frame) {
 	for i := range out {
 		in := float64(out[i])
 		level := math.Max(math.Abs(float64(level[i])), 0.00001)
-		for j := 0; j < int(stages[i]); j++ {
+		for j := 0; j < int(dsp.Max(stages[i], 1)); j++ {
 			if in > level || in < -level {
 				out[i] = dsp.Float64(math.Abs(math.Abs(math.Mod(in-level, level*4))-level*2) - level)
 			}
