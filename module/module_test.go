@@ -18,6 +18,7 @@ var allModules = []struct {
 	Config          Config
 	Inputs, Outputs []string
 }{
+	{"AHD", nil, []string{"attack", "decay", "hold", "ratio"}, []string{"output", "endcycle"}},
 	{"ADSR", nil, []string{"attack", "decay", "sustain", "release", "disableSustain", "ratio"}, []string{"output", "endcycle"}},
 	{"AND", nil, []string{"a", "b"}, defaultOutput},
 	{"Allpass", nil, []string{"input", "duration", "gain"}, defaultOutput},
@@ -78,6 +79,7 @@ var allModules = []struct {
 	{"Quantize", Config{"size": 2}, []string{"input", "0.pitch", "1.pitch", "transpose"}, defaultOutput},
 	{"Random", nil, []string{"clock", "max", "min", "probability", "smoothness"}, []string{"stepped", "smooth"}},
 	{"RandomSeries", nil, []string{"clock", "max", "min", "size", "trigger"}, []string{"gate", "value"}},
+	{"RandomTrigger", nil, []string{"clock", "probability"}, defaultOutput},
 	{"Reverb", nil, []string{"input", "gain", "feedback"}, defaultOutput},
 	{"RotatingClockDivide", nil, []string{"input", "rotate", "reset"},
 		[]string{"1", "2", "3", "4", "5", "6", "7", "8"}},
