@@ -1,7 +1,6 @@
 package module
 
 import (
-	"fmt"
 	"testing"
 
 	"buddin.us/eolian/dsp"
@@ -134,8 +133,9 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	actual, expected = three.OutputsActive(true), 0
 	assert.Equal(t, actual, expected)
 
-	o, _ := one.Output("output")
-	fmt.Println(o.destinations)
+	o, err := one.Output("output")
+	assert.Equal(t, err, nil)
+	assert.Equal(t, len(o.destinations), 2)
 
 	err = two.Reset()
 	assert.Equal(t, err, nil)
@@ -143,8 +143,8 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	actual, expected = one.OutputsActive(true), 0
 	assert.Equal(t, actual, expected)
 
-	o, _ = one.Output("output")
-	fmt.Println(o.destinations)
-
-	fmt.Println(three.ins["input"].Source)
+	o, err = one.Output("output")
+	assert.Equal(t, err, nil)
+	assert.Equal(t, len(o.destinations), 0)
+	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor, dsp.Float64(0.0))
 }
