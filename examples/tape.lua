@@ -1,15 +1,12 @@
-return function(env)
-    local synth  = require('eolian.synth')
-    local theory = require('eolian.theory')
-    local ctrl   = require('eolian.synth.control')
+local synth  = require('eolian.synth')
+local theory = require('eolian.theory')
+local ctrl   = require('eolian.synth.control')
 
+return function(_)
     local function build()
         return {
-            midi = synth.MIDIController { device = 'Launch Control' },
-            clock = {
-                osc      = synth.Oscillator(),
-                multiple = synth.Multiple(),
-            },
+            midi  = synth.MIDIController { device = 'Launch Control' },
+            clock = synth.Clock(),
             random = {
                 trigger = synth.ClockDivide(),
                 series  = synth.RandomSeries(),
@@ -44,8 +41,6 @@ return function(env)
                 cutoff    = { min = hz(1000), max = hz(5000) },
                 resonance = { min = 1, max = 50 },
             }),
-
-            sink = synth.Multiple { size = 2 }
         }
     end
 
@@ -53,19 +48,15 @@ return function(env)
         local channel = modules.midi:ns('cc/1')
         local cc      = function(n) return out(channel, n) end
 
-        local clock = with(modules.clock, function(c)
-            set(c.osc, { pitch = hz(9) })
-            set(c.multiple, { input = out(c.osc, 'pulse') })
-            return c.multiple
-        end)
+        set(modules.osc, { tempo = hz(9) })
 
         with(modules.random, function(r)
             set(r.trigger, {
-                input   = out(clock, 0),
+                input   = out(modules.clock),
                 divisor = 16,
             })
             set(r.series, {
-                clock   = out(clock, 1),
+                clock   = out(modules.clock),
                 trigger = out(r.trigger),
                 size    = 8,
             })
@@ -79,7 +70,7 @@ return function(env)
 
         local voice = with(modules.voice, function(v)
             local series = modules.random.series
-            set(v.adsr, { 
+            set(v.adsr, {
                 gate    = out(series, 'gate'),
                 attack  = cc(45),
                 decay   = cc(46),
@@ -102,7 +93,7 @@ return function(env)
             duration = cc(27),
         })
 
-        set(modules.tape, { 
+        set(modules.tape, {
             input    = out(modules.delay),
             record   = cc(9),
             splice   = cc(10),
@@ -116,9 +107,9 @@ return function(env)
         })
         set(modules.filter, { input = out(modules.tape), cutoff = cc(41), resonance = cc(42) })
 
-        set(modules.sink, { input = out(modules.filter, 'lowpass') })
+        local sink = out(modules.filter, 'lowpass')
 
-        return modules.sink:out(0), modules.sink:out(1)
+        return sink, sink
     end
 
     return build, patch

@@ -4,4 +4,6 @@ globals = {
     "ms",
     "pitch",
     "with",
+    "set",
+    "out"
 }

@@ -1,13 +1,10 @@
-return function(env)
-    local synth  = require('eolian.synth')
-    local theory = require('eolian.theory')
+local synth  = require('eolian.synth')
+local theory = require('eolian.theory')
 
+return function(_)
     local function build()
         return {
-            clock  = {
-                osc      = synth.Oscillator(),
-                multiple = synth.Multiple(),
-            },
+            clock  = synth.Clock(),
             random = {
                 trigger = synth.ClockDivide(),
                 series  = synth.RandomSeries(),
@@ -26,30 +23,25 @@ return function(env)
                 filter = synth.Filter(),
                 delay  = synth.FBLoopDelay(),
             },
-            filter = synth.Filter(),
-            mix    = synth.Mix(),
-            panLFO = synth.Oscillator { algorithm = 'simple' },
-            pan    = synth.Pan(),
-            reverb = synth.TankReverb(),
+            filter    = synth.Filter(),
+            mix       = synth.Mix(),
+            panLFO    = synth.Oscillator { algorithm = 'simple' },
+            pan       = synth.Pan(),
+            reverb    = synth.TankReverb(),
             crossfeed = synth.Crossfeed(),
         }
     end
 
     local function patch(rack)
-        with(rack.clock, function(c)
-            c.osc:set { pitch = hz(7) }
-            c.multiple:set { input = c.osc:out('pulse') }
-        end)
+        rack.clock:set { tempo = hz(7) }
 
         with(rack.random, function(r)
-            local clock = rack.clock.multiple
-
             r.trigger:set {
-                input   = clock:out(0),
+                input   = rack.clock:out(),
                 divisor = 30,
             }
             r.series:set {
-                clock   = clock:out(1),
+                clock   = rack.clock:out(),
                 trigger = r.trigger:out(),
                 size    = 16,
             }
@@ -62,7 +54,7 @@ return function(env)
         end)
 
         with(rack.voice, function(v)
-            local gate  = rack.clock.multiple:out(2)
+            local gate  = rack.clock:out()
             local quant = rack.random.quant:out()
 
             v.adsr:set {

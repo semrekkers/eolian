@@ -6,11 +6,11 @@ local theory = require('eolian.theory')
 return function(_)
     local function build()
         return {
-            debug       = synth.Debug(),
-            clock       = synth.OR(),
-            clockDiv    = synth.ClockDivide(),
-            random      = synth.RandomSeries(),
-            random2     = synth.Random(),
+            debug    = synth.Debug(),
+            clock    = synth.OR(),
+            clockDiv = synth.ClockDivide(),
+            random   = synth.RandomSeries(),
+            random2  = synth.Random(),
 
             rise    = synth.Control(),
             fall    = synth.Control(),

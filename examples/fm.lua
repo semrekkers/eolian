@@ -1,16 +1,12 @@
-return function(env)
-    local synth  = require('eolian.synth')
-    local theory = require('eolian.theory')
-    local ctrl = require('eolian.synth.control')
+local synth  = require('eolian.synth')
+local theory = require('eolian.theory')
+local ctrl   = require('eolian.synth.control')
 
+return function(_)
     local function build()
         return {
-            clock = {
-                osc      = ctrl(synth.Oscillator(), { pitch = { min = hz(1), max = hz(20) }}),
-                multiple = synth.Multiple(),
-            },
-
-            midi = synth.MIDIController { device = 'Launch Control' },
+            clock = ctrl(synth.Clock(), { tempo = { min = hz(1), max = hz(20) }}),
+            midi  = synth.MIDIController { device = 'Launch Control' },
             debug = synth.Debug(),
 
             oscA = {
@@ -51,21 +47,16 @@ return function(env)
             }),
             amp    = synth.Multiply(),
             delay  = synth.FBDelay(),
-            sink   = synth.Multiple { size = 2 },
         }
     end
 
     local function patch(m)
         local cc = function(n) return out(m.midi:ns('cc/1'), n) end
 
-        local clock = with(m.clock, function(c)
-            set(c.osc, { pitch = cc(28) })
-            set(c.multiple, { input = out(c.osc, 'pulse') })
-            return c.multiple
-        end)
+        set(m.clock, { tempo = cc(28) })
 
         set(m.adsr, {
-            gate    = out(clock, 0),
+            gate    = out(m.clock),
             attack  = cc(45),
             decay   = cc(46),
             sustain = cc(47),
@@ -78,8 +69,7 @@ return function(env)
             for i,p in ipairs(scale) do
                 set(o.quantize, i-1 .. '/pitch', p)
             end
-            set(o.multiple, { input = out(o.quantize) })
-            return o.multiple
+            return o.quantize
         end)
 
         local oscB = with(m.oscB, function(o)
@@ -88,31 +78,30 @@ return function(env)
             for i,p in ipairs(scale) do
                 set(o.quantize, i-1 .. '/pitch', p)
             end
-            set(o.multiple, { input = out(o.quantize) })
-            return o.multiple
+            return o.quantize
         end)
 
         local op1 = with(m.op1, function(op)
-            set(op.multiplier, { a = cc(21), b = out(oscA, 0) })
+            set(op.multiplier, { a = cc(21), b = out(oscA) })
             set(op.osc, { pitch = out(op.multiplier), amp = cc(22) })
             return out(op.osc, 'sine')
         end)
 
         local op2 = with(m.op2, function(op)
-            set(op.multiplier, { a = cc(41), b = out(oscA, 1) })
+            set(op.multiplier, { a = cc(41), b = out(oscA) })
             set(op.osc, { pitch = out(op.multiplier), pitchMod = op1, amp = cc(42) })
             set(op.noise, { input = out(op.osc, 'sine'), gain = 0.1 })
             return out(op.noise)
         end)
 
         local op3 = with(m.op3, function(op)
-            set(op.multiplier, { a = cc(23), b = out(oscB, 0) })
+            set(op.multiplier, { a = cc(23), b = out(oscB) })
             set(op.osc, { pitch = out(op.multiplier), amp = cc(24) })
             return out(op.osc, 'saw')
         end)
 
         local op4 = with(m.op4, function(op)
-            set(op.multiplier, { a = cc(43), b = out(oscB, 1) })
+            set(op.multiplier, { a = cc(43), b = out(oscB) })
             set(op.osc, { pitch = out(op.multiplier), pitchMod = op3, amp = cc(44) })
             set(op.noise, { input = out(op.osc, 'sine'), gain = 0.1 })
             return out(op.noise)
@@ -126,9 +115,10 @@ return function(env)
         set(m.amp, { a = out(m.mix), b = out(m.adsr) })
         set(m.delay, { input = out(m.amp), gain = 0.4, duration = ms(100) })
         set(m.filter, { input = out(m.delay), cutoff = cc(27) })
-        set(m.sink, { input = out(m.filter, 'lowpass') })
 
-        return out(m.sink, 0), out(m.sink, 1)
+        local sink = out(m.filter, 'lowpass')
+
+        return sink, sink
     end
 
     return build, patch
