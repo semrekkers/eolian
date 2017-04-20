@@ -112,7 +112,7 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	one, err := newModule(false)
 	assert.Equal(t, err, nil)
 
-	two, err := newModule(false)
+	two, err := newModule(true)
 	assert.Equal(t, err, nil)
 
 	three, err := newModule(true)
@@ -140,11 +140,20 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	err = two.Reset()
 	assert.Equal(t, err, nil)
 
-	actual, expected = one.OutputsActive(true), 0
+	actual, expected = one.OutputsActive(true), 1
 	assert.Equal(t, actual, expected)
 
 	o, err = one.Output("output")
 	assert.Equal(t, err, nil)
+	assert.Equal(t, len(o.destinations), 1)
+	assert.Equal(t, two.ins["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
+	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor.(*Out).owner.ID(), one.ID())
+
+	err = three.Reset()
+	assert.Equal(t, err, nil)
+
+	o, err = one.Output("output")
+	assert.Equal(t, err, nil)
 	assert.Equal(t, len(o.destinations), 0)
-	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor, dsp.Float64(0.0))
+	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
 }

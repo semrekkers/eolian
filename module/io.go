@@ -317,13 +317,28 @@ func (i *In) removeFromOutput() {
 	}
 }
 
+type releaser interface {
+	release(*In) error
+}
+
 // Close closes the input
 func (i *In) Close() error {
 	i.removeFromOutput()
+
 	var err error
-	if c, ok := i.Source.(io.Closer); ok {
-		err = c.Close()
+	switch v := i.Source.(type) {
+	case *dsp.Buffer:
+		if r, ok := v.Processor.(releaser); ok {
+			err = r.release(i)
+		} else {
+			err = v.Close()
+		}
+	case releaser:
+		err = v.release(i)
+	case io.Closer:
+		err = v.Close()
 	}
+
 	i.setDefault()
 	return err
 }
@@ -420,6 +435,20 @@ func (o *Out) IsSinking() bool {
 	return sinking
 }
 
+func (o *Out) release(i *In) error {
+	filtered := o.destinations[:0]
+	for _, d := range o.destinations {
+		if d != i {
+			filtered = append(filtered, d)
+		}
+	}
+	o.destinations = filtered
+	if len(o.destinations) == 0 {
+		return o.Close()
+	}
+	return nil
+}
+
 // Close closes the output
 func (o *Out) Close() error {
 	var err error
@@ -427,9 +456,6 @@ func (o *Out) Close() error {
 		err = o.buffer.Close()
 	}
 
-	for _, d := range o.destinations {
-		d.setDefault()
-	}
 	o.buffer = nil
 	o.destinations = nil
 	o.reads = 0
