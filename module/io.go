@@ -422,18 +422,19 @@ func (o *Out) IsSinking() bool {
 
 // Close closes the output
 func (o *Out) Close() error {
-	defer func() {
-		for _, d := range o.destinations {
-			d.setDefault()
-		}
-		o.buffer = nil
-		o.destinations = nil
-		o.reads = 0
-	}()
+	var err error
 	if o.buffer != nil {
-		return o.buffer.Close()
+		err = o.buffer.Close()
 	}
-	return nil
+
+	for _, d := range o.destinations {
+		d.setDefault()
+	}
+	o.buffer = nil
+	o.destinations = nil
+	o.reads = 0
+
+	return err
 }
 
 // Port represents the address of a specific port on a Patcher
