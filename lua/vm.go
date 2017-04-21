@@ -38,7 +38,7 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.sort", preloadSort)
 	state.PreloadModule("eolian.string", preloadString)
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
-	state.PreloadModule("eolian.synth.control", preloadLibFile("lua/lib/control.lua"))
+	state.PreloadModule("eolian.synth.control", preloadLibFile("lua/lib/synth/control.lua"))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.rack.route", preloadLibFile("lua/lib/route.lua"))
 	state.PreloadModule("eolian.rack.mount", preloadLibFile("lua/lib/mount.lua"))
@@ -50,7 +50,7 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
-	if err := loadLibFile(state, "lua/lib/rack.lua"); err != nil {
+	if err := loadLibFile(state, "lua/lib/rack/rack.lua"); err != nil {
 		return nil, err
 	}
 	if err := loadLibFile(state, "lua/lib/utils.lua"); err != nil {
