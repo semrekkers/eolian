@@ -39,12 +39,6 @@ Rack = {
     modules = nil
 }
 
-setmetatable(Rack, {
-    __index = function(t, k)
-        return t.modules[k]
-    end
-})
-
 function Rack.clear()
     Engine:set { left = 0, right = 0 }
 end
