@@ -38,7 +38,6 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.sort", preloadSort)
 	state.PreloadModule("eolian.string", preloadString)
 	state.PreloadModule("eolian.synth", preloadSynth(mtx))
-	state.PreloadModule("eolian.synth.clock", preloadLibFile("lua/lib/clock.lua"))
 	state.PreloadModule("eolian.synth.control", preloadLibFile("lua/lib/control.lua"))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
 	state.PreloadModule("eolian.synth.route", preloadLibFile("lua/lib/route.lua"))
