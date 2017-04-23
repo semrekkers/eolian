@@ -66,12 +66,7 @@ func (s *variableRandomSeries) Process(out dsp.Frame) {
 			}
 
 			s.value[i] = s.memory[s.idx]
-			if s.gateMemory[s.idx] > 0 {
-				s.gates[i] = 1
-			} else {
-				s.gates[i] = -1
-			}
-
+			s.gates[i] = s.gateMemory[s.idx]
 			s.lastClock = clock[i]
 		}
 	})
