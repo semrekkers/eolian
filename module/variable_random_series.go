@@ -54,9 +54,8 @@ func (s *variableRandomSeries) Process(out dsp.Frame) {
 
 			if s.lastClock < 0 && clock[i] > 0 {
 				if r := random[i]; r != 0 && (r == 1 || dsp.Rand() > 1-r) {
-					scale := dsp.Rand()
-					s.memory[s.idx] = scale*(max[i]-min[i]) + min[i]
-					if scale > 0.5 {
+					s.memory[s.idx] = dsp.Rand()*(max[i]-min[i]) + min[i]
+					if dsp.Rand() > 0.25 {
 						s.gateMemory[s.idx] = 1
 					} else {
 						s.gateMemory[s.idx] = -1
