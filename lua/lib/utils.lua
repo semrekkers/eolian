@@ -32,7 +32,7 @@ end
 function find(group, name, prefix)
     prefix = prefix or ''
 
-    if string.match(name, 'Engine:0') then
+    if name == 'Engine:0' then
         return 'engine'
     end
 
