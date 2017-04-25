@@ -9,26 +9,24 @@ function with(o, fn)
 end
 
 function set(m, ...)
-    if m == nil then
-        error('attempt to set inputs on nil value')
-    end
+    assert(m, 'attempt to set inputs on nil value')
+    assert(actsLikeModule(m), 'attempt to set inputs on non-module value')
     return m:set(unpack(arg))
 end
 
 function out(m, name)
-    if m == nil then
-        error('attempt to get output "' .. name .. '" from nil value')
-    end
+    assert(m, 'attempt to get output "' .. tostring(name) .. '" from nil value')
+    assert(actsLikeModule(m), 'attempt to get output "' .. tostring(name) .. '" from non-module value')
     return m:out(name)
 end
 
 function actsLikeModule(m)
     return type(m) == 'table' and
-    type(m['inputs']) == 'function' and
-    type(m['outputs']) == 'function' and
-    type(m['out']) == 'function' and
-    type(m['set']) == 'function' and
-    type(m['id']) == 'function'
+        type(m.inputs) == 'function' and
+        type(m.outputs) == 'function' and
+        type(m.out) == 'function' and
+        type(m.set) == 'function' and
+        type(m.id) == 'function'
 end
 
 function find(group, name, prefix)
