@@ -4,12 +4,15 @@ local synth = require('eolian.synth')
 return function(env)
     local function build()
         return {
-            mono = synth.Multiple { size = 2 },
+            mix = synth.PanMix(),
         }
     end
 
-    local function patch(modules)
-        return modules.mono:out(0), modules.mono:out(1)
+    local function patch(m)
+        m.mix:set {
+            -- mixer inputs...
+        }
+        return m.mix:out('a'), m.mix:out('b')
     end
 
     return build, patch
