@@ -67,6 +67,7 @@ return function(_)
             v.lfo:set { pitch = hz(0.5), amp = 0.1, offset = 0.6 }
             v.osc:set { pitch = quant, pulseWidth = v.lfo:out('sine') }
             v.mix:set {
+                { input = v.osc:out('sine'), level = 1 },
                 { input = v.osc:out('pulse') },
                 { input = v.osc:out('saw'), level = 0.5 },
                 { input = v.osc:out('sub'), level = 1 },
