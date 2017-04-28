@@ -1,16 +1,5 @@
 local filepath = require('eolian.filepath')
 
-local reset = function(v)
-    if type(v) ~= 'table' then
-        return
-    end
-    if type(v.reset) == 'function' then
-        v.reset()
-        return
-    end
-    for _, s in pairs(v) do reset(s) end
-end
-
 local close = function(v)
     if type(v) ~= 'table' then
         return
@@ -20,6 +9,28 @@ local close = function(v)
         return
     end
     for _, s in pairs(v) do close(s) end
+end
+
+local startPatch = function(v)
+    if type(v) ~= 'table' then
+        return
+    end
+    if type(v.startPatch) == 'function' then
+        v:startPatch()
+        return
+    end
+    for _, s in pairs(v) do startPatch(s) end
+end
+
+local finishPatch = function(v)
+    if type(v) ~= 'table' then
+        return
+    end
+    if type(v.finishPatch) == 'function' then
+        v:finishPatch()
+        return
+    end
+    for _, s in pairs(v) do finishPatch(s) end
 end
 
 Rack = {
@@ -61,7 +72,9 @@ function Rack.build()
 
     Rack.modules = modules
     local result, err = pcall(function()
+        startPatch(Rack.modules)
         local left, right = patch(Rack.modules)
+        finishPatch(Rack.modules)
         Engine:set { left = left, right = right }
     end)
     if not result then
@@ -71,6 +84,7 @@ end
 
 function Rack.patch()
     assert(Rack.modules ~= nil, 'no rackfile loaded.')
+
 
     local patch
     local status, err, result = xpcall(function()
@@ -82,9 +96,10 @@ function Rack.patch()
     end
 
     local status, err, result = xpcall(function()
-        reset(Rack.modules)
-        Engine.reset()
+        startPatch(Rack.modules)
         local left, right = patch(Rack.modules)
+        finishPatch(Rack.modules)
+
         Engine:set { left = left, right = right }
     end, debug.traceback)
     if not(result) and err ~= nil then

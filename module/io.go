@@ -15,13 +15,28 @@ var moduleSequence uint64
 
 // Patcher is the patching behavior of a module
 type Patcher interface {
-	ID() string
-	Type() string
+	Identifier
+	PortLister
+	Resetter
+	io.Closer
+
 	Patch(string, interface{}) error
 	Output(string) (*Out, error)
+}
+
+type Identifier interface {
+	ID() string
+	Type() string
+}
+
+type Resetter interface {
 	Reset() error
 	ResetOnly([]string) error
-	Close() error
+}
+
+type PortLister interface {
+	Inputs() map[string]*In
+	Outputs() map[string]*Out
 }
 
 // IO is the input/output registry of a module. It manages the lifecycles of the ports; fascilitating connects and
@@ -302,7 +317,7 @@ func (i *In) LastFrame() dsp.Frame {
 	return i.Source.(*dsp.Buffer).Frame
 }
 
-func (i *In) setDefault() {
+func (i *In) Normalize() {
 	i.SetSource(i.initial)
 }
 
@@ -339,7 +354,7 @@ func (i *In) Close() error {
 		err = v.Close()
 	}
 
-	i.setDefault()
+	i.Normalize()
 	return err
 }
 

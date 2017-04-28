@@ -99,21 +99,20 @@ func buildConstructor(name string, mtx sync.Locker) func(state *lua.LState) int 
 func addModuleMethods(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua.LTable {
 	funcs := func(p module.Patcher) map[string]lua.LGFunction {
 		fns := map[string]lua.LGFunction{
-			// Methods lock and interact with the graph
-			"close":     lock(moduleClose, mtx, p),
-			"inputs":    lock(moduleInputs, mtx, p),
-			"members":   lock(moduleMembers, mtx, p),
-			"outputs":   lock(moduleOutputs, mtx, p),
-			"reset":     lock(moduleReset, mtx, p),
-			"resetOnly": lock(moduleResetOnly, mtx, p),
-			"set":       lock(moduleSet, mtx, p),
-			"state":     lock(moduleState, mtx, p),
-
-			// Methods that don't need to lock the graph
-			"ns":   moduleExtendNamespace(p),
-			"out":  moduleOutput(p),
-			"type": moduleType(p),
-			"id":   moduleID(p),
+			"close":       moduleClose(p, mtx),
+			"finishPatch": moduleFinishPatch(p, mtx),
+			"id":          moduleID(p, mtx),
+			"inputs":      moduleInputs(p, mtx),
+			"members":     moduleMembers(p, mtx),
+			"ns":          moduleExtendNamespace(p, mtx),
+			"out":         moduleOutput(p, mtx),
+			"outputs":     moduleOutputs(p, mtx),
+			"reset":       moduleReset(p, mtx),
+			"resetOnly":   moduleResetOnly(p, mtx),
+			"set":         moduleSet(p, mtx),
+			"startPatch":  moduleStartPatch(p, mtx),
+			"state":       moduleState(p, mtx),
+			"type":        moduleType(p, mtx),
 		}
 
 		for k, v := range moduleSpecificMethods(p, mtx) {
@@ -127,6 +126,7 @@ func addModuleMethods(state *lua.LState, p module.Patcher, mtx sync.Locker) *lua
 	}(p)
 
 	table := state.NewTable()
+	state.RawSet(table, lua.LString("__patchstate"), state.NewTable())
 	state.RawSet(table, lua.LString("__namespace"), state.NewTable())
 	state.RawSet(table, lua.LString("__type"), lua.LString("module"))
 	state.SetFuncs(table, funcs)
@@ -202,113 +202,126 @@ func moduleSpecificMethods(p module.Patcher, mtx sync.Locker) map[string]lua.LGF
 	return luaMethods
 }
 
-type lister interface {
-	Inputs() map[string]*module.In
-	Outputs() map[string]*module.Out
-}
-
-func moduleInputs(state *lua.LState, p module.Patcher) int {
-	l, ok := p.(lister)
-	if !ok {
-		state.RaiseError("%T is not capable of listing inputs", p)
-	}
-	t := state.NewTable()
-	for k, v := range l.Inputs() {
-		t.RawSet(lua.LString(k), lua.LString(v.SourceName()))
-	}
-	state.Push(t)
-	return 1
-}
-
-func moduleOutputs(state *lua.LState, p module.Patcher) int {
-	l, ok := p.(lister)
-	if !ok {
-		state.RaiseError("%T is not capable of listing outputs", p)
-	}
-	t := state.NewTable()
-	for k, v := range l.Outputs() {
-		dests := state.NewTable()
-		for i, name := range v.DestinationNames() {
-			dests.Insert(i+1, lua.LString(name))
+func moduleInputs(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		t := state.NewTable()
+		mtx.Lock()
+		for k, v := range p.Inputs() {
+			t.RawSet(lua.LString(k), lua.LString(v.SourceName()))
 		}
-		t.RawSet(lua.LString(k), dests)
+		mtx.Unlock()
+		state.Push(t)
+		return 1
 	}
-	state.Push(t)
-	return 1
+}
+
+func moduleOutputs(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		t := state.NewTable()
+		mtx.Lock()
+		for k, v := range p.Outputs() {
+			dests := state.NewTable()
+			for i, name := range v.DestinationNames() {
+				dests.Insert(i+1, lua.LString(name))
+			}
+			t.RawSet(lua.LString(k), dests)
+		}
+		mtx.Unlock()
+		state.Push(t)
+		return 1
+	}
 }
 
 type stateExposer interface {
 	LuaState() map[string]interface{}
 }
 
-func moduleState(state *lua.LState, p module.Patcher) int {
-	t := state.NewTable()
-	if l, ok := p.(stateExposer); ok {
-		for k, v := range l.LuaState() {
-			t.RawSet(lua.LString(k), lua.LString(fmt.Sprintf("%v", v)))
+func moduleState(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		t := state.NewTable()
+		if l, ok := p.(stateExposer); ok {
+			mtx.Lock()
+			for k, v := range l.LuaState() {
+				t.RawSet(lua.LString(k), lua.LString(fmt.Sprintf("%v", v)))
+			}
+			mtx.Unlock()
 		}
+		state.Push(t)
+		return 1
 	}
-	state.Push(t)
-	return 1
 }
 
 type memberExposer interface {
 	LuaMembers() []string
 }
 
-func moduleMembers(state *lua.LState, p module.Patcher) int {
-	t := state.NewTable()
-	if l, ok := p.(memberExposer); ok {
-		for i, v := range l.LuaMembers() {
-			t.Insert(i+1, lua.LString(v))
-		}
-	}
-	state.Push(t)
-	return 1
-}
-
-func moduleSet(state *lua.LState, p module.Patcher) int {
-	self := state.CheckTable(1)
-	inputs := map[interface{}]interface{}{}
-
-	switch state.GetTop() {
-	case 2:
-		mapped := gluamapper.ToGoValue(state.CheckTable(2), mapperOpts)
-		switch v := mapped.(type) {
-		case map[interface{}]interface{}:
-			inputs = v
-		case []interface{}:
-			for i, rv := range v {
-				inputs[strconv.Itoa(i)] = rv
+func moduleMembers(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		t := state.NewTable()
+		if l, ok := p.(memberExposer); ok {
+			mtx.Lock()
+			for i, v := range l.LuaMembers() {
+				t.Insert(i+1, lua.LString(v))
 			}
-		default:
-			state.RaiseError("expected table, but got %T instead", mapped)
+			mtx.Unlock()
 		}
-	case 3:
-		inputs[state.ToString(2)] = state.CheckAny(3)
-	default:
-		state.RaiseError("invalid number of arguments")
+		state.Push(t)
+		return 1
 	}
-
-	if err := setInputs(state, p, getNamespace(self), inputs); err != nil {
-		state.RaiseError(err.Error())
-	}
-	state.Push(self)
-	return 1
 }
 
-func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) error {
+func moduleSet(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+		inputs := map[interface{}]interface{}{}
+
+		switch state.GetTop() {
+		case 2:
+			mapped := gluamapper.ToGoValue(state.CheckTable(2), mapperOpts)
+			switch v := mapped.(type) {
+			case map[interface{}]interface{}:
+				inputs = v
+			case []interface{}:
+				for i, rv := range v {
+					inputs[strconv.Itoa(i)] = rv
+				}
+			default:
+				state.RaiseError("expected table, but got %T instead", mapped)
+			}
+		case 3:
+			inputs[state.ToString(2)] = state.CheckAny(3)
+		default:
+			state.RaiseError("invalid number of arguments")
+		}
+
+		mtx.Lock()
+		err := setInputs(state, self, p, getNamespace(self), inputs)
+		mtx.Unlock()
+		if err != nil {
+			state.RaiseError(err.Error())
+		}
+
+		state.Push(self)
+		return 1
+	}
+}
+
+func setInputs(state *lua.LState, moduleTable *lua.LTable, p module.Patcher, namespace []string, inputs map[interface{}]interface{}) error {
 	for key, raw := range inputs {
 		full := append(namespace, key.(string))
 
 		if inputs, ok := raw.(map[interface{}]interface{}); ok {
-			if err := setInputs(state, p, full, inputs); err != nil {
+			if err := setInputs(state, moduleTable, p, full, inputs); err != nil {
 				return err
 			}
 			continue
 		}
 
 		name := strings.Join(full, "/")
+
+		patchState := state.GetField(moduleTable, "__patchstate").(*lua.LTable)
+		patchState.RawSetString(name, lua.LBool(true))
+		state.SetField(moduleTable, "__patchstate", patchState)
 
 		switch v := raw.(type) {
 		case *lua.LUserData:
@@ -322,7 +335,7 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 					return err
 				}
 			default:
-				state.RaiseError("unable to patch %T into %q", mv, name)
+				return fmt.Errorf("unable to patch %T into %q", mv, name)
 			}
 		case lua.LNumber:
 			if err := p.Patch(name, float64(v)); err != nil {
@@ -337,52 +350,68 @@ func setInputs(state *lua.LState, p module.Patcher, namespace []string, inputs m
 	return nil
 }
 
-func moduleID(p module.Patcher) func(*lua.LState) int {
+func moduleID(p module.Patcher, _ sync.Locker) func(*lua.LState) int {
 	return func(state *lua.LState) int {
 		state.Push(lua.LString(p.ID()))
 		return 1
 	}
 }
 
-func moduleResetOnly(state *lua.LState, p module.Patcher) int {
-	names := state.CheckTable(1)
-	inputs := []string{}
-	names.ForEach(func(k, v lua.LValue) {
-		inputs = append(inputs, v.String())
-	})
-	if err := p.ResetOnly(inputs); err != nil {
-		state.RaiseError("%s", err.Error())
+func moduleResetOnly(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		names := state.CheckTable(1)
+		inputs := []string{}
+		names.ForEach(func(k, v lua.LValue) {
+			inputs = append(inputs, v.String())
+		})
+
+		mtx.Lock()
+		err := p.ResetOnly(inputs)
+		mtx.Unlock()
+		if err != nil {
+			state.RaiseError("%s", err.Error())
+		}
+		return 0
 	}
-	return 0
 }
 
-func moduleReset(state *lua.LState, p module.Patcher) int {
-	if err := p.Reset(); err != nil {
-		state.RaiseError(err.Error())
+func moduleReset(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		mtx.Lock()
+		err := p.Reset()
+		mtx.Unlock()
+		if err != nil {
+			state.RaiseError(err.Error())
+		}
+		return 0
 	}
-	return 0
 }
 
-func moduleClose(state *lua.LState, p module.Patcher) int {
-	if err := p.Close(); err != nil {
-		state.RaiseError(err.Error())
+func moduleClose(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		mtx.Lock()
+		err := p.Close()
+		mtx.Unlock()
+		if err != nil {
+			state.RaiseError(err.Error())
+		}
+		return 0
 	}
-	return 0
 }
 
-func moduleType(p module.Patcher) lua.LGFunction {
+func moduleType(p module.Patcher, _ sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		state.Push(lua.LString(p.Type()))
 		return 1
 	}
 }
 
-func moduleExtendNamespace(p module.Patcher) lua.LGFunction {
+func moduleExtendNamespace(p module.Patcher, _ sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
 
 		newNamespace := state.NewTable()
-		namespace := self.RawGet(lua.LString("__namespace")).(*lua.LTable)
+		namespace := self.RawGetString("__namespace").(*lua.LTable)
 		namespace.ForEach(func(_, v lua.LValue) { newNamespace.Append(v) })
 
 		name := state.ToString(2)
@@ -398,7 +427,7 @@ func moduleExtendNamespace(p module.Patcher) lua.LGFunction {
 	}
 }
 
-func moduleOutput(p module.Patcher) lua.LGFunction {
+func moduleOutput(p module.Patcher, _ sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
 		var name string
@@ -417,16 +446,6 @@ func moduleOutput(p module.Patcher) lua.LGFunction {
 	}
 }
 
-type lockingModuleMethod func(state *lua.LState, p module.Patcher) int
-
-func lock(m lockingModuleMethod, mtx sync.Locker, p module.Patcher) lua.LGFunction {
-	return func(state *lua.LState) int {
-		mtx.Lock()
-		defer mtx.Unlock()
-		return m(state, p)
-	}
-}
-
 func getNamespace(table *lua.LTable) []string {
 	raw := table.RawGet(lua.LString("__namespace")).(*lua.LTable)
 	namespace := gluamapper.ToGoValue(raw, mapperOpts)
@@ -438,4 +457,38 @@ func getNamespace(table *lua.LTable) []string {
 		}
 	}
 	return segs
+}
+
+func moduleStartPatch(p module.Patcher, _ sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+		state.SetField(self, "__patchstate", state.NewTable())
+		return 0
+	}
+}
+
+func moduleFinishPatch(p module.Patcher, mtx sync.Locker) lua.LGFunction {
+	return func(state *lua.LState) int {
+		self := state.CheckTable(1)
+		patchState := state.GetField(self, "__patchstate").(*lua.LTable)
+		mtx.Lock()
+		inputs := p.Inputs()
+		mtx.Unlock()
+
+		for _, in := range inputs {
+			var found bool
+			patchState.ForEach(func(k, v lua.LValue) {
+				if in.Name == k.String() {
+					found = true
+					return
+				}
+			})
+			if !found {
+				mtx.Lock()
+				in.Normalize()
+				mtx.Unlock()
+			}
+		}
+		return 0
+	}
 }
