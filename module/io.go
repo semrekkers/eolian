@@ -24,16 +24,19 @@ type Patcher interface {
 	Output(string) (*Out, error)
 }
 
+// Identifier returns the identity and type of a module
 type Identifier interface {
 	ID() string
 	Type() string
 }
 
+// Resetter resets inputs back to their normal values
 type Resetter interface {
 	Reset() error
 	ResetOnly([]string) error
 }
 
+// PortLister lists inputs and outputs of a module
 type PortLister interface {
 	Inputs() map[string]*In
 	Outputs() map[string]*Out
