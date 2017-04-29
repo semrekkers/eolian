@@ -98,7 +98,7 @@ return function(_)
             cutoff = hz(500),
         }
 
-        return rack.reverb:out('a'), rack.reverb:out('b')
+        return rack.reverb:out('a', 'b')
     end
 
     return build, patch

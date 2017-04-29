@@ -92,7 +92,7 @@ return function(_)
 
         r.reverb:set { a = r.amp2:out(), b = r.amp2:out(), decay = 0.1 }
 
-        return r.reverb:out('a'), r.reverb:out('b')
+        return r.reverb:out('a', 'b')
     end
 
     return build, patch

@@ -51,7 +51,7 @@ return function(_)
         })
         set(modules.compress, { input = out(modules.mix) })
 
-        return out(modules.compress), out(modules.compress)
+        return out(modules.compress)
     end
 
     return build, patch

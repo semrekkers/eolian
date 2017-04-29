@@ -33,6 +33,16 @@ local finishPatch = function(v)
     for _, s in pairs(v) do finishPatch(s) end
 end
 
+local mount = function(sinks)
+    if #sinks == 1 then
+        Engine:set { left = sinks[1], right = sinks[1] }
+    elseif #sinks == 2 then
+        Engine:set { left = sinks[1], right = sinks[2] }
+    elseif #sinks > 2 then
+        error('too many return values from patch')
+    end
+end
+
 Rack = {
     env = {
         filepath = '',
@@ -73,9 +83,9 @@ function Rack.build()
     Rack.modules = modules
     local result, err = pcall(function()
         startPatch(Rack.modules)
-        local left, right = patch(Rack.modules)
+        local sinks = {patch(Rack.modules)}
         finishPatch(Rack.modules)
-        Engine:set { left = left, right = right }
+        mount(sinks)
     end)
     if not result then
         print(err)
@@ -97,10 +107,9 @@ function Rack.patch()
 
     local status, err, result = xpcall(function()
         startPatch(Rack.modules)
-        local left, right = patch(Rack.modules)
+        local sinks = {patch(Rack.modules)}
         finishPatch(Rack.modules)
-
-        Engine:set { left = left, right = right }
+        mount(sinks)
     end, debug.traceback)
     if not(result) and err ~= nil then
         print(err)
@@ -116,7 +125,7 @@ function Rack.load(path)
     Rack.env.path      = filepath.dir(path)
     local build, patch = dofile(path)(Rack.env)
     Rack.modules       = build(Rack.env)
+    local sinks        = {patch(Rack.modules)}
 
-    local left, right  = patch(Rack.modules)
-    Engine:set { left = left, right = right }
+    mount(sinks)
 end

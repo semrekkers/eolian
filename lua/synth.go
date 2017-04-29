@@ -430,19 +430,27 @@ func moduleExtendNamespace(p module.Patcher, _ sync.Locker) lua.LGFunction {
 func moduleOutput(p module.Patcher, _ sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
-		var name string
-		if state.GetTop() > 1 {
-			name = state.ToString(2)
+		var names []string
+		if top := state.GetTop(); top > 1 {
+			for i := 0; i <= top; i++ {
+				v := state.Get(i + 2)
+				if v == lua.LNil {
+					continue
+				}
+				names = append(names, v.String())
+			}
 		}
-		if len(name) == 0 {
-			name = "output"
+		if len(names) == 0 {
+			names = append(names, "output")
 		}
 
 		namespace := getNamespace(self)
-		name = strings.Join(append(namespace, name), "/")
-
-		state.Push(&lua.LUserData{Value: module.Port{p, name}})
-		return 1
+		for _, n := range names {
+			state.Push(&lua.LUserData{
+				Value: module.Port{p, strings.Join(append(namespace, n), "/")},
+			})
+		}
+		return len(names)
 	}
 }
 

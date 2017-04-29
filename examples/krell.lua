@@ -72,7 +72,7 @@ return function(_)
         r.mono:set     { input = r.compress:out() }
         r.reverb:set   { a = r.mono:out(0), b = r.mono:out(1), cutoff = hz(700), decay = 0.8 }
 
-        return r.reverb:out('a'), r.reverb:out('b')
+        return r.reverb:out('a', 'b')
     end
 
     return build, patch

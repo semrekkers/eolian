@@ -12,7 +12,7 @@ return function(env)
         m.mix:set {
             -- mixer inputs...
         }
-        return m.mix:out('a'), m.mix:out('b')
+        return m.mix:out('a', 'b')
     end
 
     return build, patch

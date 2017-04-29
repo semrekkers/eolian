@@ -116,9 +116,7 @@ return function(_)
         set(m.delay, { input = out(m.amp), gain = 0.4, duration = ms(100) })
         set(m.filter, { input = out(m.delay), cutoff = cc(27) })
 
-        local sink = out(m.filter, 'lowpass')
-
-        return sink, sink
+        return out(m.filter, 'lowpass')
     end
 
     return build, patch
