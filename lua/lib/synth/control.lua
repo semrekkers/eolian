@@ -14,7 +14,7 @@ return function(m, options, defaultInput)
     for name,_ in pairs(m.inputs()) do
         if options[name] ~= nil then
             controls[name] = synth.Control(options[name])
-            set(m, name, out(controls[name]))
+            m:set(name, controls[name]:out())
         end
     end
 
@@ -45,11 +45,11 @@ return function(m, options, defaultInput)
             local apply = function(k,v)
                 local segs = eolianString.split(k, '/')
                 if #segs == 2 and controls[segs[1]] ~= nil then
-                    set(controls[segs[1]], segs[2], v)
+                    controls[segs[1]]:set(segs[2], v)
                 elseif controls[k] ~= nil then
-                    set(controls[k], defaultInput, v)
+                    controls[k]:set(defaultInput, v)
                 else
-                    set(m, k, v)
+                    m:set(k, v)
                 end
             end
 
@@ -71,6 +71,18 @@ return function(m, options, defaultInput)
                     m.resetOnly({k})
                 end
             end
+        end,
+        startPatch = function()
+            for k,v in pairs(controls) do v:startPatch() end
+            m:startPatch()
+        end,
+        finishPatch = function()
+            local exclude = {}
+            for k,v in pairs(controls) do
+                table.insert(exclude, k)
+                v:finishPatch()
+            end
+            m:finishPatch(exclude)
         end
     }
 end

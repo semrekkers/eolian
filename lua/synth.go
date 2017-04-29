@@ -470,6 +470,8 @@ func moduleStartPatch(p module.Patcher, _ sync.Locker) lua.LGFunction {
 func moduleFinishPatch(p module.Patcher, mtx sync.Locker) lua.LGFunction {
 	return func(state *lua.LState) int {
 		self := state.CheckTable(1)
+		exclusions := state.OptTable(2, state.NewTable())
+
 		patchState := state.GetField(self, "__patchstate").(*lua.LTable)
 		mtx.Lock()
 		inputs := p.Inputs()
@@ -477,13 +479,23 @@ func moduleFinishPatch(p module.Patcher, mtx sync.Locker) lua.LGFunction {
 
 		for _, in := range inputs {
 			var found bool
-			patchState.ForEach(func(k, v lua.LValue) {
+			patchState.ForEach(func(k, _ lua.LValue) {
 				if in.Name == k.String() {
 					found = true
 					return
 				}
 			})
 			if !found {
+				var excluded bool
+				exclusions.ForEach(func(_, v lua.LValue) {
+					if in.Name == v.String() {
+						excluded = true
+					}
+				})
+				if excluded {
+					continue
+				}
+
 				mtx.Lock()
 				in.Normalize()
 				mtx.Unlock()
