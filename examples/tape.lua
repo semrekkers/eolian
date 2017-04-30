@@ -1,8 +1,13 @@
-local synth  = require('eolian.synth')
-local theory = require('eolian.theory')
-local ctrl   = require('eolian.synth.control')
-
 return function(_)
+    local synth  = require('eolian.synth')
+    local theory = require('eolian.theory')
+    local ctrl   = require('eolian.synth.control')
+
+    local func = require('eolian.func')
+    local with, set, out = func.with,
+                           func.set,
+                           func.out
+
     local function build()
         return {
             midi  = synth.MIDIController { device = 'Launch Control' },

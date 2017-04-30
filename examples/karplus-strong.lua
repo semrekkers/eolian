@@ -1,6 +1,10 @@
-local synth = require 'eolian.synth'
-
 return function(_)
+    local synth = require('eolian.synth')
+    local func  = require('eolian.func')
+    local with, set, out = func.with,
+                           func.set,
+                           func.out
+
     local function build()
         return {
             mix   = synth.Mix(),

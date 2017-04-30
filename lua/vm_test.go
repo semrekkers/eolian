@@ -36,8 +36,8 @@ func TestCreate(t *testing.T) {
 		Rack.modules.mix = synth.Mix { size = 4 }
 		Rack.modules.mix:ns(0):set { input = 2 }
 		Rack.modules.mix:ns(1):set { input = Rack.modules.direct:out() }
-		set(Rack.modules.mix:ns(1), 'input', out(Rack.modules.direct))
-		set(Rack.modules.mix:ns(1), { input = out(Rack.modules.direct) })
+		Rack.modules.mix:ns(1):set('input', Rack.modules.direct:out())
+		Rack.modules.mix:ns(1):set { input = Rack.modules.direct:out() }
 		inspect(Rack.modules.mix)
 		Rack.modules.mix:close()
 

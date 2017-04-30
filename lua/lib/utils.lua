@@ -4,23 +4,7 @@ local sort      = require('eolian.sort')
 local tabwriter = require('eolian.tabwriter')
 local time      = require('eolian.time')
 
-function with(o, fn)
-    return fn(o)
-end
-
-function set(m, ...)
-    assert(m, 'attempt to set inputs on nil value')
-    assert(actsLikeModule(m), 'attempt to set inputs on non-module value')
-    return m:set(unpack(arg))
-end
-
-function out(m, name)
-    assert(m, 'attempt to get output "' .. tostring(name) .. '" from nil value')
-    assert(actsLikeModule(m), 'attempt to get output "' .. tostring(name) .. '" from non-module value')
-    return m:out(name)
-end
-
-function actsLikeModule(m)
+local function actsLikeModule(m)
     return type(m) == 'table' and
         type(m.inputs) == 'function' and
         type(m.outputs) == 'function' and
@@ -29,7 +13,7 @@ function actsLikeModule(m)
         type(m.id) == 'function'
 end
 
-function find(group, name, prefix)
+local function find(group, name, prefix)
     prefix = prefix or ''
 
     if name == 'Engine:0' then

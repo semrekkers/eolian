@@ -1,7 +1,8 @@
-local synth  = require('eolian.synth')
-local theory = require('eolian.theory')
-
 return function(_)
+    local synth  = require('eolian.synth')
+    local theory = require('eolian.theory')
+    local with   = require('eolian.func').with
+
     local function build()
         return {
             clock  = synth.Clock(),
