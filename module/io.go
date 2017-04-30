@@ -324,25 +324,12 @@ func (i *In) normalize() {
 	i.SetSource(i.initial)
 }
 
-func (i *In) removeFromOutput() {
-	switch v := i.Source.(type) {
-	case *dsp.Buffer:
-		if o, ok := v.Processor.(*Out); ok {
-			o.removeDestination(i)
-		}
-	case *Out:
-		v.removeDestination(i)
-	}
-}
-
 type releaser interface {
 	release(*In) error
 }
 
 // Close closes the input
 func (i *In) Close() error {
-	i.removeFromOutput()
-
 	var err error
 	switch v := i.Source.(type) {
 	case *dsp.Buffer:
@@ -421,16 +408,6 @@ func (o *Out) Process(out dsp.Frame) {
 
 func (o *Out) addDestination(in *In) {
 	o.destinations = append(o.destinations, in)
-}
-
-func (o *Out) removeDestination(in *In) {
-	filtered := []*In{}
-	for _, d := range o.destinations {
-		if d != in {
-			filtered = append(filtered, d)
-		}
-	}
-	o.destinations = filtered
 }
 
 // DestinationNames returns the name of the destination input
