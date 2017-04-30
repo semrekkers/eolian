@@ -157,3 +157,45 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	assert.Equal(t, len(o.destinations), 0)
 	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
 }
+
+func TestNormalizeInput(t *testing.T) {
+	one, err := newModule(false)
+	assert.Equal(t, err, nil)
+
+	two, err := newModule(true)
+	assert.Equal(t, err, nil)
+
+	three, err := newModule(true)
+	assert.Equal(t, err, nil)
+
+	err = two.Patch("input", Port{one, "output"})
+	assert.Equal(t, err, nil)
+
+	err = three.Patch("input", Port{one, "output"})
+	assert.Equal(t, err, nil)
+
+	actual, expected := one.OutputsActive(true), 1
+	assert.Equal(t, actual, expected)
+
+	actual, expected = two.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+
+	actual, expected = three.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+
+	o, err := one.Output("output")
+	assert.Equal(t, err, nil)
+	assert.Equal(t, len(o.destinations), 2)
+
+	err = two.ins["input"].Close()
+	assert.Equal(t, err, nil)
+
+	actual, expected = one.OutputsActive(true), 1
+	assert.Equal(t, actual, expected)
+
+	err = three.ins["input"].Close()
+	assert.Equal(t, err, nil)
+
+	actual, expected = one.OutputsActive(true), 0
+	assert.Equal(t, actual, expected)
+}
