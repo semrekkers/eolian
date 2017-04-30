@@ -505,8 +505,11 @@ func moduleFinishPatch(p module.Patcher, mtx sync.Locker) lua.LGFunction {
 				}
 
 				mtx.Lock()
-				in.Normalize()
+				err := in.Close()
 				mtx.Unlock()
+				if err != nil {
+					state.RaiseError(err.Error())
+				}
 			}
 		}
 		return 0

@@ -320,7 +320,7 @@ func (i *In) LastFrame() dsp.Frame {
 	return i.Source.(*dsp.Buffer).Frame
 }
 
-func (i *In) Normalize() {
+func (i *In) normalize() {
 	i.SetSource(i.initial)
 }
 
@@ -357,7 +357,7 @@ func (i *In) Close() error {
 		err = v.Close()
 	}
 
-	i.Normalize()
+	i.normalize()
 	return err
 }
 
