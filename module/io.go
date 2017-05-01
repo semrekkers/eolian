@@ -130,7 +130,7 @@ func (io *IO) Patch(name string, t interface{}) error {
 		return err
 	}
 
-	input.SetSource(processor)
+	input.setSource(processor)
 	if o, ok := processor.(*Out); ok {
 		o.addDestination(input)
 	}
@@ -282,12 +282,11 @@ func (i *In) Process(f dsp.Frame) {
 	i.Source.Process(f)
 }
 
-// SetSource sets the internal source to some Processor
-func (i *In) SetSource(r dsp.Processor) {
+func (i *In) setSource(r dsp.Processor) {
 	switch v := i.Source.(type) {
-	case dsp.SourceSetter:
-		v.SetSource(r)
-	case dsp.Processor:
+	case *dsp.Buffer:
+		v.Processor = r
+	default:
 		i.Source = r
 	}
 }
@@ -320,10 +319,6 @@ func (i *In) LastFrame() dsp.Frame {
 	return i.Source.(*dsp.Buffer).Frame
 }
 
-func (i *In) normalize() {
-	i.SetSource(i.initial)
-}
-
 type releaser interface {
 	release(*In) error
 }
@@ -344,7 +339,7 @@ func (i *In) Close() error {
 		err = v.Close()
 	}
 
-	i.normalize()
+	i.setSource(i.initial)
 	return err
 }
 

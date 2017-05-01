@@ -10,11 +10,6 @@ type Processor interface {
 	Process(Frame)
 }
 
-// SourceSetter is something that can set its source
-type SourceSetter interface {
-	SetSource(Processor)
-}
-
 // ProcessValuer is a Processor and Valuer
 type ProcessValuer interface {
 	Processor
@@ -32,16 +27,6 @@ func NewBuffer(p Processor) *Buffer {
 	return &Buffer{
 		Processor: p,
 		Frame:     make(Frame, FrameSize),
-	}
-}
-
-// SetSource establishes the Processor that is called when the Buffer is read
-func (b *Buffer) SetSource(r Processor) {
-	switch v := b.Processor.(type) {
-	case SourceSetter:
-		v.SetSource(r)
-	case Processor:
-		b.Processor = r
 	}
 }
 
