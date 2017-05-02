@@ -6,6 +6,10 @@ func init() {
 	Register("Round", func(Config) (Patcher, error) { return newUnary("Round", round, 0) })
 	Register("Floor", func(Config) (Patcher, error) { return newUnary("Floor", floor, 0) })
 	Register("Ceil", func(Config) (Patcher, error) { return newUnary("Ceil", ceil, 0) })
+
+	Register("Hz", func(Config) (Patcher, error) { return newUnary("Hz", hz, 0) })
+	Register("MS", func(Config) (Patcher, error) { return newUnary("MS", ms, 0) })
+	Register("BPM", func(Config) (Patcher, error) { return newUnary("BPM", bpm, 0) })
 }
 
 type unary struct {
@@ -44,3 +48,6 @@ func round(in dsp.Float64) dsp.Float64 {
 }
 func floor(in dsp.Float64) dsp.Float64 { return dsp.Floor(in) }
 func ceil(in dsp.Float64) dsp.Float64  { return dsp.Ceil(in) }
+func hz(in dsp.Float64) dsp.Float64    { return dsp.Frequency(float64(in)).Value() }
+func ms(in dsp.Float64) dsp.Float64    { return dsp.Duration(float64(in)).Value() }
+func bpm(in dsp.Float64) dsp.Float64   { return dsp.BPM(float64(in)).Value() }
