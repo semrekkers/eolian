@@ -71,11 +71,9 @@ lowpass         -->     mix/0/input
 Documentation for all modules and synthesizer features can be found on the
 [Wiki](https://github.com/brettbuddin/eolian/wiki). I'll also be posting tutorials there soon.
 
-A small set of example racks are maintained in the [examples directory](https://github.com/brettbuddin/eolian/tree/master/examples).
-
-I keep all of my personal racks at [brettbuddin/eolian-racks](https://github.com/brettbuddin/eolian-racks). Be warned
-that some of them might be out of date due to changes and new features in Eolian. I also frequently post [short videos
-on Instagram](https://www.instagram.com/brettbuddin) of things I've been able to get out of it.
+A small set of example racks are maintained in the [examples
+directory](https://github.com/brettbuddin/eolian/tree/master/examples). I also frequently post [short videos on
+Instagram](https://www.instagram.com/brettbuddin) of things I've been able to get out of it.
 
 ## Contributing
 
