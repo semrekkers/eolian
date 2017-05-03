@@ -3,16 +3,16 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "q1aLuX/d3Z1GvcHO5UqpxvpjieE=",
+			"checksumSHA1": "5RmQjYDaSDyNhbIDvE/sjN90F2I=",
 			"path": "buddin.us/musictheory",
-			"revision": "fc830c4e9d56d418b148fae4aacba8220584c67a",
-			"revisionTime": "2017-03-18T17:18:05Z"
+			"revision": "17c08e121a42daa6fa348d6a728506f119b51e01",
+			"revisionTime": "2017-05-03T22:22:52Z"
 		},
 		{
-			"checksumSHA1": "eym21rBDGlmtJTST5PpGGAr34sA=",
+			"checksumSHA1": "ZI0qrRTzvm2KH91+BokJKIDd+Hc=",
 			"path": "buddin.us/musictheory/intervals",
-			"revision": "fc830c4e9d56d418b148fae4aacba8220584c67a",
-			"revisionTime": "2017-03-18T17:18:05Z"
+			"revision": "17c08e121a42daa6fa348d6a728506f119b51e01",
+			"revisionTime": "2017-05-03T22:22:52Z"
 		},
 		{
 			"checksumSHA1": "uJOp8topHA4MKdLAf2D4X9Nwwyo=",

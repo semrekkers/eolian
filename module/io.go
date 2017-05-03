@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 
 	"buddin.us/eolian/dsp"
+	"buddin.us/musictheory"
 )
 
 var moduleSequence uint64
@@ -145,6 +146,11 @@ func assertProcessor(t interface{}) (dsp.Processor, error) {
 		return v, nil
 	case dsp.Pitch:
 		return v, nil
+	case musictheory.Pitch:
+		return dsp.Pitch{
+			Raw:    v.Name(musictheory.AscNames),
+			Valuer: dsp.Frequency(v.Freq()),
+		}, nil
 	case dsp.Hz:
 		return v, nil
 	case dsp.MS:

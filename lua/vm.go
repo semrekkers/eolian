@@ -13,6 +13,7 @@ import (
 	"github.com/chzyer/readline"
 	lua "github.com/yuin/gopher-lua"
 
+	"buddin.us/eolian/lua/theory"
 	"buddin.us/eolian/module"
 )
 
@@ -44,7 +45,7 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.rack.route", preloadLibFile("lua/lib/rack/route.lua"))
 	state.PreloadModule("eolian.rack.mount", preloadLibFile("lua/lib/rack/mount.lua"))
 	state.PreloadModule("eolian.tabwriter", preloadTabWriter)
-	state.PreloadModule("eolian.theory", preloadTheory)
+	state.PreloadModule("eolian.theory", theory.Preload)
 	state.PreloadModule("eolian.time", preloadTime)
 
 	state.SetGlobal("Engine", addModuleMethods(state, p, mtx))
