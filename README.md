@@ -28,8 +28,6 @@ On macOS you can install these dependencies with: `brew install go portaudio por
 
 ```
 $ go get buddin.us/eolian
-$ cd $GOPATH/src/buddin.us/eolian
-$ make install
 ```
 
 ## Usage
