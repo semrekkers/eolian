@@ -4,5 +4,3 @@ bin/*
 coverage.out
 trace.out
 /eolian
-
-lua/lib.go
