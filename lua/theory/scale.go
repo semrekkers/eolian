@@ -72,6 +72,11 @@ func newScaleUserData(state *lua.LState, scale musictheory.Scale) *lua.LUserData
 			state.RaiseError("argument is not an interval")
 			return 1
 		},
+		"count": func(state *lua.LState) int {
+			scale := state.CheckUserData(1).Value.(musictheory.Scale)
+			state.Push(lua.LNumber(len(scale)))
+			return 1
+		},
 	})
 
 	mt := state.NewTable()

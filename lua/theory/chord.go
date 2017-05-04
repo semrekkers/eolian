@@ -87,6 +87,11 @@ func newChordUserData(state *lua.LState, chord musictheory.Chord) *lua.LUserData
 			state.Push(newChordUserData(state, chord.Invert(degree)))
 			return 1
 		},
+		"count": func(state *lua.LState) int {
+			chord := state.CheckUserData(1).Value.(musictheory.Chord)
+			state.Push(lua.LNumber(len(chord)))
+			return 1
+		},
 	})
 
 	mt := state.NewTable()
