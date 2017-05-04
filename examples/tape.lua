@@ -68,7 +68,7 @@ return function(_)
             set(r.quant, { input = out(r.series, 'value') })
 
             local scale = theory.scale('C3', 'minorPentatonic', 2)
-            for i,p in ipairs(scale) do
+            for i,p in ipairs(scale:pitches()) do
                 set(r.quant, i-1 .. '/pitch', p)
             end
         end)

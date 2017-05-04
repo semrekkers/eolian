@@ -46,11 +46,38 @@ func newScale(state *lua.LState) int {
 	}
 	octaves := state.CheckInt(3)
 
-	t := state.NewTable()
-	scale := musictheory.NewScale(root, series, octaves)
-	for i, p := range scale {
-		t.RawSetInt(i+1, newPitchUserData(state, p.(musictheory.Pitch)))
-	}
-	state.Push(t)
+	state.Push(newScaleUserData(state, musictheory.NewScale(root, series, octaves)))
 	return 1
+}
+
+func newScaleUserData(state *lua.LState, scale musictheory.Scale) *lua.LUserData {
+	methods := state.NewTable()
+	state.SetFuncs(methods, map[string]lua.LGFunction{
+		"pitches": func(state *lua.LState) int {
+			scale := state.CheckUserData(1).Value.(musictheory.Scale)
+			t := state.NewTable()
+			for _, p := range scale {
+				t.Append(newPitchUserData(state, p.(musictheory.Pitch)))
+			}
+			state.Push(t)
+			return 1
+		},
+		"transpose": func(state *lua.LState) int {
+			scale := state.CheckUserData(1).Value.(musictheory.Scale)
+			intervalUD := state.CheckUserData(2)
+			if interval, ok := intervalUD.Value.(musictheory.Interval); ok {
+				state.Push(newScaleUserData(state, scale.Transpose(interval).(musictheory.Scale)))
+				return 1
+			}
+			state.RaiseError("argument is not an interval")
+			return 1
+		},
+	})
+
+	mt := state.NewTable()
+	mt.RawSetString("__index", methods)
+	return &lua.LUserData{
+		Metatable: mt,
+		Value:     scale,
+	}
 }

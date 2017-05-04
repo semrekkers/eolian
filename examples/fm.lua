@@ -70,7 +70,7 @@ return function(_)
         local oscA = with(m.oscA, function(o)
             set(o.quantize, { input = cc(25) })
             local scale = theory.scale('C2', 'minorPentatonic', 2)
-            for i,p in ipairs(scale) do
+            for i,p in ipairs(scale:pitches()) do
                 set(o.quantize, i-1 .. '/pitch', p)
             end
             return o.quantize
@@ -79,7 +79,7 @@ return function(_)
         local oscB = with(m.oscB, function(o)
             set(o.quantize, { input = cc(26) })
             local scale = theory.scale('C2', 'minorPentatonic', 2)
-            for i,p in ipairs(scale) do
+            for i,p in ipairs(scale:pitches()) do
                 set(o.quantize, i-1 .. '/pitch', p)
             end
             return o.quantize

@@ -40,7 +40,7 @@ return function(_)
         -- Quantized steps to Eb minor pentatonic
         r.quant:set { input = r.random:out('value') }
         local scale = theory.scale('Eb2', 'minorPentatonic', 4)
-        for i,p in ipairs(scale) do
+        for i,p in ipairs(scale:pitches()) do
             r.quant:set(i-1 .. '/pitch', p)
         end
 

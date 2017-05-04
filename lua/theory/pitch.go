@@ -6,6 +6,15 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+func newPitch(state *lua.LState) int {
+	p, err := musictheory.ParsePitch(state.CheckString(1))
+	if err != nil {
+		state.RaiseError("%s", err.Error())
+	}
+	state.Push(newPitchUserData(state, *p))
+	return 1
+}
+
 func newPitchUserData(state *lua.LState, p musictheory.Pitch) *lua.LUserData {
 	methods := state.NewTable()
 	state.SetFuncs(methods, map[string]lua.LGFunction{
@@ -38,18 +47,8 @@ func newPitchUserData(state *lua.LState, p musictheory.Pitch) *lua.LUserData {
 
 	mt := state.NewTable()
 	mt.RawSetString("__index", methods)
-
-	ud := state.NewUserData()
-	ud.Metatable = mt
-	ud.Value = p
-	return ud
-}
-
-func newPitch(state *lua.LState) int {
-	p, err := musictheory.ParsePitch(state.CheckString(1))
-	if err != nil {
-		state.RaiseError("%s", err.Error())
+	return &lua.LUserData{
+		Metatable: mt,
+		Value:     p,
 	}
-	state.Push(newPitchUserData(state, *p))
-	return 1
 }

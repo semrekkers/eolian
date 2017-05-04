@@ -55,11 +55,44 @@ func newChord(state *lua.LState) int {
 		state.RaiseError("unknown scale intervals %s", name)
 	}
 
-	t := state.NewTable()
-	chord := musictheory.NewChord(root, series)
-	for i, p := range chord {
-		t.RawSetInt(i+1, newPitchUserData(state, p))
-	}
-	state.Push(t)
+	state.Push(newChordUserData(state, musictheory.NewChord(root, series)))
 	return 1
+}
+
+func newChordUserData(state *lua.LState, chord musictheory.Chord) *lua.LUserData {
+	methods := state.NewTable()
+	state.SetFuncs(methods, map[string]lua.LGFunction{
+		"pitches": func(state *lua.LState) int {
+			chord := state.CheckUserData(1).Value.(musictheory.Chord)
+			t := state.NewTable()
+			for _, p := range chord {
+				t.Append(newPitchUserData(state, p))
+			}
+			state.Push(t)
+			return 1
+		},
+		"transpose": func(state *lua.LState) int {
+			chord := state.CheckUserData(1).Value.(musictheory.Chord)
+			intervalUD := state.CheckUserData(2)
+			if interval, ok := intervalUD.Value.(musictheory.Interval); ok {
+				state.Push(newChordUserData(state, chord.Transpose(interval).(musictheory.Chord)))
+				return 1
+			}
+			state.RaiseError("argument is not an interval")
+			return 1
+		},
+		"invert": func(state *lua.LState) int {
+			chord := state.CheckUserData(1).Value.(musictheory.Chord)
+			degree := int(state.CheckNumber(2))
+			state.Push(newChordUserData(state, chord.Invert(degree)))
+			return 1
+		},
+	})
+
+	mt := state.NewTable()
+	mt.RawSetString("__index", methods)
+	return &lua.LUserData{
+		Metatable: mt,
+		Value:     chord,
+	}
 }
