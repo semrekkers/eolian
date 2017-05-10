@@ -30,7 +30,15 @@ func newPitchUserData(state *lua.LState, p musictheory.Pitch) *lua.LUserData {
 		},
 		"name": func(state *lua.LState) int {
 			pitch := state.CheckUserData(1).Value.(musictheory.Pitch)
-			state.Push(lua.LString(pitch.Name(musictheory.AscNames)))
+			strategy := state.OptString(2, "asc")
+			switch strategy {
+			case "asc", "ascending":
+				state.Push(lua.LString(pitch.Name(musictheory.AscNames)))
+			case "desc", "descending":
+				state.Push(lua.LString(pitch.Name(musictheory.AscNames)))
+			default:
+				state.RaiseError("unknown naming strategy %s", strategy)
+			}
 			return 1
 		},
 		"transpose": func(state *lua.LState) int {
