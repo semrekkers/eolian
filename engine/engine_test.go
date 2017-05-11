@@ -1,4 +1,4 @@
-// +build !travis
+// +build !ci
 
 package engine
 

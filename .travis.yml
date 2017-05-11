@@ -20,4 +20,4 @@ before_install:
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CGO_LDFLAGS="-lportmidi -lporttime -L/usr/lib -L/usr/local/lib"; fi
 
-script: TESTARGS="-tags travis" make test
+script: TESTARGS="-tags ci" make test

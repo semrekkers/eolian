@@ -1,0 +1,7 @@
+app:
+  build:
+    image: eolian
+    dockerfile_path: Dockerfile
+  environment:
+    - CGO_LDFLAGS=-lportmidi -lporttime -L/usr/lib -L/usr/local/lib
+    - TESTARGS=-tags ci
