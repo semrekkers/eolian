@@ -5,7 +5,7 @@ local close = function(v)
         return
     end
     if type(v.close) == 'function' then
-        v.close()
+        v:close()
         return
     end
     for _, s in pairs(v) do close(s) end
@@ -94,7 +94,6 @@ end
 
 function Rack.patch()
     assert(Rack.modules ~= nil, 'no rackfile loaded.')
-
 
     local patch
     local status, err, result = xpcall(function()

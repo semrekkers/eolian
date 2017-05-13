@@ -13,6 +13,7 @@ import (
 	"github.com/chzyer/readline"
 	lua "github.com/yuin/gopher-lua"
 
+	"buddin.us/eolian/lua/synth"
 	"buddin.us/eolian/lua/theory"
 	"buddin.us/eolian/module"
 )
@@ -35,10 +36,11 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	lua.OpenString(state)
 
 	state.PreloadModule("eolian.filepath", preloadFilepath)
+	state.PreloadModule("eolian.repl", preloadLibFile("lua/lib/repl.lua"))
 	state.PreloadModule("eolian.runtime", preloadRuntime)
 	state.PreloadModule("eolian.sort", preloadSort)
 	state.PreloadModule("eolian.string", preloadString)
-	state.PreloadModule("eolian.synth", preloadSynth(mtx))
+	state.PreloadModule("eolian.synth", synth.Preload(mtx))
 	state.PreloadModule("eolian.func", preloadLibFile("lua/lib/func.lua"))
 	state.PreloadModule("eolian.synth.control", preloadLibFile("lua/lib/synth/control.lua"))
 	state.PreloadModule("eolian.synth.proxy", preloadSynthProxy)
@@ -48,7 +50,7 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.theory", theory.Preload)
 	state.PreloadModule("eolian.time", preloadTime)
 
-	state.SetGlobal("Engine", addModuleMethods(state, p, mtx))
+	state.SetGlobal("Engine", synth.CreateModule(state, p, mtx))
 	for k, fn := range valueFuncs {
 		state.Register(k, fn)
 	}
@@ -56,6 +58,9 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 		return nil, err
 	}
 	if err := loadLibFile(state, "lua/lib/utils.lua"); err != nil {
+		return nil, err
+	}
+	if err := state.DoString("repl = require('eolian.repl')"); err != nil {
 		return nil, err
 	}
 	return &VM{state}, nil
@@ -106,7 +111,7 @@ func (vm *VM) REPL() error {
 			continue
 		}
 
-		if err := vm.DoString(fmt.Sprintf("execLine(%q)", line)); err != nil {
+		if err := vm.DoString(fmt.Sprintf("repl.exec(%q)", line)); err != nil {
 			fmt.Println("error:", err)
 		}
 	}

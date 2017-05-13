@@ -32,7 +32,9 @@ func join(state *lua.LState) int {
 	del := state.CheckString(2)
 	segs := []string{}
 	table.ForEach(func(k, v lua.LValue) {
-		segs = append(segs, v.String())
+		if str := v.String(); str != "" {
+			segs = append(segs, str)
+		}
 	})
 	state.Push(lua.LString(strings.Join(segs, del)))
 	return 1
