@@ -1,3 +1,5 @@
+local time = require('eolian.time')
+
 local function with(o, fn)
     return fn(o)
 end
@@ -23,8 +25,17 @@ local function out(m, name)
     return m:out(name)
 end
 
+local function ping(m, input)
+    m:set(input, -1)
+    time.sleep(50)
+    m:set(input, 1)
+    time.sleep(50)
+    m:set(input, -1)
+end
+
 return {
     with = with,
     set  = set,
     out  = out,
+    ping = ping,
 }

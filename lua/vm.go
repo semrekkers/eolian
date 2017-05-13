@@ -57,9 +57,6 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	if err := loadLibFile(state, "lua/lib/rack/rack.lua"); err != nil {
 		return nil, err
 	}
-	if err := loadLibFile(state, "lua/lib/utils.lua"); err != nil {
-		return nil, err
-	}
 	if err := state.DoString("repl = require('eolian.repl')"); err != nil {
 		return nil, err
 	}

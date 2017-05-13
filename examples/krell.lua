@@ -1,7 +1,7 @@
-local synth   = require('eolian.synth')
+local synth  = require('eolian.synth')
 local theory = require('eolian.theory')
 
--- `ping(Rack.modules.clock, 'a')` to get it started :)
+-- Invoke `Rack.modules:start()` to get it started :)
 
 return function(_)
     local function build()
@@ -28,6 +28,10 @@ return function(_)
             compress = synth.Compress(),
             mono     = synth.Multiple { size = 2 },
             reverb   = synth.TankReverb(),
+
+            start = function(self)
+                require('eolian.func').ping(self.clock, 'a')
+            end,
         }
     end
 

@@ -25,7 +25,7 @@ local function find(group, name, prefix)
         if isPatcher(v) then
             if v:id() == name then
                 return join({prefix, k}, ".")
-            elseif type(v['members']) == 'function' then
+            elseif type(v.members) == 'function' then
                 for _,m in ipairs(v:members()) do
                     if m == name then
                         return join({prefix, k}, ".")
@@ -118,7 +118,7 @@ end
 local function inspect(o, prefix)
     if isPatcher(o) then
         local w = tabwriter.new(5, 0, 1, " ")
-        if o['state'] ~= nil then
+        if o.state ~= nil then
             writeState(w, o:state())
         end
         local inputs  = o:inputs()
