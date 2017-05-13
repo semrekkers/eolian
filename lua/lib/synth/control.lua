@@ -11,7 +11,7 @@ return function(m, options, defaultInput)
     local eolianString = require('eolian.string')
 
     local controls = {}
-    for name,_ in pairs(m.inputs()) do
+    for name,_ in pairs(m:inputs()) do
         if options[name] ~= nil then
             controls[name] = synth.Control(options[name])
             m:set(name, controls[name]:out())
@@ -20,20 +20,20 @@ return function(m, options, defaultInput)
 
     return {
         id = function()
-            return string.format("Controlled[%s]", m.id())
+            return string.format("Controlled[%s]", m:id())
         end,
         members = function()
-            local m = { m.id() }
+            local m = { m:id() }
             for _,c in pairs(controls) do
-                table.insert(m, c.id())
+                table.insert(m, c:id())
             end
             return m
         end,
         inputs = function()
             local t = {}
-            for k,v in pairs(m.inputs()) do
+            for k,v in pairs(m:inputs()) do
                 if controls[k] ~= nil then
-                    t[k] = controls[k].inputs()[defaultInput]
+                    t[k] = controls[k]:inputs()[defaultInput]
                 else
                     t[k] = v
                 end
@@ -64,7 +64,7 @@ return function(m, options, defaultInput)
         out = proxy.outputs(m),
         close = m.close,
         reset = function()
-            for k,v in pairs(m.inputs()) do
+            for k,v in pairs(m:inputs()) do
                 if controls[k] ~= nil then
                     controls[k].reset()
                 else
