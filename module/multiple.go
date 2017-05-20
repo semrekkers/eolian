@@ -24,44 +24,34 @@ func init() {
 }
 
 type multiple struct {
-	IO
-	in *In
-
-	frame dsp.Frame
-	size  int
-	reads int
+	multiOutIO
+	in     *In
+	frames []dsp.Frame
 }
 
 func newMultiple(size int) (*multiple, error) {
 	m := &multiple{
-		in:    NewInBuffer("input", dsp.Float64(0)),
-		frame: dsp.NewFrame(),
-		size:  size,
+		in:     NewInBuffer("input", dsp.Float64(0)),
+		frames: make([]dsp.Frame, size),
 	}
 
 	outputs := []*Out{}
 	for i := 0; i < size; i++ {
-		name := fmt.Sprintf("%d", i)
-		outputs = append(outputs, &Out{Name: name, Provider: dsp.Provide(&multOut{m})})
+		m.frames[i] = dsp.NewFrame()
+		outputs = append(outputs, &Out{
+			Name:     fmt.Sprintf("%d", i),
+			Provider: provideCopyOut(m, &m.frames[i]),
+		})
 	}
 
 	return m, m.Expose("Multiple", []*In{m.in}, outputs)
 }
 
-func (m *multiple) read(out dsp.Frame) {
-	if m.reads == 0 {
-		copy(m.frame, m.in.ProcessFrame())
-	}
-	copy(out, m.frame)
-	if outs := m.OutputsActive(true); outs > 0 {
-		m.reads = (m.reads + 1) % outs
-	}
-}
-
-type multOut struct {
-	*multiple
-}
-
-func (o *multOut) Process(out dsp.Frame) {
-	o.multiple.read(out)
+func (m *multiple) Process(_ dsp.Frame) {
+	m.incrRead(func() {
+		in := m.in.ProcessFrame()
+		for i := range m.frames {
+			copy(m.frames[i], in)
+		}
+	})
 }
