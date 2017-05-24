@@ -235,9 +235,9 @@ func (o *oscOut) simple(out dsp.Frame, i int) {
 		}
 	case triangle:
 		if phase < math.Pi {
-			next = dsp.Float64(-1+(2/math.Pi)*phase) * amp
+			next = dsp.Float64(-1*float64(amp)+(2/math.Pi)*phase) * amp
 		} else {
-			next = dsp.Float64(3+(2/math.Pi)*phase) * amp
+			next = dsp.Float64(3*float64(amp)-(2/math.Pi)*phase) * amp
 		}
 	default:
 	}
