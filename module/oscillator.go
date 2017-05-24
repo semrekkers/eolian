@@ -141,6 +141,11 @@ func (o *oscOut) Process(out dsp.Frame) {
 }
 
 func (o *oscOut) blep(out dsp.Frame, i int) {
+	var multiplier dsp.Float64 = 1
+	if o.shape == triangle {
+		multiplier = 4
+	}
+
 	var (
 		phase  = o.phases[o.phaseIndex]
 		bPhase = phase / (2 * math.Pi)
@@ -149,7 +154,8 @@ func (o *oscOut) blep(out dsp.Frame, i int) {
 			o.state.detune[i] +
 			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10))
 		pulseWidth = float64(dsp.Clamp(o.state.pulseWidth[i], 0.1, 1))
-		next       = blepSample(o.shape, phase, pulseWidth)*o.state.amp[i] + o.state.offset[i]
+		amp        = o.state.amp[i] * multiplier
+		next       = blepSample(o.shape, phase, pulseWidth)*amp + o.state.offset[i]
 	)
 
 	switch o.shape {
