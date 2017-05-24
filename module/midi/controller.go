@@ -57,8 +57,9 @@ type controller struct {
 
 	deviceID  portmidi.DeviceID
 	frameRate int
-	events    []portmidi.Event
+	events    []*portmidi.Event
 	reads     int
+	samples   int
 }
 
 func newController(config controllerConfig) (*controller, error) {
@@ -81,7 +82,7 @@ func newController(config controllerConfig) (*controller, error) {
 		stopStreamEvents: stop,
 		deviceID:         id,
 		frameRate:        config.FrameRate,
-		events:           make([]portmidi.Event, dsp.FrameSize),
+		events:           make([]*portmidi.Event, dsp.FrameSize),
 	}
 	outs := []*module.Out{}
 
@@ -113,11 +114,17 @@ func newController(config controllerConfig) (*controller, error) {
 func (c *controller) read(out dsp.Frame) {
 	if c.reads == 0 && c.stream != nil {
 		for i := range out {
-			select {
-			case c.events[i] = <-c.streamEvents:
-			default:
-				c.events[i] = portmidi.Event{}
+			if c.samples == 0 {
+				select {
+				case e := <-c.streamEvents:
+					c.events[i] = &e
+				default:
+					c.events[i] = nil
+				}
+			} else {
+				c.events[i] = nil
 			}
+			c.samples = (c.samples + 1) % 64
 		}
 	}
 	if outs := c.OutputsActive(true); outs > 0 {
@@ -165,7 +172,7 @@ func (g *ctrlGate) Process(out dsp.Frame) {
 }
 
 type gateState struct {
-	event                portmidi.Event
+	event                *portmidi.Event
 	which, channelOffset int
 	value                dsp.Float64
 }
@@ -177,6 +184,10 @@ func gateRolling(s *gateState) gateStateFunc {
 
 func gateDown(s *gateState) gateStateFunc {
 	s.value = 1
+	if s.event == nil {
+		return gateDown
+	}
+
 	which := int(s.event.Data1)
 
 	switch int(s.event.Status) {
@@ -204,6 +215,9 @@ func gateDown(s *gateState) gateStateFunc {
 
 func gateUp(s *gateState) gateStateFunc {
 	s.value = -1
+	if s.event == nil {
+		return gateUp
+	}
 	if int(s.event.Status) == 144+s.channelOffset && s.event.Data2 > 0 {
 		s.which = int(s.event.Data1)
 		return gateDown
@@ -222,8 +236,8 @@ type ctrlVelocity struct {
 func (v *ctrlVelocity) Process(out dsp.Frame) {
 	v.controller.read(out)
 	for i := range out {
-		if int(v.controller.events[i].Status) == 144+v.channelOffset {
-			data2 := int(v.controller.events[i].Data2)
+		if e := v.controller.events[i]; e != nil && int(e.Status) == 144+v.channelOffset {
+			data2 := int(e.Data2)
 			if data2 == 0 {
 				out[i] = v.lastVelocity
 			} else {
@@ -266,9 +280,9 @@ type ctrlPitch struct {
 func (p *ctrlPitch) Process(out dsp.Frame) {
 	p.controller.read(out)
 	for i := range out {
-		if int(p.controller.events[i].Status) == 144+p.channelOffset {
-			data1 := int(p.controller.events[i].Data1)
-			data2 := int(p.controller.events[i].Data2)
+		if e := p.controller.events[i]; e != nil && int(e.Status) == 144+p.channelOffset {
+			data1 := int(e.Data1)
+			data2 := int(e.Data2)
 			if data2 == 0 {
 				continue
 			}
@@ -290,7 +304,7 @@ type ctrlReset struct {
 func (r ctrlReset) Process(out dsp.Frame) {
 	r.controller.read(out)
 	for i := range out {
-		if r.controller.events[i].Status == 250 {
+		if e := r.controller.events[i]; e != nil && e.Status == 250 {
 			out[i] = 1
 		} else {
 			out[i] = -1
@@ -305,8 +319,7 @@ type ctrlPitchBend struct {
 func (b *ctrlPitchBend) Process(out dsp.Frame) {
 	b.controller.read(out)
 	for i := range out {
-		e := b.controller.events[i]
-		if e.Status == 224 && e.Data1 == 0 {
+		if e := b.controller.events[i]; e != nil && e.Status == 224 && e.Data1 == 0 {
 			switch e.Data2 {
 			case 127:
 				out[i] = 1
@@ -330,8 +343,7 @@ type ctrlCC struct {
 func (c *ctrlCC) Process(out dsp.Frame) {
 	c.controller.read(out)
 	for i := range out {
-		e := c.controller.events[i]
-		if int(e.Status) == c.status && int(e.Data1) == c.number {
+		if e := c.controller.events[i]; e != nil && int(e.Status) == c.status && int(e.Data1) == c.number {
 			c.value = dsp.Float64(float64(e.Data2) / 127)
 		}
 		out[i] = c.value
