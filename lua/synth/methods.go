@@ -251,7 +251,7 @@ func setInputs(state *lua.LState, self *lua.LTable, p module.Patcher, namespace 
 		switch v := raw.(type) {
 		case *lua.LUserData:
 			if err := p.Patch(name, v.Value); err != nil {
-				return fmt.Errorf("unable to patch %T into %q", v.Value, name)
+				return err
 			}
 		case lua.LNumber:
 			if err := p.Patch(name, float64(v)); err != nil {
