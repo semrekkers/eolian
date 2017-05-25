@@ -58,9 +58,9 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	if err := state.DoString("repl = require('eolian.repl')"); err != nil {
 		return nil, err
 	}
-	// if err := state.DoString("for k,v in pairs(require('eolian.value')) do _G[k] = v end"); err != nil {
-	// 	return nil, err
-	// }
+	if err := state.DoString("for k,v in pairs(require('eolian.value')) do _G[k] = v end"); err != nil {
+		return nil, err
+	}
 	return &VM{state}, nil
 }
 
