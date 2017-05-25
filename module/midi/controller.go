@@ -94,10 +94,10 @@ func newController(config controllerConfig) (*controller, error) {
 		&module.Out{Name: "pitchBend", Provider: dsp.Provide(&ctrlPitchBend{controller: m})})
 
 	for _, c := range config.CCChannels {
-		for n := 0; n < 128; n++ {
+		for n := 1; n < 128; n++ {
 			func(c, n int) {
 				outs = append(outs, &module.Out{
-					Name: fmt.Sprintf("cc/%d/%d", c, n),
+					Name: fmt.Sprintf("%d/cc/%d", c, n),
 					Provider: dsp.Provide(&ctrlCC{
 						controller: m,
 						status:     176 + (c - 1),
@@ -353,31 +353,18 @@ func (c *ctrlCC) Process(out dsp.Frame) {
 func polyphonicOutputs(m *controller, count int) []*module.Out {
 	outs := []*module.Out{}
 
-	if count == 0 {
+	for i := 1; i <= count; i++ {
 		outs = append(outs, &module.Out{
-			Name: "gate",
+			Name: fmt.Sprintf("%d/gate", i),
 			Provider: dsp.Provide(&ctrlGate{
-				controller: m,
-				stateFunc:  gateUp,
-				state:      &gateState{which: -1},
+				controller:    m,
+				stateFunc:     gateUp,
+				state:         &gateState{which: -1},
+				channelOffset: i - 1,
 			}),
 		},
-			&module.Out{Name: "pitch", Provider: dsp.Provide(&ctrlPitch{controller: m})},
-			&module.Out{Name: "velocity", Provider: dsp.Provide(&ctrlVelocity{controller: m})})
-	} else {
-		for i := 0; i < count; i++ {
-			outs = append(outs, &module.Out{
-				Name: fmt.Sprintf("%d/gate", i),
-				Provider: dsp.Provide(&ctrlGate{
-					controller:    m,
-					stateFunc:     gateUp,
-					state:         &gateState{which: -1},
-					channelOffset: i,
-				}),
-			},
-				&module.Out{Name: fmt.Sprintf("%d/pitch", i), Provider: dsp.Provide(&ctrlPitch{controller: m, channelOffset: i})},
-				&module.Out{Name: fmt.Sprintf("%d/velocity", i), Provider: dsp.Provide(&ctrlVelocity{controller: m, channelOffset: i})})
-		}
+			&module.Out{Name: fmt.Sprintf("%d/pitch", i), Provider: dsp.Provide(&ctrlPitch{controller: m, channelOffset: i - 1})},
+			&module.Out{Name: fmt.Sprintf("%d/velocity", i), Provider: dsp.Provide(&ctrlVelocity{controller: m, channelOffset: i - 1})})
 	}
 
 	return outs
