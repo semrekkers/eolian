@@ -2,6 +2,8 @@ return function(_)
     local synth  = require('eolian.synth')
     local theory = require('eolian.theory')
     local with   = require('eolian.func').with
+    local value  = require('eolian.value')
+    local hz, ms = value.hz, value.ms
 
     local function build()
         return {

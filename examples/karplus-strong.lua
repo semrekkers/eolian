@@ -5,6 +5,9 @@ return function(_)
                            func.set,
                            func.out
 
+    local value  = require('eolian.value')
+    local hz, ms = value.hz, value.ms
+
     local function build()
         return {
             mix   = synth.Mix(),

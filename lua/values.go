@@ -8,11 +8,16 @@ import (
 	"buddin.us/eolian/dsp"
 )
 
-var valueFuncs = map[string]lua.LGFunction{
-	"bpm":   bpm,
-	"hz":    hz,
-	"ms":    ms,
-	"pitch": pitch,
+func preloadValue(state *lua.LState) int {
+	mod := state.NewTable()
+	state.SetFuncs(mod, map[string]lua.LGFunction{
+		"bpm":   bpm,
+		"hz":    hz,
+		"ms":    ms,
+		"pitch": pitch,
+	})
+	state.Push(mod)
+	return 1
 }
 
 func hz(state *lua.LState) int {

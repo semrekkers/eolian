@@ -1,7 +1,13 @@
 -- More information about the structure of this file: https://github.com/brettbuddin/eolian/wiki/Rack-Files
-local synth = require('eolian.synth')
+return function()
+    local synth              = require('eolian.synth')
+    local theory             = require('eolian.theory')
+    local value              = require('eolian.value')
+    local hz, ms, pitch, bpm = value.hz, 
+                               value.ms, 
+                               value.pitch, 
+                               value.bpm
 
-return function(env)
     local function build()
         return {
             mix = synth.PanMix(),

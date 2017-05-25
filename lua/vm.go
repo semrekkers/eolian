@@ -49,17 +49,18 @@ func NewVM(p module.Patcher, mtx sync.Locker) (*VM, error) {
 	state.PreloadModule("eolian.tabwriter", preloadTabWriter)
 	state.PreloadModule("eolian.theory", theory.Preload)
 	state.PreloadModule("eolian.time", preloadTime)
+	state.PreloadModule("eolian.value", preloadValue)
 
 	state.SetGlobal("Engine", synth.CreateModule(state, p, mtx))
-	for k, fn := range valueFuncs {
-		state.Register(k, fn)
-	}
 	if err := loadLibFile(state, "lua/lib/rack/rack.lua"); err != nil {
 		return nil, err
 	}
 	if err := state.DoString("repl = require('eolian.repl')"); err != nil {
 		return nil, err
 	}
+	// if err := state.DoString("for k,v in pairs(require('eolian.value')) do _G[k] = v end"); err != nil {
+	// 	return nil, err
+	// }
 	return &VM{state}, nil
 }
 

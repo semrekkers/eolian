@@ -3,9 +3,12 @@ return function(_)
     local theory = require('eolian.theory')
     local ctrl   = require('eolian.synth.control')
     local func   = require('eolian.func')
+    local value  = require('eolian.value')
     local with, set, out = func.with,
                            func.set,
                            func.out
+    local hz, ms = value.hz,
+                   value.ms
 
     local function build()
         return {

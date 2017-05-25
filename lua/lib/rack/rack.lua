@@ -1,5 +1,39 @@
 local filepath = require('eolian.filepath')
 
+local environment = {
+    assert       = assert,
+    channel      = channel,
+    coroutine    = coroutine,
+    debug        = debug,
+    dofile       = dofile,
+    error        = error,
+    getmetatable = getmetatable,
+    io           = io,
+    ipairs       = ipairs,
+    load         = load,
+    loadfile     = loadfile,
+    loadstring   = loadstring,
+    math         = math,
+    next         = next,
+    os           = os,
+    pairs        = pairs,
+    pcall        = pcall,
+    print        = print,
+    rawequal     = rawequal,
+    rawget       = rawget,
+    rawset       = rawset,
+    require      = require,
+    select       = select,
+    setmetatable = setmetatable,
+    string       = string,
+    table        = table,
+    tonumber     = tonumber,
+    tostring     = tostring,
+    type         = type,
+    unpack       = unpack,
+    xpcall       = xpcall,
+}
+
 local close = function(v)
     if type(v) ~= 'table' then
         return
@@ -72,7 +106,9 @@ function Rack.build()
 
     local build, patch, modules
     local status, err, result = xpcall(function()
-        build, patch = dofile(Rack.env.filepath)(Rack.env)
+        local file = dofile(Rack.env.filepath)
+        setfenv(file, environment)
+        build, patch = file(Rack.env)
         modules = build()
     end, debug.traceback)
     if not(result) and err ~= nil then
@@ -97,7 +133,9 @@ function Rack.patch()
 
     local patch
     local status, err, result = xpcall(function()
-        _, patch = dofile(Rack.env.filepath)(Rack.env)
+        local file = dofile(Rack.env.filepath)
+        setfenv(file, environment)
+        _, patch = file(Rack.env)
     end, debug.traceback)
     if not(result) and err ~= nil then
         print(err)
@@ -122,7 +160,11 @@ function Rack.load(path)
 
     Rack.env.filepath  = path
     Rack.env.path      = filepath.dir(path)
-    local build, patch = dofile(path)(Rack.env)
+
+    local file = dofile(path)
+    setfenv(file, environment)
+    local build, patch = file(Rack.env)
+
     Rack.modules       = build(Rack.env)
     local sinks        = {patch(Rack.modules)}
 

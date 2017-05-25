@@ -1,5 +1,7 @@
 local synth  = require('eolian.synth')
 local theory = require('eolian.theory')
+local value  = require('eolian.value')
+local hz, ms = value.hz, value.ms
 
 -- Invoke `Rack.modules:start()` to get it started :)
 
