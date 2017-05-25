@@ -11,7 +11,7 @@ import (
 	"github.com/rakyll/portmidi"
 )
 
-var ccInputPattern = regexp.MustCompile("cc/([0-9]+)/([0-9]+)")
+var ccInputPattern = regexp.MustCompile("([0-9]+)/cc/([0-9]+)")
 
 func init() {
 	module.Register("MIDIOut", func(c module.Config) (module.Patcher, error) {
