@@ -52,6 +52,7 @@ var allModules = []struct {
 	{"Floor", nil, []string{"input"}, defaultOutput},
 	{"Fold", nil, []string{"input", "level", "gain", "stages"}, defaultOutput},
 	{"Follow", nil, []string{"input", "attack", "release"}, defaultOutput},
+	{"Freeze", nil, []string{"input", "size", "rate", "bits"}, defaultOutput},
 	{"GateMix", nil, []string{"0", "1", "2", "3"}, defaultOutput},
 	{"GateSequence", Config{"steps": 2}, []string{"clock", "reset", "0.mode", "1.mode"}, []string{"on", "off"}},
 	{"Glide", nil, []string{"input", "rise", "fall"}, defaultOutput},

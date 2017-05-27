@@ -50,6 +50,22 @@ func Max(a, b Float64) Float64 {
 	return Float64(math.Max(float64(a), float64(b)))
 }
 
+// Pow is math.Pow()
+func Pow(x, y Float64) Float64 {
+	return Float64(math.Pow(float64(x), float64(y)))
+}
+
+// Mod is math.Mod()
+func Mod(x, y Float64) Float64 {
+	return Float64(math.Mod(float64(x), float64(y)))
+}
+
+// Modf is math.Mod()
+func Modf(x Float64) (Float64, Float64) {
+	i, f := math.Modf(float64(x))
+	return Float64(i), Float64(f)
+}
+
 // ExpRatio produces an (inverse-)exponential curve that's inflection can be controlled by a specific ratio
 func ExpRatio(ratio, speed Float64) Float64 {
 	return Float64(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))
