@@ -8,6 +8,7 @@ return function(_)
                            func.set,
                            func.out
 
+    local value = require('eolian.value')
     local hz, ms = value.hz, value.ms
 
     local function build()
@@ -51,19 +52,19 @@ return function(_)
         }
     end
 
-    local function patch(modules)
-        local channel = modules.midi:ns('cc/1')
+    local function patch(m)
+        local channel = m.midi:ns('1/cc')
         local cc      = function(n) return out(channel, n) end
 
-        set(modules.osc, { tempo = hz(9) })
+        set(m.clock, { tempo = hz(9) })
 
-        with(modules.random, function(r)
+        with(m.random, function(r)
             set(r.trigger, {
-                input   = out(modules.clock),
+                input   = out(m.clock),
                 divisor = 16,
             })
             set(r.series, {
-                clock   = out(modules.clock),
+                clock   = out(m.clock),
                 trigger = out(r.trigger),
                 size    = 8,
             })
@@ -75,8 +76,8 @@ return function(_)
             end
         end)
 
-        local voice = with(modules.voice, function(v)
-            local series = modules.random.series
+        local voice = with(m.voice, function(v)
+            local series = m.random.series
             set(v.adsr, {
                 gate    = out(series, 'gate'),
                 attack  = cc(45),
@@ -84,7 +85,7 @@ return function(_)
                 sustain = cc(47),
                 release = cc(48),
             })
-            set(v.osc, { pitch = out(modules.random.quant), pulseWidth = cc(28) })
+            set(v.osc, { pitch = out(m.random.quant), pulseWidth = cc(28) })
             set(v.mix, {
                 { input = out(v.osc, 'sine') },
                 { input = out(v.osc, 'pulse'), level = 0.4 },
@@ -93,15 +94,8 @@ return function(_)
             return v.amp
         end)
 
-        set(modules.delay, {
+        set(m.tape, {
             input    = out(voice),
-            gain     = cc(25),
-            cutoff   = cc(26),
-            duration = cc(27),
-        })
-
-        set(modules.tape, {
-            input    = out(modules.delay),
             record   = cc(9),
             splice   = cc(10),
             unsplice = cc(11),
@@ -112,9 +106,15 @@ return function(_)
             zoom     = cc(43),
             slide    = cc(44),
         })
-        set(modules.filter, { input = out(modules.tape), cutoff = cc(41), resonance = cc(42) })
+        set(m.delay, {
+            input    = out(m.tape),
+            gain     = cc(25),
+            cutoff   = cc(26),
+            duration = cc(27),
+        })
+        set(m.filter, { input = out(m.delay), cutoff = cc(41), resonance = cc(42) })
 
-        local sink = out(modules.filter, 'lowpass')
+        local sink = out(m.filter, 'lowpass')
 
         return sink, sink
     end
