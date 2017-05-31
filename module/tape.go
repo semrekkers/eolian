@@ -30,7 +30,7 @@ type tape struct {
 	multiOutIO
 
 	in, play, record, reset, splice, unsplice,
-	speed, bias, organize, zoom, slide *In
+	speed, bias, organize, zoom, slide, layers *In
 
 	state                 *tapeState
 	stateFunc             tapeStateFunc
@@ -60,6 +60,7 @@ func newTape(max int, file string) (*tape, error) {
 		unsplice:     NewInBuffer("unsplice", dsp.Float64(0)),
 		zoom:         NewInBuffer("zoom", dsp.Float64(0)),
 		slide:        NewInBuffer("slide", dsp.Float64(0)),
+		layers:       NewInBuffer("layers", dsp.Float64(1)),
 		stateFunc:    tapeIdle,
 		mainOut:      dsp.NewFrame(),
 		endSpliceOut: dsp.NewFrame(),
@@ -88,7 +89,7 @@ func newTape(max int, file string) (*tape, error) {
 
 	return m, m.Expose(
 		"Tape",
-		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice, m.zoom, m.slide},
+		[]*In{m.in, m.speed, m.play, m.record, m.reset, m.bias, m.splice, m.organize, m.unsplice, m.zoom, m.slide, m.layers},
 		[]*Out{
 			{Name: "output", Provider: provideCopyOut(m, &m.mainOut)},
 			{Name: "endsplice", Provider: provideCopyOut(m, &m.endSpliceOut)},
@@ -112,6 +113,7 @@ func (t *tape) Process(out dsp.Frame) {
 			bias     = t.bias.ProcessFrame()
 			zoom     = t.zoom.ProcessFrame()
 			slide    = t.slide.ProcessFrame()
+			layers   = t.layers.ProcessFrame()
 		)
 
 		for i := range out {
@@ -123,6 +125,7 @@ func (t *tape) Process(out dsp.Frame) {
 			t.state.record = record[i]
 			t.state.reset = reset[i]
 			t.state.splice = splice[i]
+			t.state.layers = dsp.Clamp(layers[i], 0, 8)
 			t.state.unsplice = unsplice[i]
 			t.state.atSpliceEnd = false
 
@@ -149,7 +152,7 @@ func (t *tape) Process(out dsp.Frame) {
 
 type tapeState struct {
 	in, out, speed, play, organize, reset,
-	record, splice, unsplice, bias dsp.Float64
+	record, splice, unsplice, bias, layers dsp.Float64
 
 	zoom, slide dsp.Float64
 
@@ -241,28 +244,39 @@ func (s *tapeState) writeToMemory(in dsp.Float64, oversample int) {
 }
 
 func (s *tapeState) playback() {
-	s.out = dsp.AttenSum(s.bias, s.in, s.memory[s.offset])
+	var (
+		start      = s.markers.At(s.spliceStart)
+		end        = s.markers.At(s.spliceEnd)
+		grains     = 1024 >> uint(10-(s.zoom*10))
+		size       = (end - start) / grains
+		slide      = size * int(0.9*s.slide*dsp.Float64(grains))
+		grainStart = start + slide
+		grainEnd   = start + slide + size
+		memoryOut  = s.memory[s.offset]
+	)
+
+	if s.zoom > 0 {
+		for i := 0; i < int(s.layers); i++ {
+			var (
+				offset      = s.offset - grainStart
+				grainOffset = size * (i + 1)
+				future      = grainStart + grainOffset + offset
+				atten       = 1 - 0.1*dsp.Float64(i+1)
+			)
+			if future < len(s.memory) && future >= 0 {
+				memoryOut += s.memory[future] * atten
+			}
+		}
+	}
+
+	s.out = dsp.AttenSum(s.bias, s.in, memoryOut)
 	s.offset += int(s.playbackSpeed())
 
-	start := s.markers.At(s.spliceStart)
-	end := s.markers.At(s.spliceEnd)
-
-	if s.zoom != 0 {
-		var (
-			grains     = 1024 >> uint(10-(s.zoom*10))
-			size       = (end - start) / grains
-			slide      = size * int(0.9*s.slide*dsp.Float64(grains))
-			grainStart = start + slide
-			grainEnd   = start + slide + size
-		)
-		if s.offset >= grainEnd {
-			s.playheadTo(grainStart)
-		} else if s.offset <= grainStart {
-			s.playheadTo(grainEnd)
-		}
-		return
-	}
-	if s.offset >= end {
+	if s.zoom > 0 && s.offset >= grainEnd {
+		s.playheadTo(grainStart)
+	} else if s.zoom > 0 && s.offset <= grainStart {
+		s.playheadTo(grainEnd)
+	} else if s.offset >= end {
 		s.playheadTo(start)
 	} else if s.offset <= start {
 		s.playheadTo(end)
