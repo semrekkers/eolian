@@ -28,7 +28,7 @@ return function(_)
 
             delay    = synth.FilteredFBDelay(),
             compress = synth.Compress(),
-            mono     = synth.Multiple { size = 2 },
+            amp      = synth.Multiply(),
             reverb   = synth.TankReverb(),
 
             start = function(self)
@@ -75,8 +75,8 @@ return function(_)
         r.delay:set { input = r.gate:out(), duration = ms(500), gain = 0.5 }
 
         r.compress:set { input = r.delay:out() }
-        r.mono:set     { input = r.compress:out() }
-        r.reverb:set   { a = r.mono:out(0), b = r.mono:out(1), cutoff = hz(700), decay = 0.8 }
+        r.amp:set      { a = r.compress:out(), b = 0.3 }
+        r.reverb:set   { a = r.amp:out(), b = r.amp:out(), cutoff = hz(700), decay = 0.8 }
 
         return r.reverb:out('a', 'b')
     end
