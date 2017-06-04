@@ -15,6 +15,7 @@ type compress struct {
 	in, attack, release *In
 
 	envelope dsp.Float64
+	dcBlock  *dsp.DCBlock
 }
 
 func newCompress() (*compress, error) {
@@ -22,6 +23,7 @@ func newCompress() (*compress, error) {
 		in:      NewIn("input", dsp.Float64(0)),
 		attack:  NewInBuffer("attack", dsp.Duration(10)),
 		release: NewInBuffer("release", dsp.Duration(500)),
+		dcBlock: &dsp.DCBlock{},
 	}
 	err := m.Expose(
 		"Compress",
@@ -47,5 +49,6 @@ func (c *compress) Process(out dsp.Frame) {
 		if c.envelope > 1 {
 			out[i] /= c.envelope
 		}
+		out[i] = c.dcBlock.Tick(out[i])
 	}
 }
