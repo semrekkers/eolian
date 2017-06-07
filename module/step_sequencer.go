@@ -115,14 +115,7 @@ func (s *stepSequence) Process(out dsp.Frame) {
 
 		for i := range out {
 			if s.lastStep >= 0 && s.lastClock < 0 && clock[i] > 0 {
-				s.advance(mode[i])
-			}
-
-			if s.lastReset < 0 && reset[i] > 0 {
-				s.step = 0
-			}
-			if s.enables[s.step].LastFrame()[i] <= 0 {
-				s.step = 0
+				s.advance(mode[i], reset[i], s.enables[s.step].LastFrame()[i])
 			}
 
 			for j := 0; j < s.layerCount; j++ {
@@ -147,26 +140,42 @@ func (s *stepSequence) Process(out dsp.Frame) {
 	})
 }
 
-func (s *stepSequence) advance(mode dsp.Float64) {
+func (s *stepSequence) advance(mode, reset, enabled dsp.Float64) {
 	switch mapPatternMode(mode) {
 	case patternModeSequential:
-		s.step = (s.step + 1) % s.stepCount
 		s.pong = false
-	case patternModePingPong:
-		if s.pong {
-			s.step -= 1
-		} else {
-			s.step += 1
-		}
-		if s.step == s.stepCount-1 {
-			s.step = s.stepCount - 1
-			s.pong = true
-		} else if s.step == 0 {
+		if s.lastReset < 0 && reset > 0 || enabled <= 0 {
 			s.step = 0
-			s.pong = false
+		} else {
+			s.step = (s.step + 1) % s.stepCount
+		}
+	case patternModePingPong:
+		if s.lastReset < 0 && reset > 0 || enabled <= 0 {
+			if s.pong {
+				s.step = s.stepCount - 1
+			} else {
+				s.step = 0
+			}
+		} else {
+			if s.pong {
+				s.step -= 1
+			} else {
+				s.step += 1
+			}
+			if s.step == s.stepCount-1 {
+				s.step = s.stepCount - 1
+				s.pong = true
+			} else if s.step == 0 {
+				s.step = 0
+				s.pong = false
+			}
 		}
 	case patternModeRandom:
-		s.step = rand.Intn(s.stepCount)
 		s.pong = false
+		if s.lastReset < 0 && reset > 0 || enabled <= 0 {
+			s.step = 0
+		} else {
+			s.step = rand.Intn(s.stepCount)
+		}
 	}
 }
