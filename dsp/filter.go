@@ -10,10 +10,11 @@ type SVFilter struct {
 
 // Tick advances the operation
 func (f *SVFilter) Tick(in Float64) (lp, bp, hp Float64) {
-	if f.Cutoff != f.lastCutoff {
-		f.g = Tan(f.Cutoff)
+	cutoff := Abs(f.Cutoff)
+	if cutoff != f.lastCutoff {
+		f.g = Tan(cutoff)
 	}
-	f.lastCutoff = f.Cutoff
+	f.lastCutoff = cutoff
 
 	r := 1 / Max(f.Resonance, 1)
 	h := 1 / (1 + r*f.g + f.g*f.g)
