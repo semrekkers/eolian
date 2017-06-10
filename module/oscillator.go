@@ -187,7 +187,7 @@ func (o *oscOut) blep(out dsp.Frame, i int) {
 func blepSample(shape int, phase, pulseWidth float64) dsp.Float64 {
 	switch shape {
 	case sine:
-		return dsp.Float64(math.Sin(phase))
+		return dsp.Sin(dsp.Float64(phase))
 	case saw:
 		return dsp.Float64(2.0*phase/(2*math.Pi) - 1.0)
 	case triangle:
@@ -230,7 +230,7 @@ func (o *oscOut) simple(out dsp.Frame, i int) {
 
 	switch o.shape {
 	case sine:
-		next = dsp.Float64(math.Sin(phase)) * amp
+		next = dsp.Sin(dsp.Float64(phase)) * amp
 	case saw:
 		next = dsp.Float64(1-float32(1/math.Pi*phase)) * amp
 	case pulse:

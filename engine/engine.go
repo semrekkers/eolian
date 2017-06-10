@@ -17,13 +17,12 @@ type Engine struct {
 	module.IO
 	left, right *module.In
 
-	device         *portaudio.DeviceInfo
-	errors         chan error
-	stop           chan error
-	timings        chan metrics
-	timingRequests chan chan metrics
-	stream         *portaudio.Stream
-	originTime     time.Duration
+	device     *portaudio.DeviceInfo
+	errors     chan error
+	stop       chan error
+	metrics    *metrics
+	stream     *portaudio.Stream
+	originTime time.Duration
 }
 
 // New returns a new Enngine
@@ -47,16 +46,13 @@ func New(deviceIndex int) (*Engine, error) {
 	fmt.Println("Frame Size:", dsp.FrameSize)
 
 	m := &Engine{
-		left:           &module.In{Name: "left", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
-		right:          &module.In{Name: "right", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
-		errors:         make(chan error),
-		stop:           make(chan error),
-		timings:        make(chan metrics),
-		timingRequests: make(chan chan metrics),
-		device:         devices[deviceIndex],
+		left:    &module.In{Name: "left", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
+		right:   &module.In{Name: "right", Source: dsp.NewBuffer(dsp.Float64(0)), ForceSinking: true},
+		errors:  make(chan error),
+		stop:    make(chan error),
+		device:  devices[deviceIndex],
+		metrics: &metrics{},
 	}
-
-	go collectTimings(m.timings, m.timingRequests)
 
 	err = m.Expose("Engine", []*module.In{m.left, m.right}, nil)
 	return m, err
@@ -79,24 +75,27 @@ func (e *Engine) LuaMethods() map[string]module.LuaMethod {
 
 // TotalElapsed returns the current wallclock duration of the session
 func (e *Engine) TotalElapsed() time.Duration {
-	r := make(chan metrics)
-	e.timingRequests <- r
-	return (<-r).TotalElapsed - e.originTime
+	e.Lock()
+	r := e.metrics.TotalElapsed
+	e.Unlock()
+	return r - e.originTime
 }
 
 // Latency returns the current latency within the PortAudio callback. It's an indicator of how computationally expensive
 // your Rack is, and does not include any latency between PortAudio and your speakers.
 func (e *Engine) Latency() time.Duration {
-	r := make(chan metrics)
-	e.timingRequests <- r
-	return (<-r).Callback
+	e.Lock()
+	r := e.metrics.Callback
+	e.Unlock()
+	return r
 }
 
 // Load returns the current CPU load of the underlying audio engine
 func (e *Engine) Load() float64 {
-	r := make(chan metrics)
-	e.timingRequests <- r
-	return (<-r).Load
+	e.Lock()
+	r := e.metrics.Load
+	e.Unlock()
+	return r
 }
 
 // Errors returns a channel that expresses any errors during operation of the Engine
@@ -158,24 +157,10 @@ func (e *Engine) portAudioCallback(_, out [][]float32) {
 			}
 		}
 	}
-	e.timings <- metrics{
-		Callback:     time.Since(now),
-		TotalElapsed: e.stream.Time(),
-		Load:         e.stream.CpuLoad(),
-	}
+	e.metrics.Callback = time.Since(now)
+	e.metrics.TotalElapsed = e.stream.Time()
+	e.metrics.Load = e.stream.CpuLoad()
 	e.Unlock()
-}
-
-func collectTimings(timings <-chan metrics, requests chan chan metrics) {
-	var current metrics
-	for {
-		select {
-		case d := <-timings:
-			current = d
-		case ch := <-requests:
-			ch <- current
-		}
-	}
 }
 
 type metrics struct {
