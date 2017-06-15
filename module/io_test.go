@@ -46,9 +46,9 @@ func TestListing(t *testing.T) {
 	module, err := newModule(false)
 	assert.Equal(t, err, nil)
 
-	assert.Equal(t, module.Inputs(), module.ins)
+	assert.Equal(t, module.Inputs(), module.inLookup)
 	assert.Equal(t, len(module.Inputs()), 2)
-	assert.Equal(t, module.Outputs(), module.outs)
+	assert.Equal(t, module.Outputs(), module.outLookup)
 	assert.Equal(t, len(module.Outputs()), 1)
 }
 
@@ -146,8 +146,8 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	o, err = one.Output("output")
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(o.destinations), 1)
-	assert.Equal(t, two.ins["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
-	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor.(*Out).owner.ID(), one.ID())
+	assert.Equal(t, two.inLookup["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
+	assert.Equal(t, three.inLookup["input"].Source.(*dsp.Buffer).Processor.(*Out).owner.ID(), one.ID())
 
 	err = three.Reset()
 	assert.Equal(t, err, nil)
@@ -155,7 +155,7 @@ func TestMultipleOutputDestinations(t *testing.T) {
 	o, err = one.Output("output")
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(o.destinations), 0)
-	assert.Equal(t, three.ins["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
+	assert.Equal(t, three.inLookup["input"].Source.(*dsp.Buffer).Processor.(dsp.Float64), dsp.Float64(0))
 }
 
 func TestNormalizeInput(t *testing.T) {
@@ -187,13 +187,13 @@ func TestNormalizeInput(t *testing.T) {
 	assert.Equal(t, err, nil)
 	assert.Equal(t, len(o.destinations), 2)
 
-	err = two.ins["input"].Close()
+	err = two.inLookup["input"].Close()
 	assert.Equal(t, err, nil)
 
 	actual, expected = one.OutputsActive(true), 1
 	assert.Equal(t, actual, expected)
 
-	err = three.ins["input"].Close()
+	err = three.inLookup["input"].Close()
 	assert.Equal(t, err, nil)
 
 	actual, expected = one.OutputsActive(true), 0

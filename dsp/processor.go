@@ -30,9 +30,14 @@ func NewBuffer(p Processor) *Buffer {
 	}
 }
 
-// ProcessFrame reads a frame of data from the source
-func (b *Buffer) ProcessFrame() Frame {
+// Tick reads a frame of data into the internal buffer
+func (b *Buffer) Tick() {
 	b.Processor.Process(b.Frame)
+}
+
+// ProcessFrame reads a frame of data
+func (b *Buffer) ProcessFrame() Frame {
+	b.Tick()
 	return b.Frame
 }
 

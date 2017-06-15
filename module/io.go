@@ -47,10 +47,13 @@ type PortLister interface {
 // disconnects between them. This struct lazy initializes so it is useful by default. It is intended to just be embedded
 // inside other structs that represent a module.
 type IO struct {
-	id   string
-	typ  string
-	ins  map[string]*In
-	outs map[string]*Out
+	id  string
+	typ string
+
+	in        []*In
+	inLookup  map[string]*In
+	out       []*Out
+	outLookup map[string]*Out
 
 	forcedActiveOutputs int
 }
@@ -88,7 +91,7 @@ func (io *IO) Expose(typ string, ins []*In, outs []*Out) error {
 // AddInput registers a new input with the module. This is primarily used to allow for lazy-creation of inputs when
 // patched instead of at the module's create-time.
 func (io *IO) AddInput(in *In) error {
-	if _, ok := io.ins[in.Name]; ok {
+	if _, ok := io.inLookup[in.Name]; ok {
 		return fmt.Errorf(`duplicate input exposed "%s"`, in.Name)
 	}
 
@@ -98,20 +101,22 @@ func (io *IO) AddInput(in *In) error {
 		in.initial = in.Source
 	}
 	in.owner = io
-	io.ins[in.Name] = in
+	io.in = append(io.in, in)
+	io.inLookup[in.Name] = in
 	return nil
 }
 
 // AddOutput registers a new output with the module. Like AddInput, it is used for lazy-creation of outputs.
 func (io *IO) AddOutput(out *Out) error {
-	if _, ok := io.outs[out.Name]; ok {
+	if _, ok := io.outLookup[out.Name]; ok {
 		return fmt.Errorf(`duplicate output exposed "%s"`, out.Name)
 	}
 	if out.Provider == nil {
 		return fmt.Errorf(`provider must be set for output "%s"`, out.Name)
 	}
 	out.owner = io
-	io.outs[out.Name] = out
+	io.out = append(io.out, out)
+	io.outLookup[out.Name] = out
 	return nil
 }
 
@@ -119,7 +124,7 @@ func (io *IO) AddOutput(out *Out) error {
 func (io *IO) Patch(name string, t interface{}) error {
 	io.lazyInit()
 	name = canonicalPort(name)
-	input, ok := io.ins[name]
+	input, ok := io.inLookup[name]
 	if !ok {
 		return fmt.Errorf(`unknown input "%s"`, name)
 	}
@@ -178,20 +183,20 @@ func assertProcessor(t interface{}) (dsp.Processor, error) {
 // Inputs lists all registered inputs
 func (io *IO) Inputs() map[string]*In {
 	io.lazyInit()
-	return io.ins
+	return io.inLookup
 }
 
 // Outputs lists all registered outputs
 func (io *IO) Outputs() map[string]*Out {
 	io.lazyInit()
-	return io.outs
+	return io.outLookup
 }
 
 // Output realizes a registered output and returns it for patching
 func (io *IO) Output(name string) (*Out, error) {
 	io.lazyInit()
 	name = canonicalPort(name)
-	if o, ok := io.outs[name]; ok {
+	if o, ok := io.outLookup[name]; ok {
 		if !o.IsActive() {
 			o.buffer = dsp.NewBuffer(o.Provider.Processor())
 		}
@@ -209,7 +214,7 @@ func (io *IO) OutputsActive(sinking bool) int {
 	}
 
 	var i int
-	for _, out := range io.outs {
+	for _, out := range io.out {
 		if sinking {
 			if out.IsActive() && out.IsSinking() {
 				i++
@@ -226,18 +231,18 @@ func (io *IO) String() string {
 }
 
 func (io *IO) lazyInit() {
-	if io.ins == nil {
-		io.ins = map[string]*In{}
+	if io.inLookup == nil {
+		io.inLookup = map[string]*In{}
 	}
-	if io.outs == nil {
-		io.outs = map[string]*Out{}
+	if io.outLookup == nil {
+		io.outLookup = map[string]*Out{}
 	}
 }
 
 // Reset disconnects all inputs from their sources (closing them in the process) and re-assigns the input to its
 // original default value
 func (io *IO) Reset() error {
-	for _, in := range io.ins {
+	for _, in := range io.in {
 		if err := in.Close(); err != nil {
 			return err
 		}
@@ -248,7 +253,7 @@ func (io *IO) Reset() error {
 // ResetOnly disconnects specific inputs from their sources
 func (io *IO) ResetOnly(names []string) error {
 	for _, n := range names {
-		if in, ok := io.ins[n]; ok {
+		if in, ok := io.inLookup[n]; ok {
 			if err := in.Close(); err != nil {
 				return err
 			}
@@ -271,6 +276,7 @@ type In struct {
 	ForceSinking bool
 	initial      dsp.Processor
 	owner        *IO
+	static       bool
 }
 
 // NewIn returns a new unbuffered input
@@ -292,6 +298,12 @@ func (i *In) setSource(r dsp.Processor) {
 	switch v := i.Source.(type) {
 	case *dsp.Buffer:
 		v.Processor = r
+		if _, ok := r.(dsp.Valuer); ok {
+			v.Tick()
+			i.static = true
+		} else {
+			i.static = false
+		}
 	default:
 		i.Source = r
 	}
@@ -317,6 +329,9 @@ func (i *In) String() string {
 
 // ProcessFrame reads an entire frame into the buffered input
 func (i *In) ProcessFrame() dsp.Frame {
+	if i.static {
+		return i.LastFrame()
+	}
 	return i.Source.(*dsp.Buffer).ProcessFrame()
 }
 

@@ -15,11 +15,6 @@ func Clamp(s, min, max Float64) Float64 {
 	return s
 }
 
-// Tan is math.Tan()
-func Tan(v Float64) Float64 {
-	return Float64(math.Tan(float64(v)))
-}
-
 // Rand is rand.Float64()
 func Rand() Float64 {
 	return Float64(rand.Float64())
