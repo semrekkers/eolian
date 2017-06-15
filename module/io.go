@@ -97,6 +97,9 @@ func (io *IO) AddInput(in *In) error {
 
 	if b, ok := in.Source.(*dsp.Buffer); ok {
 		in.initial = b.Processor
+		if _, ok := b.Processor.(dsp.Valuer); ok {
+			b.Tick()
+		}
 	} else {
 		in.initial = in.Source
 	}
@@ -276,7 +279,7 @@ type In struct {
 	ForceSinking bool
 	initial      dsp.Processor
 	owner        *IO
-	static       bool
+	audioRate    bool
 }
 
 // NewIn returns a new unbuffered input
@@ -300,12 +303,13 @@ func (i *In) setSource(r dsp.Processor) {
 		v.Processor = r
 		if _, ok := r.(dsp.Valuer); ok {
 			v.Tick()
-			i.static = true
+			i.audioRate = false
 		} else {
-			i.static = false
+			i.audioRate = true
 		}
 	default:
 		i.Source = r
+		i.audioRate = true
 	}
 }
 
@@ -329,7 +333,7 @@ func (i *In) String() string {
 
 // ProcessFrame reads an entire frame into the buffered input
 func (i *In) ProcessFrame() dsp.Frame {
-	if i.static {
+	if !i.audioRate {
 		return i.LastFrame()
 	}
 	return i.Source.(*dsp.Buffer).ProcessFrame()
