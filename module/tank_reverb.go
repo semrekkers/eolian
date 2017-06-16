@@ -2,10 +2,26 @@ package module
 
 import (
 	"buddin.us/eolian/dsp"
+	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
-	Register("TankReverb", func(c Config) (Patcher, error) { return newTankReverb() })
+	Register("TankReverb", func(c Config) (Patcher, error) {
+		var config struct {
+			PolesA int `mapstructure:"polesA"`
+			PolesB int `mapstructure:"polesB"`
+		}
+		if err := mapstructure.Decode(c, &config); err != nil {
+			return nil, err
+		}
+		if config.PolesA == 0 {
+			config.PolesA = 4
+		}
+		if config.PolesB == 0 {
+			config.PolesB = 4
+		}
+		return newTankReverb(config.PolesA, config.PolesB)
+	})
 }
 
 type tankReverb struct {
@@ -20,7 +36,7 @@ type tankReverb struct {
 	aOut, bOut                        dsp.Frame
 }
 
-func newTankReverb() (*tankReverb, error) {
+func newTankReverb(polesA, polesB int) (*tankReverb, error) {
 	m := &tankReverb{
 		a:       NewInBuffer("a", dsp.Float64(0)),
 		b:       NewInBuffer("b", dsp.Float64(0)),
@@ -28,8 +44,8 @@ func newTankReverb() (*tankReverb, error) {
 		cutoff:  NewInBuffer("cutoff", dsp.Frequency(800)),
 		decay:   NewInBuffer("decay", dsp.Float64(0.5)),
 		bias:    NewInBuffer("bias", dsp.Float64(0)),
-		aFilter: &dsp.SVFilter{Poles: 2, Resonance: 1},
-		bFilter: &dsp.SVFilter{Poles: 2, Resonance: 1},
+		aFilter: &dsp.SVFilter{Poles: polesA, Resonance: 1},
+		bFilter: &dsp.SVFilter{Poles: polesB, Resonance: 1},
 		ap:      make([]*dsp.AllPass, 4),
 		aAP:     make([]*dsp.AllPass, 2),
 		bAP:     make([]*dsp.AllPass, 2),
