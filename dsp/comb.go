@@ -25,13 +25,13 @@ func (c *FBComb) TickDuration(in, gain, duration Float64) Float64 {
 
 // NewFilteredFBComb returns a new FilteredFBComb
 func NewFilteredFBCombMS(ms MS, poles int) *FilteredFBComb {
-	return &FilteredFBComb{dl: NewDelayLineMS(ms), f: &SVFilter{Poles: poles}}
+	return &FilteredFBComb{dl: NewDelayLineMS(ms), f: NewFilter(LowPass, 4)}
 }
 
 // FilteredFBComb is a feedback comb filter
 type FilteredFBComb struct {
 	dl   *DelayLine
-	f    *SVFilter
+	f    *Filter
 	last Float64
 }
 
@@ -45,8 +45,7 @@ func (c *FilteredFBComb) TickDuration(in, gain, duration, cutoff, resonance Floa
 	out := in + c.last
 	c.f.Cutoff = cutoff
 	c.f.Resonance = resonance
-	lp, _, _ := c.f.Tick(tick(c.dl, out, duration))
-	c.last = gain * lp
+	c.last = gain * c.f.Tick(tick(c.dl, out, duration))
 
 	return out
 }

@@ -128,22 +128,21 @@ func (p *allpass) Process(out dsp.Frame) {
 
 type filteredFBDelay struct {
 	IO
-	in, duration, gain, cutoff, resonance *In
-	comb                                  *dsp.FilteredFBComb
+	in, duration, gain, cutoff *In
+	comb                       *dsp.FilteredFBComb
 }
 
 func newFilteredFBDelay(size dsp.MS) (*filteredFBDelay, error) {
 	m := &filteredFBDelay{
-		in:        NewIn("input", dsp.Float64(0)),
-		duration:  NewInBuffer("duration", dsp.Duration(1000)),
-		gain:      NewInBuffer("gain", dsp.Float64(0.98)),
-		cutoff:    NewInBuffer("cutoff", dsp.Frequency(1000)),
-		resonance: NewInBuffer("resonance", dsp.Float64(1)),
-		comb:      dsp.NewFilteredFBCombMS(size, 4),
+		in:       NewIn("input", dsp.Float64(0)),
+		duration: NewInBuffer("duration", dsp.Duration(1000)),
+		gain:     NewInBuffer("gain", dsp.Float64(0.98)),
+		cutoff:   NewInBuffer("cutoff", dsp.Frequency(1000)),
+		comb:     dsp.NewFilteredFBCombMS(size, 4),
 	}
 	err := m.Expose(
 		"FilteredFBDelay",
-		[]*In{m.in, m.duration, m.gain, m.cutoff, m.resonance},
+		[]*In{m.in, m.duration, m.gain, m.cutoff},
 		[]*Out{{Name: "output", Provider: dsp.Provide(m)}},
 	)
 	return m, err
@@ -154,9 +153,8 @@ func (c *filteredFBDelay) Process(out dsp.Frame) {
 	gain := c.gain.ProcessFrame()
 	duration := c.duration.ProcessFrame()
 	cutoff := c.cutoff.ProcessFrame()
-	resonance := c.resonance.ProcessFrame()
 	for i := range out {
-		out[i] = c.comb.TickDuration(out[i], gain[i], duration[i], cutoff[i], resonance[i])
+		out[i] = c.comb.TickDuration(out[i], gain[i], duration[i], cutoff[i], 0)
 	}
 }
 
