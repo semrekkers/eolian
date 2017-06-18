@@ -48,7 +48,7 @@ var allModules = []struct {
 	{"FBDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FileSource", Config{"path": "testdata/dummy_source.txt"}, nil, defaultOutput},
-	{"FilteredFBDelay", nil, []string{"input", "gain", "duration", "cutoff", "resonance"}, defaultOutput},
+	{"FilteredFBDelay", nil, []string{"input", "gain", "duration", "cutoff"}, defaultOutput},
 	{"FilteredReverb", nil, []string{"input", "gain", "feedback", "cutoff", "fbCutoff"}, defaultOutput},
 	{"Floor", nil, []string{"input"}, defaultOutput},
 	{"Fold", nil, []string{"input", "level", "gain", "stages"}, defaultOutput},
