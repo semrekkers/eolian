@@ -150,9 +150,9 @@ func (o *oscOut) blep(out dsp.Frame, i int) {
 		phase  = o.phases[o.phaseIndex]
 		bPhase = phase / (2 * math.Pi)
 		pitch  = o.state.pitch[i] * dsp.Float64(o.multiplier)
-		delta  = float64(pitch +
+		delta  = float64(dsp.Abs(pitch +
 			o.state.detune[i] +
-			o.state.pitchMod[i]*(o.state.pitchModAmount[i]/10))
+			o.state.pitchMod[i]*o.state.pitchModAmount[i]))
 		pulseWidth = float64(dsp.Clamp(o.state.pulseWidth[i], 0.1, 1))
 		amp        = o.state.amp[i] * multiplier
 		next       = blepSample(o.shape, phase, pulseWidth)*amp + o.state.offset[i]
