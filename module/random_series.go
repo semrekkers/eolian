@@ -10,7 +10,7 @@ func init() {
 	Register("RandomSeries", func(Config) (Patcher, error) { return newRandomSeries() })
 }
 
-const randomSeriesMax = 32
+const randomSeriesMax = 128
 
 type randomSeries struct {
 	multiOutIO
