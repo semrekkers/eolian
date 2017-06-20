@@ -61,6 +61,16 @@ func Modf(x Float64) (Float64, Float64) {
 	return Float64(i), Float64(f)
 }
 
+// Exp is math.Exp()
+func Exp(x Float64) Float64 {
+	return Float64(math.Exp(float64(x)))
+}
+
+// Log is math.Log()
+func Log(x Float64) Float64 {
+	return Float64(math.Log(float64(x)))
+}
+
 // ExpRatio produces an (inverse-)exponential curve that's inflection can be controlled by a specific ratio
 func ExpRatio(ratio, speed Float64) Float64 {
 	return Float64(math.Exp(-math.Log(float64((1+ratio)/ratio)) / float64(speed)))

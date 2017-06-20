@@ -44,6 +44,7 @@ var allModules = []struct {
 	{"Direct", nil, []string{"input"}, defaultOutput},
 	{"Distort", nil, []string{"input", "gain", "offsetA", "offsetB"}, defaultOutput},
 	{"Divide", nil, []string{"a", "b"}, defaultOutput},
+	{"Dynamics", nil, []string{"input", "control", "slopeAbove", "slopeBelow", "clamp", "relax", "threshold"}, defaultOutput},
 	{"Edges", nil, []string{"input"}, []string{"endrise", "endcycle"}},
 	{"FBDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
 	{"FBLoopDelay", nil, []string{"input", "duration", "gain"}, defaultOutput},
