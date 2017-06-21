@@ -45,55 +45,55 @@ func newDynamics() (*dynamics, error) {
 	return m, err
 }
 
-func (c *dynamics) calcCoefs(clamp, relax dsp.Float64) {
-	if clamp != c.lastClamp || c.lastClamp == -1 {
+func (d *dynamics) calcCoefs(clamp, relax dsp.Float64) {
+	if clamp != d.lastClamp || d.lastClamp == -1 {
 		if clamp == 0 {
-			c.clampCoef = 0
+			d.clampCoef = 0
 		} else {
-			c.clampCoef = dsp.Exp(log1 / clamp)
+			d.clampCoef = dsp.Exp(log1 / clamp)
 		}
-		c.lastClamp = clamp
+		d.lastClamp = clamp
 	}
-	if relax != c.lastRelax || c.lastRelax == -1 {
+	if relax != d.lastRelax || d.lastRelax == -1 {
 		if relax == 0 {
-			c.relaxCoef = 0
+			d.relaxCoef = 0
 		} else {
-			c.relaxCoef = dsp.Exp(log1 / relax)
+			d.relaxCoef = dsp.Exp(log1 / relax)
 		}
-		c.lastRelax = relax
+		d.lastRelax = relax
 	}
 }
 
-func (c *dynamics) Process(out dsp.Frame) {
-	c.in.Process(out)
+func (d *dynamics) Process(out dsp.Frame) {
+	d.in.Process(out)
 
 	var (
-		control   = c.control.ProcessFrame()
-		threshold = c.threshold.ProcessFrame()[0]
-		above     = c.above.ProcessFrame()[0]
-		below     = c.below.ProcessFrame()[0]
-		clamp     = c.clamp.ProcessFrame()[0]
-		relax     = c.relax.ProcessFrame()[0]
+		control   = d.control.ProcessFrame()
+		threshold = d.threshold.ProcessFrame()[0]
+		above     = d.above.ProcessFrame()[0]
+		below     = d.below.ProcessFrame()[0]
+		clamp     = d.clamp.ProcessFrame()[0]
+		relax     = d.relax.ProcessFrame()[0]
 	)
 
-	c.calcCoefs(clamp, relax)
+	d.calcCoefs(clamp, relax)
 
 	for i := range out {
 		v := dsp.Abs(control[i])
-		if v < c.lastMax {
-			v = v + (c.lastMax-v)*c.relaxCoef
+		if v < d.lastMax {
+			v = v + (d.lastMax-v)*d.relaxCoef
 		} else {
-			v = v + (c.lastMax-v)*c.clampCoef
+			v = v + (d.lastMax-v)*d.clampCoef
 		}
-		c.lastMax = v
+		d.lastMax = v
 	}
 
 	var nextGain dsp.Float64
-	if c.lastMax < threshold {
+	if d.lastMax < threshold {
 		if below == 1 {
 			nextGain = 1
 		} else {
-			nextGain = dsp.Pow(c.lastMax/threshold, below-1)
+			nextGain = dsp.Pow(d.lastMax/threshold, below-1)
 			absGain := dsp.Abs(nextGain)
 			if absGain < 1.0e-15 {
 				nextGain = 0
@@ -105,13 +105,19 @@ func (c *dynamics) Process(out dsp.Frame) {
 		if above == 1 {
 			nextGain = 1
 		} else {
-			nextGain = dsp.Pow(c.lastMax/threshold, above-1)
+			nextGain = dsp.Pow(d.lastMax/threshold, above-1)
 		}
 	}
 
-	slope := (nextGain - c.lastGain) * slopeFactor
+	slope := (nextGain - d.lastGain) * slopeFactor
 	for i := range out {
-		out[i] = c.dcBlock.Tick(out[i] * c.lastGain)
-		c.lastGain += slope
+		out[i] = d.dcBlock.Tick(out[i] * d.lastGain)
+		d.lastGain += slope
+	}
+}
+
+func (d *dynamics) LuaState() map[string]interface{} {
+	return map[string]interface{}{
+		"rms": d.lastMax,
 	}
 }
